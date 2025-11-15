@@ -1,0 +1,242 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Task } from '@/lib/types';
+import { createBrowserClient } from '@/lib/supabase/client';
+
+interface EditTaskDialogProps {
+  task: Task | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onTaskUpdated: (task: Task) => void;
+}
+
+export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: EditTaskDialogProps) {
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<'Work' | 'Home' | 'Health' | 'Personal'>('Personal');
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [estimatedHours, setEstimatedHours] = useState('1');
+  const [importance, setImportance] = useState<'important' | 'not-important'>('not-important');
+  const [urgency, setUrgency] = useState<'urgent' | 'not-urgent'>('not-urgent');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const supabase = createBrowserClient();
+
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setCategory(task.category);
+      setDueDate(task.due_date ? new Date(task.due_date) : undefined);
+      setEstimatedHours(task.estimated_hours.toString());
+      setImportance(task.importance);
+      setUrgency(task.urgency);
+    }
+  }, [task]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!task) return;
+
+    setError('');
+
+    if (!title.trim()) {
+      setError('Task name is required');
+      return;
+    }
+
+    if (!dueDate) {
+      setError('Due date is required');
+      return;
+    }
+
+    const hours = parseFloat(estimatedHours);
+    if (isNaN(hours) || hours <= 0) {
+      setError('Estimated hours must be a positive number');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from('tasks')
+        .update({
+          title: title.trim(),
+          category,
+          due_date: dueDate.toISOString().split('T')[0],
+          estimated_hours: hours,
+          importance,
+          urgency,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', task.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      onTaskUpdated(data);
+      onOpenChange(false);
+    } catch (err) {
+      console.error('[v0] Error updating task:', err);
+      setError('Failed to update task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Task</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-title">Task Name</Label>
+            <Input
+              id="edit-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="What needs to be done?"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-category">Category</Label>
+            <Select value={category} onValueChange={(value: any) => setCategory(value)}>
+              <SelectTrigger id="edit-category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Work">Work</SelectItem>
+                <SelectItem value="Home">Home</SelectItem>
+                <SelectItem value="Health">Health</SelectItem>
+                <SelectItem value="Personal">Personal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Due Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !dueDate && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-hours">Estimated Hours</Label>
+            <Input
+              id="edit-hours"
+              type="number"
+              step="0.5"
+              min="0.5"
+              value={estimatedHours}
+              onChange={(e) => setEstimatedHours(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label>Importance</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={importance === 'important' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setImportance('important')}
+              >
+                Important
+              </Button>
+              <Button
+                type="button"
+                variant={importance === 'not-important' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setImportance('not-important')}
+              >
+                Not Important
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Urgency</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={urgency === 'urgent' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setUrgency('urgent')}
+              >
+                Urgent
+              </Button>
+              <Button
+                type="button"
+                variant={urgency === 'not-urgent' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setUrgency('not-urgent')}
+              >
+                Not Urgent
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="flex-1">
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
