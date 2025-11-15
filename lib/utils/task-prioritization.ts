@@ -176,6 +176,8 @@ export function assignStartDates(
   const result: Task[] = [...completedTasks, ...recurringTasks];
   const todayStr = getTodayLocal();
   
+  const nonRecurringCountPerDay = new Map<string, number>();
+  
   // Step 6: Schedule each non-recurring task
   for (const task of scoredTasks) {
     let scheduled = false;
@@ -193,6 +195,12 @@ export function assignStartDates(
     for (let dayOffset = 0; dayOffset < maxDayOffset && !scheduled; dayOffset++) {
       const dateStr = addDaysToDateString(todayStr, dayOffset);
       attemptedDates.push(dateStr);
+      
+      const nonRecurringCount = nonRecurringCountPerDay.get(dateStr) || 0;
+      if (nonRecurringCount >= 4) {
+        console.log('[v0] Skipping', dateStr, '- already has 4 non-recurring tasks');
+        continue;
+      }
       
       const weekend = isWeekend(dateStr);
       const category = task.category;
@@ -219,6 +227,8 @@ export function assignStartDates(
         result.push(scheduledTask);
         scheduled = true;
         
+        nonRecurringCountPerDay.set(dateStr, nonRecurringCount + 1);
+        
         // Track if this is a reschedule
         const oldDate = originalDates.get(task.id);
         if (oldDate !== dateStr) {
@@ -229,7 +239,7 @@ export function assignStartDates(
           });
         }
         
-        console.log('[v0] Scheduled', task.title, 'on', dateStr, '(priority:', task.priorityScore, ')');
+        console.log('[v0] Scheduled', task.title, 'on', dateStr, '(priority:', task.priorityScore, ', non-recurring:', nonRecurringCount + 1, '/4)');
       }
     }
     
@@ -240,6 +250,9 @@ export function assignStartDates(
       
       const scheduledTask = { ...task, start_date: dueDate };
       result.push(scheduledTask);
+      
+      const nonRecurringCount = nonRecurringCountPerDay.get(dueDate) || 0;
+      nonRecurringCountPerDay.set(dueDate, nonRecurringCount + 1);
       
       warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but may exceed capacity limits.`);
       
@@ -321,7 +334,11 @@ export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);
   scoredIncompleteTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  return [...scoredIncompleteTasks, ...completedTodayTasks];
+  const top4Incomplete = scoredIncompleteTasks.slice(0, 4);
+  
+  console.log('[v0] Returning top', top4Incomplete.length, 'incomplete +', completedTodayTasks.length, 'completed tasks');
+  
+  return [...top4Incomplete, ...completedTodayTasks];
 }
 
 // Group tasks by start date
