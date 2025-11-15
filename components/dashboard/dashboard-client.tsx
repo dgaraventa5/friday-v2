@@ -13,6 +13,7 @@ import { assignStartDates } from '@/lib/utils/task-prioritization';
 import { generateNextRecurringInstance } from '@/lib/utils/recurring-tasks';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { getTodayLocal } from '@/lib/utils/date-utils';
 
 interface DashboardClientProps {
   initialTasks: Task[];
@@ -351,6 +352,43 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
     }
   };
 
+  const handlePullTaskToToday = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const todayStr = getTodayLocal();
+    
+    try {
+      // Update task's start_date to today
+      const { error } = await supabase
+        .from('tasks')
+        .update({ start_date: todayStr })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedTasks = tasks.map(t => 
+        t.id === taskId ? { ...t, start_date: todayStr } : t
+      );
+      setTasks(updatedTasks);
+
+      toast({
+        title: 'Task Added',
+        description: `"${task.title}" has been added to today's focus!`,
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error pulling task to today:', error);
+      toast({
+        title: 'Update Failed',
+        description: 'Could not add task to today. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col">
       <div className="flex-1 overflow-hidden">
@@ -361,6 +399,8 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
             onTaskComplete={handleTaskComplete}
             onTaskEdit={handleTaskEdit}
             onTaskDelete={handleTaskDelete}
+            onPullTaskToToday={handlePullTaskToToday}
+            onOpenAddDialog={() => setShowAddDialog(true)}
           />
         ) : (
           <ScheduleView

@@ -298,47 +298,27 @@ function calculateDaysUntil(fromDateStr: string, toDateStr: string): number {
 // Get today's focus tasks (max 4)
 export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const todayStr = getTodayLocal();
+  const BASELINE_TASKS = 4;
   
   console.log('[v0] getTodaysFocusTasks - today:', todayStr);
-  console.log('[v0] All tasks:', tasks.map(t => ({ 
-    id: t.id,
-    name: t.title, 
-    start_date: t.start_date, 
-    completed: t.completed,
-    due_date: t.due_date 
-  })));
   
-  // Filter for tasks scheduled for today only
+  // Filter for tasks scheduled for today
   const incompleteTodayTasks = tasks
-    .filter(t => {
-      const matches = !t.completed && t.start_date === todayStr;
-      if (t.start_date === todayStr) {
-        console.log('[v0] Task', t.title, '- completed:', t.completed, 'matches:', matches);
-      }
-      return matches;
-    });
+    .filter(t => !t.completed && t.start_date === todayStr);
   
   const completedTodayTasks = tasks
-    .filter(t => {
-      const matches = t.completed && t.start_date === todayStr;
-      if (t.completed && t.start_date) {
-        console.log('[v0] Completed task', t.title, '- start_date:', t.start_date, 'today:', todayStr, 'matches:', matches);
-      }
-      return matches;
-    });
+    .filter(t => t.completed && t.start_date === todayStr);
   
-  console.log('[v0] Incomplete today tasks:', incompleteTodayTasks.map(t => t.title));
-  console.log('[v0] Completed today tasks:', completedTodayTasks.map(t => t.title));
+  console.log('[v0] Incomplete today tasks:', incompleteTodayTasks.length);
+  console.log('[v0] Completed today tasks:', completedTodayTasks.length);
   
-  // Add priority scores and sort
+  // Add priority scores and sort incomplete tasks
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);
   scoredIncompleteTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  const top4Incomplete = scoredIncompleteTasks.slice(0, 4);
-  
-  console.log('[v0] Returning top', top4Incomplete.length, 'incomplete +', completedTodayTasks.length, 'completed tasks');
-  
-  return [...top4Incomplete, ...completedTodayTasks];
+  // Return all tasks (no artificial limit on incomplete tasks)
+  // Users can add as many as they want for "extra credit"
+  return [...scoredIncompleteTasks, ...completedTodayTasks];
 }
 
 // Group tasks by start date

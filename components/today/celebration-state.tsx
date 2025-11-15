@@ -2,6 +2,7 @@ import { Sparkles } from 'lucide-react';
 
 interface CelebrationStateProps {
   completedCount: number;
+  baselineCount?: number;
 }
 
 const QUOTES = [
@@ -12,19 +13,31 @@ const QUOTES = [
   "Believe you can and you're halfway there.",
 ];
 
-export function CelebrationState({ completedCount }: CelebrationStateProps) {
+export function CelebrationState({ 
+  completedCount,
+  baselineCount = 4,
+}: CelebrationStateProps) {
   const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  
+  const isExtraCredit = completedCount > baselineCount;
+  const title = isExtraCredit
+    ? `All ${baselineCount} tasks complete - plus ${completedCount - baselineCount} bonus!`
+    : `All ${completedCount} tasks complete!`;
 
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       <div className="mb-6">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 animate-bounce">
+        <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${
+          isExtraCredit 
+            ? 'from-yellow-400 to-amber-500' 
+            : 'from-green-400 to-emerald-500'
+        } animate-bounce`}>
           <Sparkles className="w-10 h-10 text-white" />
         </div>
       </div>
 
       <h2 className="text-2xl font-bold mb-2 text-balance">
-        All {completedCount} tasks complete!
+        {title}
       </h2>
       
       <p className="text-muted-foreground max-w-md leading-relaxed text-pretty">
