@@ -92,11 +92,23 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
 
       const recurringSeriesId = isRecurring ? crypto.randomUUID() : null;
 
+      const normalizedDueDate = new Date(Date.UTC(
+        dueDate.getFullYear(),
+        dueDate.getMonth(),
+        dueDate.getDate(),
+        12, 0, 0, 0
+      ));
+      const dueDateStr = normalizedDueDate.toISOString().split('T')[0];
+
+      console.log('[v0] Form submission - selected date:', dueDate.toISOString());
+      console.log('[v0] Form submission - normalized date:', dueDateStr);
+      console.log('[v0] Form submission - recurring days:', recurringDays);
+
       const baseTaskData = {
         user_id: user.id,
         title: title.trim(),
         category,
-        due_date: dueDate.toISOString().split('T')[0],
+        due_date: dueDateStr,
         estimated_hours: hours,
         importance,
         urgency,
@@ -122,7 +134,6 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
       if (insertError) throw insertError;
 
       if (data && data.length > 0) {
-        // Pass all created tasks to parent, not just the first one
         data.forEach(task => onTaskAdded(task));
       }
     } catch (err) {

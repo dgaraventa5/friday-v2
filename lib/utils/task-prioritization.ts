@@ -114,24 +114,19 @@ function getTotalHoursUsed(date: Date, scheduledTasks: Task[]): number {
 
 // Check if recurring task should be scheduled on this date
 function shouldScheduleRecurringTask(task: Task, date: Date): boolean {
-  if (!task.is_recurring) return true; // Non-recurring tasks can be scheduled any day
+  if (!task.is_recurring) return true;
   
-  const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  console.log('[v0] Checking recurring task:', task.title, 'for date:', date.toISOString().split('T')[0], 'day:', dayOfWeek);
+  const dayOfWeek = date.getDay();
   
   if (task.recurring_interval === 'daily') {
     return true;
   }
   
   if (task.recurring_interval === 'weekly' && task.recurring_days) {
-    const shouldSchedule = task.recurring_days.includes(dayOfWeek);
-    console.log('[v0] Weekly task, recurring_days:', task.recurring_days, 'should schedule:', shouldSchedule);
-    return shouldSchedule;
+    return task.recurring_days.includes(dayOfWeek);
   }
   
   if (task.recurring_interval === 'monthly') {
-    // Schedule on the same day of month as the due date
     const dueDate = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
     return date.getDate() === dueDate.getDate();
   }
@@ -210,40 +205,25 @@ export function assignStartDates(
 // Get today's focus tasks (max 4)
 export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString().split('T')[0];
   
-  // Get incomplete tasks scheduled for today
+  console.log('[v0] getTodaysFocusTasks - today:', todayStr);
+  console.log('[v0] All tasks:', tasks.map(t => ({ name: t.title, start_date: t.start_date, completed: t.completed })));
+  
   const incompleteTodayTasks = tasks
     .filter(t => !t.completed && t.start_date === todayStr);
   
-  // Get completed tasks from today
   const completedTodayTasks = tasks
     .filter(t => t.completed && t.start_date === todayStr);
+  
+  console.log('[v0] Incomplete today tasks:', incompleteTodayTasks.length);
+  console.log('[v0] Completed today tasks:', completedTodayTasks.length);
   
   // Add priority scores and sort
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);
   scoredIncompleteTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  // Take up to 4 incomplete tasks
-  const focusTasks = scoredIncompleteTasks.slice(0, 4);
-  
-  // If we have fewer than 4, try to fill from upcoming tasks
-  if (focusTasks.length < 4) {
-    const upcomingTasks = tasks.filter(t => 
-      !t.completed && 
-      (!t.start_date || (t.start_date && new Date(t.start_date) > today))
-    );
-    
-    const scoredUpcoming = addPriorityScores(upcomingTasks);
-    scoredUpcoming.sort((a, b) => b.priorityScore - a.priorityScore);
-    
-    const needed = 4 - focusTasks.length;
-    focusTasks.push(...scoredUpcoming.slice(0, needed));
-  }
-  
-  // Combine with completed tasks for display
-  return [...focusTasks, ...completedTodayTasks];
+  return [...scoredIncompleteTasks, ...completedTodayTasks];
 }
 
 // Group tasks by start date
