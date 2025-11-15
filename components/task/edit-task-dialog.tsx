@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Task } from '@/lib/types';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -38,12 +39,13 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
   const [error, setError] = useState('');
 
   const supabase = createBrowserClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setCategory(task.category);
-      setDueDate(task.due_date ? new Date(task.due_date) : undefined);
+      setDueDate(task.due_date ? parseDateLocal(task.due_date) : undefined);
       setEstimatedHours(task.estimated_hours.toString());
       setImportance(task.importance);
       setUrgency(task.urgency);
@@ -77,6 +79,10 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
     try {
       const dueDateStr = formatDateLocal(dueDate);
       
+      console.log('[v0] Editing task:', task.title);
+      console.log('[v0] Old due_date:', task.due_date, 'Old start_date:', task.start_date);
+      console.log('[v0] New due_date:', dueDateStr);
+      
       const updateData: any = {
         title: title.trim(),
         category,
@@ -87,7 +93,6 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
         updated_at: new Date().toISOString(),
       };
       
-      // For non-recurring tasks, update start_date to match new due_date
       if (!task.is_recurring) {
         updateData.start_date = dueDateStr;
         console.log('[v0] Updating non-recurring task start_date to:', dueDateStr);
@@ -103,11 +108,23 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
       if (updateError) throw updateError;
 
       console.log('[v0] Task updated successfully:', data);
+      
+      toast({
+        title: 'Task updated',
+        description: 'Your task has been saved successfully.',
+      });
+      
       onTaskUpdated(data);
       onOpenChange(false);
     } catch (err) {
       console.error('[v0] Error updating task:', err);
       setError('Failed to update task. Please try again.');
+      
+      toast({
+        title: 'Error',
+        description: 'Failed to update task. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }

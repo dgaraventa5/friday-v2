@@ -12,6 +12,7 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { assignStartDates } from '@/lib/utils/task-prioritization';
 import { generateNextRecurringInstance } from '@/lib/utils/recurring-tasks';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardClientProps {
   initialTasks: Task[];
@@ -27,6 +28,7 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const supabase = createBrowserClient();
 
@@ -158,12 +160,55 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
   };
 
   const handleTaskEdit = (task: Task) => {
+    console.log('[v0] Editing task:', task.title);
     setEditingTask(task);
     setShowEditDialog(true);
   };
 
-  const handleTaskUpdated = (updatedTask: Task) => {
-    setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+  const handleTaskUpdated = async (updatedTask: Task) => {
+    console.log('[v0] Task updated:', updatedTask.title);
+    console.log('[v0] Updated values:', { due_date: updatedTask.due_date, start_date: updatedTask.start_date });
+    
+    // Optimistically update local state first for immediate UI feedback
+    setTasks(prevTasks => prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+    
+    // Re-run scheduling algorithm for all tasks
+    const updatedTaskList = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    
+    console.log('[v0] Re-running scheduling algorithm...');
+    const scheduled = assignStartDates(
+      updatedTaskList,
+      profile.category_limits,
+      profile.daily_max_hours
+    );
+    
+    // Find tasks whose start_date changed due to rescheduling
+    const tasksToUpdate = scheduled.filter(t => {
+      const original = updatedTaskList.find(orig => orig.id === t.id);
+      return original && original.start_date !== t.start_date && t.id !== updatedTask.id;
+    });
+    
+    // Batch update changed start_dates in database
+    if (tasksToUpdate.length > 0) {
+      console.log('[v0] Rescheduling', tasksToUpdate.length, 'additional tasks');
+      try {
+        await Promise.all(
+          tasksToUpdate.map(task =>
+            supabase
+              .from('tasks')
+              .update({ start_date: task.start_date })
+              .eq('id', task.id)
+          )
+        );
+      } catch (error) {
+        console.error('[v0] Error updating rescheduled tasks:', error);
+      }
+    }
+    
+    // Update state with all scheduled tasks
+    setTasks(scheduled);
+    
+    // Refresh to sync with server
     router.refresh();
   };
 
