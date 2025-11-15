@@ -33,72 +33,101 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
   const supabase = createBrowserClient();
 
   useEffect(() => {
-    const scheduleUnscheduledTasks = async () => {
-      const unscheduled = tasks.filter(t => !t.completed && !t.start_date);
+    const runInitialScheduling = async () => {
+      console.log('[v0] Running initial scheduling for all tasks');
       
-      if (unscheduled.length > 0) {
-        console.log('[v0] Found', unscheduled.length, 'unscheduled tasks');
+      const schedulingResult = assignStartDates(
+        tasks,
+        profile.category_limits,
+        profile.daily_max_hours
+      );
+      
+      // Find tasks that need database updates
+      const tasksToUpdate = schedulingResult.rescheduledTasks
+        .filter(({ newDate }) => newDate !== null);
+      
+      if (tasksToUpdate.length > 0) {
+        console.log('[v0] Updating', tasksToUpdate.length, 'tasks with new start dates');
         
-        const scheduled = assignStartDates(
-          tasks,
-          profile.category_limits,
-          profile.daily_max_hours
-        );
-        
-        const updates = scheduled
-          .filter(t => {
-            const original = tasks.find(orig => orig.id === t.id);
-            return original && !original.start_date && t.start_date;
-          })
-          .map(task => 
+        await Promise.all(
+          tasksToUpdate.map(({ task }) =>
             supabase
               .from('tasks')
               .update({ start_date: task.start_date })
               .eq('id', task.id)
-          );
-        
-        if (updates.length > 0) {
-          console.log('[v0] Updating', updates.length, 'tasks with start dates');
-          await Promise.all(updates);
-          setTasks(scheduled);
-        }
+          )
+        );
+      }
+      
+      setTasks(schedulingResult.tasks);
+      
+      // Show warnings if any
+      if (schedulingResult.warnings.length > 0) {
+        toast({
+          title: 'Scheduling Warning',
+          description: schedulingResult.warnings[0],
+          variant: 'destructive',
+        });
       }
     };
     
-    scheduleUnscheduledTasks();
+    runInitialScheduling();
   }, []);
 
   const handleTaskAdded = async (newTasks: Task | Task[]) => {
     const tasksArray = Array.isArray(newTasks) ? newTasks : [newTasks];
     console.log('[v0] handleTaskAdded called with', tasksArray.length, 'tasks');
     
-    setTasks(prevTasks => {
-      const updated = [...prevTasks, ...tasksArray];
-      console.log('[v0] Total tasks after adding:', updated.length);
+    // Add new tasks to state
+    const updatedTaskList = [...tasks, ...tasksArray];
+    
+    // Run full scheduling
+    const schedulingResult = assignStartDates(
+      updatedTaskList,
+      profile.category_limits,
+      profile.daily_max_hours
+    );
+    
+    // Update all tasks with new start_dates
+    const tasksToUpdate = schedulingResult.rescheduledTasks
+      .filter(({ newDate }) => newDate !== null);
+    
+    if (tasksToUpdate.length > 0) {
+      console.log('[v0] Updating', tasksToUpdate.length, 'tasks in database');
       
-      const scheduled = assignStartDates(
-        updated,
-        profile.category_limits,
-        profile.daily_max_hours
+      await Promise.all(
+        tasksToUpdate.map(({ task }) =>
+          supabase
+            .from('tasks')
+            .update({ start_date: task.start_date })
+            .eq('id', task.id)
+        )
       );
       
-      console.log('[v0] Scheduled tasks:', scheduled.filter(t => t.start_date).length);
+      // Show notification about rescheduled tasks
+      const rescheduledCount = schedulingResult.rescheduledTasks.filter(
+        ({ task }) => !tasksArray.some(t => t.id === task.id) // Exclude newly added tasks
+      ).length;
       
-      tasksArray.forEach(async (addedTask) => {
-        const scheduledVersion = scheduled.find(t => t.id === addedTask.id);
-        if (scheduledVersion && scheduledVersion.start_date) {
-          console.log('[v0] Updating task', addedTask.title, 'with start_date:', scheduledVersion.start_date);
-          await supabase
-            .from('tasks')
-            .update({ start_date: scheduledVersion.start_date })
-            .eq('id', addedTask.id);
-        }
-      });
-      
-      return scheduled;
-    });
+      if (rescheduledCount > 0) {
+        toast({
+          title: 'Tasks Rescheduled',
+          description: `${rescheduledCount} task${rescheduledCount > 1 ? 's were' : ' was'} moved to optimize your schedule.`,
+        });
+      }
+    }
     
+    setTasks(schedulingResult.tasks);
     setShowAddDialog(false);
+    
+    // Show warnings
+    if (schedulingResult.warnings.length > 0) {
+      toast({
+        title: 'Scheduling Warning',
+        description: schedulingResult.warnings[0],
+        variant: 'destructive',
+      });
+    }
     
     setTimeout(() => {
       router.refresh();
@@ -111,11 +140,12 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
 
     const newCompletedState = !task.completed;
 
-    setTasks(tasks.map(t => 
+    // Optimistic update
+    const updatedTasks = tasks.map(t => 
       t.id === taskId 
         ? { ...t, completed: newCompletedState, completed_at: newCompletedState ? new Date().toISOString() : null }
         : t
-    ));
+    );
 
     try {
       const { error: updateError } = await supabase
@@ -131,6 +161,7 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
       if (newCompletedState) {
         await fetch('/api/streak', { method: 'POST' });
         
+        // Handle recurring task next instance
         if (task.is_recurring) {
           const nextInstance = generateNextRecurringInstance(task);
           if (nextInstance) {
@@ -144,18 +175,49 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
               .single();
 
             if (!insertError && data) {
-              setTasks([...tasks, data]);
+              updatedTasks.push(data);
             }
           }
         }
+        
+        // Re-run scheduling to backfill the freed capacity
+        console.log('[v0] Task completed - re-optimizing schedule');
+        const schedulingResult = assignStartDates(
+          updatedTasks,
+          profile.category_limits,
+          profile.daily_max_hours
+        );
+        
+        // Update tasks with new start_dates
+        const tasksToUpdate = schedulingResult.rescheduledTasks
+          .filter(({ newDate, task: t }) => newDate !== null && t.id !== taskId);
+        
+        if (tasksToUpdate.length > 0) {
+          await Promise.all(
+            tasksToUpdate.map(({ task: t }) =>
+              supabase
+                .from('tasks')
+                .update({ start_date: t.start_date })
+                .eq('id', t.id)
+            )
+          );
+          
+          // Show notification
+          toast({
+            title: 'Schedule Optimized',
+            description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} moved to fill available time.`,
+          });
+        }
+        
+        setTasks(schedulingResult.tasks);
+      } else {
+        setTasks(updatedTasks);
       }
 
       router.refresh();
     } catch (error) {
       console.error('[v0] Error updating task:', error);
-      setTasks(tasks.map(t => 
-        t.id === taskId ? task : t
-      ));
+      setTasks(tasks);
     }
   };
 
@@ -169,53 +231,76 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
     console.log('[v0] Task updated:', updatedTask.title);
     console.log('[v0] Updated values:', { due_date: updatedTask.due_date, start_date: updatedTask.start_date });
     
-    // Optimistically update local state first for immediate UI feedback
-    setTasks(prevTasks => prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t));
-    
-    // Re-run scheduling algorithm for all tasks
+    // Update task in list
     const updatedTaskList = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
     
-    console.log('[v0] Re-running scheduling algorithm...');
-    const scheduled = assignStartDates(
+    // Run full scheduling
+    console.log('[v0] Re-running scheduling algorithm after edit...');
+    const schedulingResult = assignStartDates(
       updatedTaskList,
       profile.category_limits,
       profile.daily_max_hours
     );
     
-    // Find tasks whose start_date changed due to rescheduling
-    const tasksToUpdate = scheduled.filter(t => {
-      const original = updatedTaskList.find(orig => orig.id === t.id);
-      return original && original.start_date !== t.start_date && t.id !== updatedTask.id;
-    });
+    // Find tasks that need database updates (excluding the edited task itself)
+    const tasksToUpdate = schedulingResult.rescheduledTasks
+      .filter(({ newDate, task }) => newDate !== null && task.id !== updatedTask.id);
     
-    // Batch update changed start_dates in database
+    // Batch update in database
     if (tasksToUpdate.length > 0) {
       console.log('[v0] Rescheduling', tasksToUpdate.length, 'additional tasks');
+      
       try {
         await Promise.all(
-          tasksToUpdate.map(task =>
+          tasksToUpdate.map(({ task }) =>
             supabase
               .from('tasks')
               .update({ start_date: task.start_date })
               .eq('id', task.id)
           )
         );
+        
+        toast({
+          title: 'Tasks Rescheduled',
+          description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} moved to accommodate your changes.`,
+        });
       } catch (error) {
         console.error('[v0] Error updating rescheduled tasks:', error);
+        toast({
+          title: 'Update Error',
+          description: 'Some tasks may not have been rescheduled. Please refresh the page.',
+          variant: 'destructive',
+        });
       }
     }
     
-    // Update state with all scheduled tasks
-    setTasks(scheduled);
+    // Update state
+    setTasks(schedulingResult.tasks);
     
-    // Refresh to sync with server
+    // Show warnings
+    if (schedulingResult.warnings.length > 0) {
+      toast({
+        title: 'Scheduling Warning',
+        description: schedulingResult.warnings[0],
+        variant: 'destructive',
+      });
+    }
+    
+    // Show success
+    toast({
+      title: 'Task Updated',
+      description: 'Your changes have been saved.',
+    });
+    
+    // Refresh
     router.refresh();
   };
 
   const handleTaskDelete = async (taskId: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
-    setTasks(tasks.filter(t => t.id !== taskId));
+    const deletedTask = tasks.find(t => t.id === taskId);
+    const updatedTasks = tasks.filter(t => t.id !== taskId);
 
     try {
       const { error } = await supabase
@@ -224,9 +309,44 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
         .eq('id', taskId);
 
       if (error) throw error;
+      
+      // Re-run scheduling to backfill freed capacity
+      console.log('[v0] Task deleted - re-optimizing schedule');
+      const schedulingResult = assignStartDates(
+        updatedTasks,
+        profile.category_limits,
+        profile.daily_max_hours
+      );
+      
+      // Update tasks with new start_dates
+      const tasksToUpdate = schedulingResult.rescheduledTasks
+        .filter(({ newDate }) => newDate !== null);
+      
+      if (tasksToUpdate.length > 0) {
+        await Promise.all(
+          tasksToUpdate.map(({ task }) =>
+            supabase
+              .from('tasks')
+              .update({ start_date: task.start_date })
+              .eq('id', task.id)
+          )
+        );
+        
+        toast({
+          title: 'Schedule Optimized',
+          description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} rescheduled.`,
+        });
+      }
+      
+      setTasks(schedulingResult.tasks);
       router.refresh();
     } catch (error) {
       console.error('[v0] Error deleting task:', error);
+      toast({
+        title: 'Delete Failed',
+        description: 'Could not delete task. Please try again.',
+        variant: 'destructive',
+      });
       router.refresh();
     }
   };

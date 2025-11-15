@@ -130,38 +130,69 @@ function shouldScheduleRecurringTask(task: Task, dateStr: string): boolean {
   return false;
 }
 
+export interface SchedulingResult {
+  tasks: Task[];
+  rescheduledTasks: Array<{ task: Task; oldDate: string | null; newDate: string | null }>;
+  warnings: string[];
+}
+
 // Assign start dates to unscheduled tasks
 export function assignStartDates(
   tasks: Task[],
   categoryLimits: CategoryLimits,
   dailyMaxHours: DailyMaxHours,
   lookAheadDays: number = 90
-): Task[] {
-  // Separate completed, scheduled, and unscheduled tasks
+): SchedulingResult {
+  const warnings: string[] = [];
+  const rescheduledTasks: Array<{ task: Task; oldDate: string | null; newDate: string | null }> = [];
+  
+  // Step 1: Keep completed tasks as-is
   const completedTasks = tasks.filter(t => t.completed);
-  const scheduledTasks = tasks.filter(t => !t.completed && t.start_date);
-  const unscheduledTasks = tasks.filter(t => !t.completed && !t.start_date);
   
-  console.log('[v0] assignStartDates: unscheduled tasks:', unscheduledTasks.length);
+  // Step 2: Keep recurring tasks - they already have start_date = due_date
+  const recurringTasks = tasks.filter(t => !t.completed && t.is_recurring);
   
-  // Sort unscheduled tasks by priority score
-  const scoredTasks = addPriorityScores(unscheduledTasks);
+  // Step 3: Get ALL non-recurring incomplete tasks (clear their start_dates for re-evaluation)
+  const nonRecurringTasks = tasks.filter(t => !t.completed && !t.is_recurring);
+  console.log('[v0] Re-scheduling', nonRecurringTasks.length, 'non-recurring tasks');
+  
+  // Track original start_dates for comparison
+  const originalDates = new Map(
+    nonRecurringTasks.map(t => [t.id, t.start_date])
+  );
+  
+  // Step 4: Score and sort by priority (highest first)
+  const scoredTasks = addPriorityScores(nonRecurringTasks);
   scoredTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  const result = [...completedTasks, ...scheduledTasks];
+  console.log('[v0] Top 5 priorities:', scoredTasks.slice(0, 5).map(t => ({
+    title: t.title,
+    score: t.priorityScore,
+    quadrant: t.quadrant,
+    due_date: t.due_date
+  })));
+  
+  // Step 5: Start with recurring tasks as "already scheduled"
+  const result: Task[] = [...completedTasks, ...recurringTasks];
   const todayStr = getTodayLocal();
   
-  // Try to schedule each task
+  // Step 6: Schedule each non-recurring task
   for (const task of scoredTasks) {
     let scheduled = false;
+    let attemptedDates: string[] = [];
     
-    // Try each day within the look-ahead window
-    for (let dayOffset = 0; dayOffset < lookAheadDays && !scheduled; dayOffset++) {
+    // Calculate max days to look ahead (up to due_date or lookAheadDays)
+    const maxDayOffset = task.due_date 
+      ? Math.min(
+          Math.max(0, calculateDaysUntil(todayStr, task.due_date) + 1), // +1 to include due_date
+          lookAheadDays
+        )
+      : lookAheadDays;
+    
+    // Try each day from today up to due_date (or max look-ahead)
+    for (let dayOffset = 0; dayOffset < maxDayOffset && !scheduled; dayOffset++) {
       const dateStr = addDaysToDateString(todayStr, dayOffset);
-      
-      if (task.is_recurring && !shouldScheduleRecurringTask(task, dateStr)) {
-        continue;
-      }
+      attemptedDates.push(dateStr);
       
       const weekend = isWeekend(dateStr);
       const category = task.category;
@@ -174,29 +205,81 @@ export function assignStartDates(
         ? dailyMaxHours.weekend 
         : dailyMaxHours.weekday;
       
-      // Check if there's capacity
+      // Check current capacity usage
       const categoryHours = getHoursUsedForCategory(dateStr, category, result);
       const totalHours = getTotalHoursUsed(dateStr, result);
       
       // Check if we can fit this task
-      if (
-        categoryHours + task.estimated_hours <= categoryLimit &&
-        totalHours + task.estimated_hours <= dailyLimit
-      ) {
-        console.log('[v0] Scheduling task', task.title, 'on', dateStr);
-        result.push({ ...task, start_date: dateStr });
+      const canFitCategory = categoryHours + task.estimated_hours <= categoryLimit;
+      const canFitDaily = totalHours + task.estimated_hours <= dailyLimit;
+      
+      if (canFitCategory && canFitDaily) {
+        // Found a slot!
+        const scheduledTask = { ...task, start_date: dateStr };
+        result.push(scheduledTask);
         scheduled = true;
+        
+        // Track if this is a reschedule
+        const oldDate = originalDates.get(task.id);
+        if (oldDate !== dateStr) {
+          rescheduledTasks.push({
+            task: scheduledTask,
+            oldDate,
+            newDate: dateStr
+          });
+        }
+        
+        console.log('[v0] Scheduled', task.title, 'on', dateStr, '(priority:', task.priorityScore, ')');
       }
     }
     
-    // If we couldn't schedule it, add it without a start date
-    if (!scheduled) {
-      console.log('[v0] Could not schedule task:', task.title);
+    // If we couldn't schedule it before due_date, force schedule on due_date
+    if (!scheduled && task.due_date) {
+      const dueDate = task.due_date;
+      console.warn('[v0] Could not fit', task.title, 'before due date. Scheduling on', dueDate, '(over capacity)');
+      
+      const scheduledTask = { ...task, start_date: dueDate };
+      result.push(scheduledTask);
+      
+      warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but may exceed capacity limits.`);
+      
+      // Track reschedule
+      const oldDate = originalDates.get(task.id);
+      if (oldDate !== dueDate) {
+        rescheduledTasks.push({
+          task: scheduledTask,
+          oldDate,
+          newDate: dueDate
+        });
+      }
+    } else if (!scheduled) {
+      // No due_date and couldn't fit - leave unscheduled
+      console.warn('[v0] Could not schedule', task.title, '- no capacity and no due_date');
       result.push(task);
+      warnings.push(`Task "${task.title}" could not be scheduled. Please adjust capacity limits or task duration.`);
     }
   }
   
-  return result;
+  console.log('[v0] Scheduling complete:', {
+    total: result.length,
+    scheduled: result.filter(t => t.start_date).length,
+    rescheduled: rescheduledTasks.length,
+    warnings: warnings.length
+  });
+  
+  return {
+    tasks: result,
+    rescheduledTasks,
+    warnings
+  };
+}
+
+// Helper: Calculate days between two date strings
+function calculateDaysUntil(fromDateStr: string, toDateStr: string): number {
+  const from = parseDateLocal(fromDateStr);
+  const to = parseDateLocal(toDateStr);
+  const diffMs = to.getTime() - from.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
 // Get today's focus tasks (max 4)
@@ -204,17 +287,35 @@ export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const todayStr = getTodayLocal();
   
   console.log('[v0] getTodaysFocusTasks - today:', todayStr);
-  console.log('[v0] All tasks:', tasks.map(t => ({ name: t.title, start_date: t.start_date, completed: t.completed })));
+  console.log('[v0] All tasks:', tasks.map(t => ({ 
+    id: t.id,
+    name: t.title, 
+    start_date: t.start_date, 
+    completed: t.completed,
+    due_date: t.due_date 
+  })));
   
   // Filter for tasks scheduled for today only
   const incompleteTodayTasks = tasks
-    .filter(t => !t.completed && t.start_date === todayStr);
+    .filter(t => {
+      const matches = !t.completed && t.start_date === todayStr;
+      if (t.start_date === todayStr) {
+        console.log('[v0] Task', t.title, '- completed:', t.completed, 'matches:', matches);
+      }
+      return matches;
+    });
   
   const completedTodayTasks = tasks
-    .filter(t => t.completed && t.start_date === todayStr);
+    .filter(t => {
+      const matches = t.completed && t.start_date === todayStr;
+      if (t.completed && t.start_date) {
+        console.log('[v0] Completed task', t.title, '- start_date:', t.start_date, 'today:', todayStr, 'matches:', matches);
+      }
+      return matches;
+    });
   
-  console.log('[v0] Incomplete today tasks:', incompleteTodayTasks.length);
-  console.log('[v0] Completed today tasks:', completedTodayTasks.length);
+  console.log('[v0] Incomplete today tasks:', incompleteTodayTasks.map(t => t.title));
+  console.log('[v0] Completed today tasks:', completedTodayTasks.map(t => t.title));
   
   // Add priority scores and sort
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);

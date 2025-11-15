@@ -2,6 +2,7 @@
 
 import { Task } from '@/lib/types';
 import { groupTasksByDate } from '@/lib/utils/task-prioritization';
+import { getTodayLocal, formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 import { TaskCard } from '@/components/today/task-card';
 import { Calendar } from 'lucide-react';
 
@@ -20,6 +21,11 @@ export function ScheduleView({
 }: ScheduleViewProps) {
   const groupedTasks = groupTasksByDate(tasks);
   const sortedDates = Array.from(groupedTasks.keys()).sort();
+
+  const todayStr = getTodayLocal();
+
+  console.log('[v0] ScheduleView - grouped dates:', sortedDates);
+  console.log('[v0] ScheduleView - today (local):', todayStr);
 
   if (sortedDates.length === 0) {
     return (
@@ -45,17 +51,17 @@ export function ScheduleView({
       <div className="p-4 space-y-6">
         {sortedDates.map((dateStr) => {
           const dateTasks = groupedTasks.get(dateStr)!;
-          const date = new Date(dateStr);
+          const isToday = dateStr === todayStr;
+          const isTomorrow = dateStr === formatDateLocal(new Date(Date.now() + 24 * 60 * 60 * 1000));
+          
+          const taskDate = parseDateLocal(dateStr);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const taskDate = new Date(date);
-          taskDate.setHours(0, 0, 0, 0);
+          const isPast = taskDate < today && !isToday;
 
-          const isToday = taskDate.getTime() === today.getTime();
-          const isTomorrow = taskDate.getTime() === today.getTime() + 86400000;
-          const isPast = taskDate < today;
+          console.log('[v0] ScheduleView date:', dateStr, 'isToday:', isToday, 'tasks:', dateTasks.map(t => t.title));
 
-          let dateLabel = date.toLocaleDateString('en-US', {
+          let dateLabel = taskDate.toLocaleDateString('en-US', {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
