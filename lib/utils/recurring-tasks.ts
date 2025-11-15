@@ -1,9 +1,5 @@
 import { Task } from '@/lib/types';
-
-// Utility to normalize date to UTC at noon to prevent timezone shifts
-function normalizeToUTC(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0, 0));
-}
+import { formatDateLocal, parseDateLocal, addDaysToDateString, getDayOfWeek } from './date-utils';
 
 // Generate the next instance of a recurring task
 export function generateNextRecurringInstance(completedTask: Task): Task | null {
@@ -18,19 +14,20 @@ export function generateNextRecurringInstance(completedTask: Task): Task | null 
     return null;
   }
   
-  const currentDueDate = normalizeToUTC(new Date(completedTask.due_date || completedTask.created_at));
-  let nextDueDate = new Date(currentDueDate);
+  const currentDueDateStr = completedTask.due_date || formatDateLocal(new Date(completedTask.created_at));
+  let nextDueDateStr = currentDueDateStr;
   
   switch (completedTask.recurring_interval) {
     case 'daily':
-      nextDueDate.setUTCDate(nextDueDate.getUTCDate() + 1);
+      nextDueDateStr = addDaysToDateString(currentDueDateStr, 1);
       break;
+      
     case 'weekly':
       if (completedTask.recurring_days && completedTask.recurring_days.length > 0) {
-        const currentDay = currentDueDate.getUTCDay();
+        const currentDay = getDayOfWeek(currentDueDateStr);
         const sortedDays = [...completedTask.recurring_days].sort((a, b) => a - b);
         
-        console.log('[v0] Next instance: current day (UTC):', currentDay, 'recurring_days:', sortedDays);
+        console.log('[v0] Next instance: current day (local):', currentDay, 'recurring_days:', sortedDays);
         
         // Find next day in the cycle
         let nextDay = sortedDays.find(day => day > currentDay);
@@ -38,24 +35,28 @@ export function generateNextRecurringInstance(completedTask: Task): Task | null 
         if (nextDay !== undefined) {
           // Next occurrence is later this week
           const daysToAdd = nextDay - currentDay;
-          nextDueDate.setUTCDate(nextDueDate.getUTCDate() + daysToAdd);
+          nextDueDateStr = addDaysToDateString(currentDueDateStr, daysToAdd);
         } else {
           // Next occurrence is first day of next week
           const firstDay = sortedDays[0];
           const daysToAdd = 7 - currentDay + firstDay;
-          nextDueDate.setUTCDate(nextDueDate.getUTCDate() + daysToAdd);
+          nextDueDateStr = addDaysToDateString(currentDueDateStr, daysToAdd);
         }
       } else {
         // Fallback: add 7 days
-        nextDueDate.setUTCDate(nextDueDate.getUTCDate() + 7);
+        nextDueDateStr = addDaysToDateString(currentDueDateStr, 7);
       }
       break;
+      
     case 'monthly':
-      nextDueDate.setUTCMonth(nextDueDate.getUTCMonth() + 1);
+      // Add 1 month, keeping the same day of month
+      const currentDate = parseDateLocal(currentDueDateStr);
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      nextDueDateStr = formatDateLocal(currentDate);
       break;
   }
   
-  const dueDateStr = nextDueDate.toISOString().split('T')[0];
+  console.log('[v0] Generated next instance due date:', nextDueDateStr);
   
   // Create new task instance
   const nextInstance: Partial<Task> = {
@@ -65,8 +66,8 @@ export function generateNextRecurringInstance(completedTask: Task): Task | null 
     urgency: completedTask.urgency,
     estimated_hours: completedTask.estimated_hours,
     category: completedTask.category,
-    due_date: dueDateStr,
-    start_date: dueDateStr, // Recurring tasks have start_date = due_date
+    due_date: nextDueDateStr,
+    start_date: nextDueDateStr, // Recurring tasks have start_date = due_date
     recurring_series_id: completedTask.recurring_series_id,
     is_recurring: true,
     recurring_interval: completedTask.recurring_interval,
@@ -89,20 +90,19 @@ export function generateInitialRecurringInstances(
   }
 
   const instances: Partial<Task>[] = [];
-  const startDate = normalizeToUTC(new Date(baseTask.due_date || new Date()));
   
-  const endDate = new Date(startDate);
-  endDate.setUTCDate(endDate.getUTCDate() + (weeksAhead * 7));
-
-  let currentDate = new Date(startDate);
+  const startDateStr = baseTask.due_date || formatDateLocal(new Date());
+  const endDateStr = addDaysToDateString(startDateStr, weeksAhead * 7);
+  
+  let currentDateStr = startDateStr;
   let instanceCount = 1;
 
-  console.log('[v0] Generating recurring instances from', startDate.toISOString(), 'to', endDate.toISOString());
+  console.log('[v0] Generating recurring instances from', startDateStr, 'to', endDateStr);
   console.log('[v0] Recurring days:', baseTask.recurring_days);
 
   // Generate instances for each occurrence day within the time window
-  while (currentDate <= endDate) {
-    const dayOfWeek = currentDate.getUTCDay();
+  while (currentDateStr <= endDateStr) {
+    const dayOfWeek = getDayOfWeek(currentDateStr);
     
     if (baseTask.recurring_days.includes(dayOfWeek)) {
       // Check if we've reached the end count
@@ -114,20 +114,19 @@ export function generateInitialRecurringInstances(
         break;
       }
 
-      const dateStr = currentDate.toISOString().split('T')[0];
-      console.log('[v0] Creating instance for day', dayOfWeek, 'on date', dateStr);
+      console.log('[v0] Creating instance for day', dayOfWeek, 'on date', currentDateStr);
 
       instances.push({
         ...baseTask,
-        due_date: dateStr,
-        start_date: dateStr, // Set start_date = due_date for recurring tasks
+        due_date: currentDateStr,
+        start_date: currentDateStr, // Set start_date = due_date for recurring tasks
         recurring_current_count: instanceCount,
       });
 
       instanceCount++;
     }
 
-    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+    currentDateStr = addDaysToDateString(currentDateStr, 1);
   }
 
   console.log('[v0] Generated', instances.length, 'recurring instances');

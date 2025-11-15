@@ -18,6 +18,7 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/types';
 import { createBrowserClient } from '@/lib/supabase/client';
+import { formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -74,23 +75,34 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
     setIsSubmitting(true);
 
     try {
+      const dueDateStr = formatDateLocal(dueDate);
+      
+      const updateData: any = {
+        title: title.trim(),
+        category,
+        due_date: dueDateStr,
+        estimated_hours: hours,
+        importance,
+        urgency,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // For non-recurring tasks, update start_date to match new due_date
+      if (!task.is_recurring) {
+        updateData.start_date = dueDateStr;
+        console.log('[v0] Updating non-recurring task start_date to:', dueDateStr);
+      }
+      
       const { data, error: updateError } = await supabase
         .from('tasks')
-        .update({
-          title: title.trim(),
-          category,
-          due_date: dueDate.toISOString().split('T')[0],
-          estimated_hours: hours,
-          importance,
-          urgency,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', task.id)
         .select()
         .single();
 
       if (updateError) throw updateError;
 
+      console.log('[v0] Task updated successfully:', data);
       onTaskUpdated(data);
       onOpenChange(false);
     } catch (err) {

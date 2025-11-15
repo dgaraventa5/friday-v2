@@ -1,4 +1,5 @@
 import { Task, TaskWithScore, EisenhowerQuadrant, CategoryLimits, DailyMaxHours } from '@/lib/types';
+import { getTodayLocal, formatDateLocal, parseDateLocal, compareDateStrings, addDaysToDateString, getDayOfWeek } from './date-utils';
 
 // Eisenhower Matrix base scores
 const QUADRANT_SCORES = {
@@ -26,37 +27,33 @@ export function calculatePriorityScore(task: Task): number {
 
   // Add overdue bonus (+10 per day)
   if (task.due_date && !task.completed) {
-    const dueDate = new Date(task.due_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
+    const todayStr = getTodayLocal();
+    const comparison = compareDateStrings(todayStr, task.due_date);
     
-    const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysOverdue > 0) {
+    if (comparison > 0) {
+      // Task is overdue
+      const today = parseDateLocal(todayStr);
+      const dueDate = parseDateLocal(task.due_date);
+      const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
       score += daysOverdue * 10;
     }
   }
 
   // Add due today bonus (+40)
   if (task.due_date && !task.completed) {
-    const dueDate = new Date(task.due_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
-    
-    if (dueDate.getTime() === today.getTime()) {
+    const todayStr = getTodayLocal();
+    if (task.due_date === todayStr) {
       score += 40;
     }
   }
 
   // Add due soon bonus (+20 within 1 day, +10 within 3 days)
   if (task.due_date && !task.completed) {
-    const dueDate = new Date(task.due_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
-    
+    const todayStr = getTodayLocal();
+    const today = parseDateLocal(todayStr);
+    const dueDate = parseDateLocal(task.due_date);
     const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
     if (daysUntilDue === 1) {
       score += 20;
     } else if (daysUntilDue > 1 && daysUntilDue <= 3) {
@@ -65,9 +62,9 @@ export function calculatePriorityScore(task: Task): number {
   }
 
   // Add age bonus (+2 per day since creation, max +20)
+  const todayStr = getTodayLocal();
+  const today = parseDateLocal(todayStr);
   const createdDate = new Date(task.created_at);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   createdDate.setHours(0, 0, 0, 0);
   
   const daysOld = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -87,36 +84,34 @@ export function addPriorityScores(tasks: Task[]): TaskWithScore[] {
 }
 
 // Check if a date is a weekend
-function isWeekend(date: Date): boolean {
-  const day = date.getDay();
+function isWeekend(dateStr: string): boolean {
+  const day = getDayOfWeek(dateStr);
   return day === 0 || day === 6; // Sunday or Saturday
 }
 
 // Calculate hours used on a specific date for a category
 function getHoursUsedForCategory(
-  date: Date,
+  dateStr: string,
   category: string,
   scheduledTasks: Task[]
 ): number {
-  const dateStr = date.toISOString().split('T')[0];
   return scheduledTasks
     .filter(t => t.start_date === dateStr && t.category === category)
     .reduce((sum, t) => sum + t.estimated_hours, 0);
 }
 
 // Calculate total hours used on a specific date
-function getTotalHoursUsed(date: Date, scheduledTasks: Task[]): number {
-  const dateStr = date.toISOString().split('T')[0];
+function getTotalHoursUsed(dateStr: string, scheduledTasks: Task[]): number {
   return scheduledTasks
     .filter(t => t.start_date === dateStr)
     .reduce((sum, t) => sum + t.estimated_hours, 0);
 }
 
 // Check if recurring task should be scheduled on this date
-function shouldScheduleRecurringTask(task: Task, date: Date): boolean {
+function shouldScheduleRecurringTask(task: Task, dateStr: string): boolean {
   if (!task.is_recurring) return true;
   
-  const dayOfWeek = date.getDay();
+  const dayOfWeek = getDayOfWeek(dateStr);
   
   if (task.recurring_interval === 'daily') {
     return true;
@@ -127,8 +122,9 @@ function shouldScheduleRecurringTask(task: Task, date: Date): boolean {
   }
   
   if (task.recurring_interval === 'monthly') {
-    const dueDate = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
-    return date.getDate() === dueDate.getDate();
+    const dueDate = parseDateLocal(task.due_date || formatDateLocal(new Date(task.created_at)));
+    const checkDate = parseDateLocal(dateStr);
+    return checkDate.getDate() === dueDate.getDate();
   }
   
   return false;
@@ -146,13 +142,14 @@ export function assignStartDates(
   const scheduledTasks = tasks.filter(t => !t.completed && t.start_date);
   const unscheduledTasks = tasks.filter(t => !t.completed && !t.start_date);
   
+  console.log('[v0] assignStartDates: unscheduled tasks:', unscheduledTasks.length);
+  
   // Sort unscheduled tasks by priority score
   const scoredTasks = addPriorityScores(unscheduledTasks);
   scoredTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
   const result = [...completedTasks, ...scheduledTasks];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = getTodayLocal();
   
   // Try to schedule each task
   for (const task of scoredTasks) {
@@ -160,14 +157,13 @@ export function assignStartDates(
     
     // Try each day within the look-ahead window
     for (let dayOffset = 0; dayOffset < lookAheadDays && !scheduled; dayOffset++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() + dayOffset);
+      const dateStr = addDaysToDateString(todayStr, dayOffset);
       
-      if (task.is_recurring && !shouldScheduleRecurringTask(task, date)) {
+      if (task.is_recurring && !shouldScheduleRecurringTask(task, dateStr)) {
         continue;
       }
       
-      const weekend = isWeekend(date);
+      const weekend = isWeekend(dateStr);
       const category = task.category;
       
       // Get limits for this day and category
@@ -179,15 +175,15 @@ export function assignStartDates(
         : dailyMaxHours.weekday;
       
       // Check if there's capacity
-      const categoryHours = getHoursUsedForCategory(date, category, result);
-      const totalHours = getTotalHoursUsed(date, result);
+      const categoryHours = getHoursUsedForCategory(dateStr, category, result);
+      const totalHours = getTotalHoursUsed(dateStr, result);
       
       // Check if we can fit this task
       if (
         categoryHours + task.estimated_hours <= categoryLimit &&
         totalHours + task.estimated_hours <= dailyLimit
       ) {
-        const dateStr = date.toISOString().split('T')[0];
+        console.log('[v0] Scheduling task', task.title, 'on', dateStr);
         result.push({ ...task, start_date: dateStr });
         scheduled = true;
       }
@@ -195,6 +191,7 @@ export function assignStartDates(
     
     // If we couldn't schedule it, add it without a start date
     if (!scheduled) {
+      console.log('[v0] Could not schedule task:', task.title);
       result.push(task);
     }
   }
@@ -204,12 +201,12 @@ export function assignStartDates(
 
 // Get today's focus tasks (max 4)
 export function getTodaysFocusTasks(tasks: Task[]): Task[] {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = getTodayLocal();
   
   console.log('[v0] getTodaysFocusTasks - today:', todayStr);
   console.log('[v0] All tasks:', tasks.map(t => ({ name: t.title, start_date: t.start_date, completed: t.completed })));
   
+  // Filter for tasks scheduled for today only
   const incompleteTodayTasks = tasks
     .filter(t => !t.completed && t.start_date === todayStr);
   

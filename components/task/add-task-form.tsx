@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateInitialRecurringInstances } from '@/lib/utils/recurring-tasks';
+import { formatDateLocal } from '@/lib/utils/date-utils';
 
 interface AddTaskFormProps {
   onTaskAdded: (task: Task) => void;
@@ -92,16 +93,10 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
 
       const recurringSeriesId = isRecurring ? crypto.randomUUID() : null;
 
-      const normalizedDueDate = new Date(Date.UTC(
-        dueDate.getFullYear(),
-        dueDate.getMonth(),
-        dueDate.getDate(),
-        12, 0, 0, 0
-      ));
-      const dueDateStr = normalizedDueDate.toISOString().split('T')[0];
+      const dueDateStr = formatDateLocal(dueDate);
 
       console.log('[v0] Form submission - selected date:', dueDate.toISOString());
-      console.log('[v0] Form submission - normalized date:', dueDateStr);
+      console.log('[v0] Form submission - normalized date (local):', dueDateStr);
       console.log('[v0] Form submission - recurring days:', recurringDays);
 
       const baseTaskData = {
