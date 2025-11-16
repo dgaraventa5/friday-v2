@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/lib/supabase/provider";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,7 +25,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const router = useRouter();
-  const supabase = useSupabase();
+  const supabase = createClient();
   const [showGuide, setShowGuide] = useState(false);
 
   const handleLogout = async () => {

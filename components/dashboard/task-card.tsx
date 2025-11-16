@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSupabase } from '@/lib/supabase/provider';
+import { createClient } from "@/lib/supabase/client";
 import { Task } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,7 +24,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const supabase = useSupabase();
+  const supabase = createClient();
 
   const handleToggleComplete = async () => {
     const { data, error } = await supabase

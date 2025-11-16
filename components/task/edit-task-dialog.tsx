@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/types';
-import { useSupabase } from '@/lib/supabase/provider';
+import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,7 +38,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const supabase = useSupabase();
+  const supabase = createBrowserClient();
   const { toast } = useToast();
 
   useEffect(() => {
