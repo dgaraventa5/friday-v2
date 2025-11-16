@@ -4,6 +4,12 @@ import { createContext, useContext, useEffect, useId } from 'react';
 import { createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+declare global {
+  interface Window {
+    __supabaseClient?: SupabaseClient;
+  }
+}
+
 const MODULE_LOAD_ID = Math.random().toString(36).substring(7);
 console.log('[v0] provider.tsx module loaded, ID:', MODULE_LOAD_ID);
 console.log('[v0] Module timestamp:', new Date().toISOString());
@@ -19,30 +25,28 @@ const getSupabaseBrowserClient = () => {
   console.log('[v0] Session ID:', sessionId);
   console.log('[v0] Timestamp:', new Date().toISOString());
   console.log('[v0] Module Load ID:', MODULE_LOAD_ID);
-  console.log('[v0] Window exists:', typeof window !== 'undefined');
-  console.log('[v0] Current globalThis keys:', Object.keys(globalThis).filter(k => k.includes('supabase')));
-  console.log('[v0] __supabaseClient exists:', !!(globalThis as any).__supabaseClient);
+  console.log('[v0] Current window.__supabaseClient exists:', !!window.__supabaseClient);
+  console.log('[v0] Window keys with supabase:', Object.keys(window).filter(k => k.includes('supabase')));
 
-  // Store client on globalThis to survive HMR
-  if (!(globalThis as any).__supabaseClient) {
+  if (!window.__supabaseClient) {
     console.log('[v0] Creating NEW Supabase client');
     console.log('[v0] Stack trace:');
     console.trace('[v0] Client creation point');
     
-    (globalThis as any).__supabaseClient = createSupabaseBrowserClient(
+    window.__supabaseClient = createSupabaseBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     
-    console.log('[v0] Client created and stored in globalThis');
-    console.log('[v0] Client instance ID:', (globalThis as any).__supabaseClient?.supabaseUrl);
+    console.log('[v0] Client created and stored in window');
+    console.log('[v0] Client instance ID:', window.__supabaseClient?.supabaseUrl);
   } else {
-    console.log('[v0] Reusing EXISTING client from globalThis');
+    console.log('[v0] Reusing EXISTING client from window');
   }
   
   console.log('[v0] === End getSupabaseBrowserClient ===');
 
-  return (globalThis as any).__supabaseClient as SupabaseClient;
+  return window.__supabaseClient;
 };
 
 const SupabaseContext = createContext<SupabaseClient | null>(null);
