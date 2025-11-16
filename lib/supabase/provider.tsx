@@ -4,10 +4,11 @@ import { createContext, useContext, useEffect, useId } from 'react';
 import { createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+const SUPABASE_CLIENT_SYMBOL = Symbol.for('__v0_supabase_client__');
+
 declare global {
-  interface Window {
-    __supabaseClient?: SupabaseClient;
-  }
+  // eslint-disable-next-line no-var
+  var [SUPABASE_CLIENT_SYMBOL]: SupabaseClient | undefined;
 }
 
 const MODULE_LOAD_ID = Math.random().toString(36).substring(7);
@@ -25,28 +26,31 @@ const getSupabaseBrowserClient = () => {
   console.log('[v0] Session ID:', sessionId);
   console.log('[v0] Timestamp:', new Date().toISOString());
   console.log('[v0] Module Load ID:', MODULE_LOAD_ID);
-  console.log('[v0] Current window.__supabaseClient exists:', !!window.__supabaseClient);
-  console.log('[v0] Window keys with supabase:', Object.keys(window).filter(k => k.includes('supabase')));
+  
+  const existingClient = (globalThis as any)[SUPABASE_CLIENT_SYMBOL];
+  console.log('[v0] Existing client via Symbol:', !!existingClient);
 
-  if (!window.__supabaseClient) {
-    console.log('[v0] Creating NEW Supabase client');
+  if (!existingClient) {
+    console.log('[v0] Creating NEW Supabase client with Symbol key');
     console.log('[v0] Stack trace:');
     console.trace('[v0] Client creation point');
     
-    window.__supabaseClient = createSupabaseBrowserClient(
+    const newClient = createSupabaseBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     
-    console.log('[v0] Client created and stored in window');
-    console.log('[v0] Client instance ID:', window.__supabaseClient?.supabaseUrl);
+    (globalThis as any)[SUPABASE_CLIENT_SYMBOL] = newClient;
+    
+    console.log('[v0] Client created and stored with Symbol key');
+    console.log('[v0] Client instance ID:', newClient?.supabaseUrl);
   } else {
-    console.log('[v0] Reusing EXISTING client from window');
+    console.log('[v0] Reusing EXISTING client from Symbol key');
   }
   
   console.log('[v0] === End getSupabaseBrowserClient ===');
 
-  return window.__supabaseClient;
+  return (globalThis as any)[SUPABASE_CLIENT_SYMBOL] as SupabaseClient;
 };
 
 const SupabaseContext = createContext<SupabaseClient | null>(null);
