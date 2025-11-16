@@ -37,13 +37,22 @@ const getSupabaseBrowserClient = () => {
     
     const newClient = createSupabaseBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: `supabase.auth.token.${MODULE_LOAD_ID}`,
+        },
+      }
     );
     
     (globalThis as any)[SUPABASE_CLIENT_SYMBOL] = newClient;
     
     console.log('[v0] Client created and stored with Symbol key');
     console.log('[v0] Client instance ID:', newClient?.supabaseUrl);
+    console.log('[v0] Storage key:', `supabase.auth.token.${MODULE_LOAD_ID}`);
   } else {
     console.log('[v0] Reusing EXISTING client from Symbol key');
   }
