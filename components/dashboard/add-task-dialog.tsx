@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
-import { createClient } from "@/lib/supabase/client";
+import { useSupabase } from '@/lib/supabase/provider';
 import {
   Dialog,
   DialogContent,
@@ -36,12 +36,12 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
   const [dueDate, setDueDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const supabase = useSupabase();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
