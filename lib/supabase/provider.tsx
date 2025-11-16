@@ -4,23 +4,22 @@ import { createContext, useContext } from 'react';
 import { createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// This ensures only ONE client is created regardless of Provider re-renders
-let browserClient: SupabaseClient | null = null;
-
-function getSupabaseBrowserClient() {
-  if (browserClient) {
-    return browserClient;
+const getSupabaseBrowserClient = () => {
+  if (typeof window === 'undefined') {
+    throw new Error('Supabase client can only be created in the browser');
   }
 
-  browserClient = createSupabaseBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Store client on globalThis to survive HMR
+  if (!(globalThis as any).__supabaseClient) {
+    (globalThis as any).__supabaseClient = createSupabaseBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    console.log('[v0] Supabase browser client created (globalThis singleton)');
+  }
 
-  console.log('[v0] Supabase browser client created (singleton)');
-  
-  return browserClient;
-}
+  return (globalThis as any).__supabaseClient as SupabaseClient;
+};
 
 const SupabaseContext = createContext<SupabaseClient | null>(null);
 
