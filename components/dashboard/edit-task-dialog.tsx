@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/lib/supabase/provider';
+import { createClient } from "@/lib/supabase/client";
 import { Task } from "@/lib/types";
 import {
   Dialog,
@@ -46,7 +46,6 @@ export function EditTaskDialog({
   const [dueDate, setDueDate] = useState(task.due_date || "");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const supabase = useSupabase();
 
   useEffect(() => {
     setTitle(task.title);
@@ -59,6 +58,8 @@ export function EditTaskDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from("tasks")
