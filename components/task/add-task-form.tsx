@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/supabase/provider';
 import { Task } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -52,7 +52,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const supabase = createBrowserClient();
+  const supabase = useSupabase();
 
   const handleDayToggle = (day: number) => {
     setRecurringDays(prev =>

@@ -8,7 +8,7 @@ import { BottomNav } from '@/components/navigation/bottom-nav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AddTaskForm } from '@/components/task/add-task-form';
 import { EditTaskDialog } from '@/components/task/edit-task-dialog';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/supabase/provider';
 import { assignStartDates } from '@/lib/utils/task-prioritization';
 import { generateNextRecurringInstance } from '@/lib/utils/recurring-tasks';
 import { useRouter } from 'next/navigation';
@@ -30,8 +30,7 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
   const [showEditDialog, setShowEditDialog] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-
-  const supabase = createBrowserClient();
+  const supabase = useSupabase();
 
   useEffect(() => {
     const runInitialScheduling = async () => {
