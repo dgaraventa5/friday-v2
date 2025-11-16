@@ -12,8 +12,8 @@ declare global {
 }
 
 const MODULE_LOAD_ID = Math.random().toString(36).substring(7);
-console.log('[v0] provider.tsx module loaded, ID:', MODULE_LOAD_ID);
-console.log('[v0] Module timestamp:', new Date().toISOString());
+// console.log('[v0] provider.tsx module loaded, ID:', MODULE_LOAD_ID);
+// console.log('[v0] Module timestamp:', new Date().toISOString());
 
 const getSupabaseBrowserClient = () => {
   if (typeof window === 'undefined') {
@@ -22,18 +22,18 @@ const getSupabaseBrowserClient = () => {
 
   const sessionId = Math.random().toString(36).substring(7);
   
-  console.log('[v0] === getSupabaseBrowserClient called ===');
-  console.log('[v0] Session ID:', sessionId);
-  console.log('[v0] Timestamp:', new Date().toISOString());
-  console.log('[v0] Module Load ID:', MODULE_LOAD_ID);
+  // console.log('[v0] === getSupabaseBrowserClient called ===');
+  // console.log('[v0] Session ID:', sessionId);
+  // console.log('[v0] Timestamp:', new Date().toISOString());
+  // console.log('[v0] Module Load ID:', MODULE_LOAD_ID);
   
   const existingClient = (globalThis as any)[SUPABASE_CLIENT_SYMBOL];
-  console.log('[v0] Existing client via Symbol:', !!existingClient);
+  // console.log('[v0] Existing client via Symbol:', !!existingClient);
 
   if (!existingClient) {
-    console.log('[v0] Creating NEW Supabase client with Symbol key');
-    console.log('[v0] Stack trace:');
-    console.trace('[v0] Client creation point');
+    // console.log('[v0] Creating NEW Supabase client with Symbol key');
+    // console.log('[v0] Stack trace:');
+    // console.trace('[v0] Client creation point');
     
     const newClient = createSupabaseBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,14 +50,14 @@ const getSupabaseBrowserClient = () => {
     
     (globalThis as any)[SUPABASE_CLIENT_SYMBOL] = newClient;
     
-    console.log('[v0] Client created and stored with Symbol key');
-    console.log('[v0] Client instance ID:', newClient?.supabaseUrl);
-    console.log('[v0] Storage key:', `supabase.auth.token.${MODULE_LOAD_ID}`);
+    // console.log('[v0] Client created and stored with Symbol key');
+    // console.log('[v0] Client instance ID:', newClient?.supabaseUrl);
+    // console.log('[v0] Storage key:', `supabase.auth.token.${MODULE_LOAD_ID}`);
   } else {
-    console.log('[v0] Reusing EXISTING client from Symbol key');
+    // console.log('[v0] Reusing EXISTING client from Symbol key');
   }
   
-  console.log('[v0] === End getSupabaseBrowserClient ===');
+  // console.log('[v0] === End getSupabaseBrowserClient ===');
 
   return (globalThis as any)[SUPABASE_CLIENT_SYMBOL] as SupabaseClient;
 };
@@ -68,15 +68,15 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const providerId = useId();
   
   useEffect(() => {
-    console.log('[v0] SupabaseProvider MOUNTED, ID:', providerId);
-    console.log('[v0] Provider mount timestamp:', new Date().toISOString());
+    // console.log('[v0] SupabaseProvider MOUNTED, ID:', providerId);
+    // console.log('[v0] Provider mount timestamp:', new Date().toISOString());
     
     return () => {
-      console.log('[v0] SupabaseProvider UNMOUNTED, ID:', providerId);
+      // console.log('[v0] SupabaseProvider UNMOUNTED, ID:', providerId);
     };
   }, [providerId]);
 
-  console.log('[v0] SupabaseProvider RENDERING, ID:', providerId);
+  // console.log('[v0] SupabaseProvider RENDERING, ID:', providerId);
   const supabase = getSupabaseBrowserClient();
 
   return (
@@ -90,7 +90,7 @@ export function useSupabase() {
   const context = useContext(SupabaseContext);
   
   const callerId = useId();
-  console.log('[v0] useSupabase() called, caller ID:', callerId);
+  // console.log('[v0] useSupabase() called, caller ID:', callerId);
   
   if (!context) {
     throw new Error('useSupabase must be used within a SupabaseProvider');
