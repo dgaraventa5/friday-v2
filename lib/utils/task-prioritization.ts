@@ -152,34 +152,44 @@ export function assignStartDates(
   // Step 2: Keep recurring tasks - they already have start_date = due_date
   const recurringTasks = tasks.filter(t => !t.completed && t.is_recurring);
   
-  // Step 3: Get ALL non-recurring incomplete tasks (clear their start_dates for re-evaluation)
+  // Step 3: Get ALL non-recurring incomplete tasks
   const nonRecurringTasks = tasks.filter(t => !t.completed && !t.is_recurring);
+  const todayStr = getTodayLocal();
+  
+  // Step 3.5: Preserve tasks already scheduled for today
+  // These should not be re-scheduled unless absolutely necessary
+  const tasksAlreadyOnToday = nonRecurringTasks.filter(t => t.start_date === todayStr);
+  const tasksToSchedule = nonRecurringTasks.filter(t => t.start_date !== todayStr);
+  
   console.log('[v0] Re-scheduling', nonRecurringTasks.length, 'non-recurring tasks');
+  console.log('[v0] Preserving', tasksAlreadyOnToday.length, 'tasks already on today');
+  console.log('[v0] Re-scheduling', tasksToSchedule.length, 'other tasks');
   
   // Track original start_dates for comparison
   const originalDates = new Map(
     nonRecurringTasks.map(t => [t.id, t.start_date])
   );
   
-  // Step 4: Score and sort by priority (highest first)
-  const scoredTasks = addPriorityScores(nonRecurringTasks);
-  scoredTasks.sort((a, b) => b.priorityScore - a.priorityScore);
+  // Step 4: Score and sort by priority (highest first) - only for tasks to schedule
+  const scoredTasksToSchedule = addPriorityScores(tasksToSchedule);
+  scoredTasksToSchedule.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  console.log('[v0] Top 5 priorities:', scoredTasks.slice(0, 5).map(t => ({
+  console.log('[v0] Top 5 priorities:', scoredTasksToSchedule.slice(0, 5).map(t => ({
     title: t.title,
     score: t.priorityScore,
     quadrant: t.quadrant,
     due_date: t.due_date
   })));
   
-  // Step 5: Start with recurring tasks as "already scheduled"
-  const result: Task[] = [...completedTasks, ...recurringTasks];
-  const todayStr = getTodayLocal();
+  // Step 5: Start with completed tasks, recurring tasks, and tasks already on today
+  const result: Task[] = [...completedTasks, ...recurringTasks, ...tasksAlreadyOnToday];
   
+  // Initialize count per day with tasks already on today
   const nonRecurringCountPerDay = new Map<string, number>();
+  nonRecurringCountPerDay.set(todayStr, tasksAlreadyOnToday.length);
   
-  // Step 6: Schedule each non-recurring task
-  for (const task of scoredTasks) {
+  // Step 6: Schedule each non-recurring task (excluding those already on today)
+  for (const task of scoredTasksToSchedule) {
     let scheduled = false;
     let attemptedDates: string[] = [];
     

@@ -14,7 +14,7 @@ import { getTodayLocal } from '@/lib/utils/date-utils';
 interface TodayViewProps {
   tasks: Task[];
   profile: Profile;
-  onTaskComplete: (taskId: string) => void;
+  onTaskComplete: (taskId: string, skipAutoSchedule?: boolean) => void;
   onTaskEdit: (task: Task) => void;
   onTaskDelete: (taskId: string) => void;
   onPullTaskToToday?: (taskId: string) => void;
@@ -35,6 +35,7 @@ export function TodayView({
   const [showAddAnotherDialog, setShowAddAnotherDialog] = useState(false);
   const [showSelectTaskDialog, setShowSelectTaskDialog] = useState(false);
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
+  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [declineCount, setDeclineCount] = useState(0);
 
   const focusTasks = getTodaysFocusTasks(tasks);
@@ -50,23 +51,39 @@ export function TodayView({
 
   const handleTaskComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    if (task && !task.completed && declineCount < 2) {
-      // Show "add another" prompt after completing a task
-      setCompletedTask(task);
-      setShowAddAnotherDialog(true);
+    if (!task || task.completed) return;
+
+    // If user has declined 2+ times, skip auto-scheduling
+    if (declineCount >= 2) {
+      onTaskComplete(taskId, true);
+      return;
     }
-    onTaskComplete(taskId);
+
+    // Show "add another" prompt and store the task ID
+    setPendingTaskId(taskId);
+    setCompletedTask(task);
+    setShowAddAnotherDialog(true);
   };
 
   const handleAddAnotherYes = () => {
     setShowAddAnotherDialog(false);
     setDeclineCount(0);
+    // Complete the task but skip auto-scheduling since user wants to manually select
+    if (pendingTaskId) {
+      onTaskComplete(pendingTaskId, true);
+      setPendingTaskId(null);
+    }
     setShowSelectTaskDialog(true);
   };
 
   const handleAddAnotherNo = () => {
     setShowAddAnotherDialog(false);
     setDeclineCount(prev => prev + 1);
+    // Complete the task but skip auto-scheduling
+    if (pendingTaskId) {
+      onTaskComplete(pendingTaskId, true);
+      setPendingTaskId(null);
+    }
   };
 
   const handleSelectTask = (taskId: string) => {
@@ -163,7 +180,14 @@ export function TodayView({
 
       <AddAnotherTaskDialog
         open={showAddAnotherDialog}
-        onOpenChange={setShowAddAnotherDialog}
+        onOpenChange={(open) => {
+          setShowAddAnotherDialog(open);
+          // If dialog is closed without selecting, complete task with skipAutoSchedule
+          if (!open && pendingTaskId) {
+            onTaskComplete(pendingTaskId, true);
+            setPendingTaskId(null);
+          }
+        }}
         completedTask={completedTask}
         onYes={handleAddAnotherYes}
         onNo={handleAddAnotherNo}

@@ -135,7 +135,7 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
     }, 500);
   };
 
-  const handleTaskComplete = async (taskId: string) => {
+  const handleTaskComplete = async (taskId: string, skipAutoSchedule: boolean = false) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -181,36 +181,42 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
           }
         }
         
-        // Re-run scheduling to backfill the freed capacity
-        console.log('[v0] Task completed - re-optimizing schedule');
-        const schedulingResult = assignStartDates(
-          updatedTasks,
-          profile.category_limits,
-          profile.daily_max_hours
-        );
-        
-        // Update tasks with new start_dates
-        const tasksToUpdate = schedulingResult.rescheduledTasks
-          .filter(({ newDate, task: t }) => newDate !== null && t.id !== taskId);
-        
-        if (tasksToUpdate.length > 0) {
-          await Promise.all(
-            tasksToUpdate.map(({ task: t }) =>
-              supabase
-                .from('tasks')
-                .update({ start_date: t.start_date })
-                .eq('id', t.id)
-            )
+        // Only re-run scheduling if auto-scheduling is not skipped
+        if (!skipAutoSchedule) {
+          // Re-run scheduling to backfill the freed capacity
+          console.log('[v0] Task completed - re-optimizing schedule');
+          const schedulingResult = assignStartDates(
+            updatedTasks,
+            profile.category_limits,
+            profile.daily_max_hours
           );
           
-          // Show notification
-          toast({
-            title: 'Schedule Optimized',
-            description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} moved to fill available time.`,
-          });
+          // Update tasks with new start_dates
+          const tasksToUpdate = schedulingResult.rescheduledTasks
+            .filter(({ newDate, task: t }) => newDate !== null && t.id !== taskId);
+          
+          if (tasksToUpdate.length > 0) {
+            await Promise.all(
+              tasksToUpdate.map(({ task: t }) =>
+                supabase
+                  .from('tasks')
+                  .update({ start_date: t.start_date })
+                  .eq('id', t.id)
+              )
+            );
+            
+            // Show notification
+            toast({
+              title: 'Schedule Optimized',
+              description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} moved to fill available time.`,
+            });
+          }
+          
+          setTasks(schedulingResult.tasks);
+        } else {
+          console.log('[v0] Task completed - skipping auto-scheduling per user preference');
+          setTasks(updatedTasks);
         }
-        
-        setTasks(schedulingResult.tasks);
       } else {
         setTasks(updatedTasks);
       }

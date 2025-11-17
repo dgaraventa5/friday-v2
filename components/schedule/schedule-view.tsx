@@ -8,7 +8,7 @@ import { Calendar } from 'lucide-react';
 
 interface ScheduleViewProps {
   tasks: Task[];
-  onTaskComplete: (taskId: string) => void;
+  onTaskComplete: (taskId: string, skipAutoSchedule?: boolean) => void;
   onTaskEdit: (task: Task) => void;
   onTaskDelete: (taskId: string) => void;
 }
