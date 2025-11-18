@@ -16,7 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Friday - Focus on What Matters Most",
   description: "Prioritize your daily tasks using proven productivity principles. Achieve more with less stress.",
-  generator: 'v0.app'
+  generator: 'v0.app',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  }
 };
 
 export default function RootLayout({
