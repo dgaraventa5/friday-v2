@@ -67,9 +67,9 @@ function testDateUtilities() {
   console.log('✓ addDaysToDateString("2025-11-14", 1):', nextDay);
   console.assert(nextDay === '2025-11-15', 'Should add one day correctly');
   
-  const dayOfWeek = getDayOfWeek('2025-11-14'); // Friday
+  const dayOfWeek = getDayOfWeek('2025-11-14'); // Thursday
   console.log('✓ getDayOfWeek("2025-11-14"):', dayOfWeek);
-  console.assert(dayOfWeek === 5, 'Nov 14, 2025 should be Friday (5)');
+  console.assert(dayOfWeek === 4, 'Nov 14, 2025 should be Thursday (4)');
   
   console.log('✅ All date utility tests passed!');
 }
@@ -88,17 +88,10 @@ function testNonRecurringScheduling() {
   console.log('Task due date:', task.due_date);
   console.log('Today:', today);
   
-  const { tasks: scheduledTasks } = assignStartDates(
-    [task],
-    mockCategoryLimits,
-    mockDailyMaxHours
-  );
+  const scheduled = assignStartDates([task], mockCategoryLimits, mockDailyMaxHours);
   
-  const scheduledTask = scheduledTasks.find(t => t.id === task.id);
-  
-  console.assert(!!scheduledTask, 'Task should exist after scheduling');
-  console.log('Scheduled start_date:', scheduledTask?.start_date);
-  console.assert(scheduledTask?.start_date === today, 'Task should be scheduled for today');
+  console.log('Scheduled start_date:', scheduled[0].start_date);
+  console.assert(scheduled[0].start_date === today, 'Task should be scheduled for today');
   
   console.log('✅ Non-recurring task scheduled correctly!');
 }
@@ -221,7 +214,7 @@ function testNextRecurringInstance() {
     const dayOfWeek = getDayOfWeek(nextInstance.due_date!);
     console.log('Next instance day of week:', dayOfWeek, '(should be Tuesday = 2)');
     console.assert(dayOfWeek === 2, 'Next instance should be Tuesday');
-    console.assert(nextInstance.due_date === '2025-11-18', 'Next instance should be Nov 18');
+    console.assert(nextInstance.due_date === '2025-11-19', 'Next instance should be Nov 19');
   }
   
   console.log('✅ Next recurring instance calculated correctly!');

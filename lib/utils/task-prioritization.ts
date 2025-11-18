@@ -158,15 +158,22 @@ export function assignStartDates(
   const nonRecurringTasks = allNonRecurringTasks.filter(t => !t.completed);
   const todayStr = getTodayLocal();
   
+  // Step 3.5: Preserve tasks already scheduled for today
+  // These should not be re-scheduled unless absolutely necessary
+  const tasksAlreadyOnToday = nonRecurringTasks.filter(t => t.start_date === todayStr);
+  const tasksToSchedule = nonRecurringTasks.filter(t => t.start_date !== todayStr);
+  
   console.log('[v0] Re-scheduling', nonRecurringTasks.length, 'non-recurring tasks');
+  console.log('[v0] Preserving', tasksAlreadyOnToday.length, 'tasks already on today');
+  console.log('[v0] Re-scheduling', tasksToSchedule.length, 'other tasks');
   
   // Track original start_dates for comparison
   const originalDates = new Map(
     nonRecurringTasks.map(t => [t.id, t.start_date])
   );
   
-  // Step 4: Score and sort by priority (highest first)
-  const scoredTasksToSchedule = addPriorityScores(nonRecurringTasks);
+  // Step 4: Score and sort by priority (highest first) - only for tasks to schedule
+  const scoredTasksToSchedule = addPriorityScores(tasksToSchedule);
   scoredTasksToSchedule.sort((a, b) => b.priorityScore - a.priorityScore);
   
   console.log('[v0] Top 5 priorities:', scoredTasksToSchedule.slice(0, 5).map(t => ({
@@ -176,8 +183,8 @@ export function assignStartDates(
     due_date: t.due_date
   })));
   
-  // Step 5: Start with completed tasks and recurring tasks
-  const result: Task[] = [...completedTasks, ...recurringTasks];
+  // Step 5: Start with completed tasks, recurring tasks, and tasks already on today
+  const result: Task[] = [...completedTasks, ...recurringTasks, ...tasksAlreadyOnToday];
   
   // Initialize count per day with existing non-recurring tasks (including completed)
   const nonRecurringCountPerDay = new Map<string, number>();
@@ -203,13 +210,16 @@ export function assignStartDates(
     let scheduled = false;
     let attemptedDates: string[] = [];
     
-    const dueWindow = task.due_date
-      ? Math.max(0, calculateDaysUntil(todayStr, task.due_date) + 1) // +1 to include due_date
+    // Calculate max days to look ahead (up to due_date or lookAheadDays)
+    const maxDayOffset = task.due_date 
+      ? Math.min(
+          Math.max(0, calculateDaysUntil(todayStr, task.due_date) + 1), // +1 to include due_date
+          lookAheadDays
+        )
       : lookAheadDays;
-    const cappedDueWindow = Math.min(dueWindow, lookAheadDays);
     
-    // Try each day from today up to due_date (or lookAhead cap)
-    for (let dayOffset = 0; dayOffset < cappedDueWindow && !scheduled; dayOffset++) {
+    // Try each day from today up to due_date (or max look-ahead)
+    for (let dayOffset = 0; dayOffset < maxDayOffset && !scheduled; dayOffset++) {
       const dateStr = addDaysToDateString(todayStr, dayOffset);
       attemptedDates.push(dateStr);
       
@@ -239,23 +249,15 @@ export function assignStartDates(
       const canFitDaily = totalHours + task.estimated_hours <= dailyLimit;
       
       if (canFitCategory && canFitDaily) {
-        // Double-check the count hasn't changed (shouldn't happen in single-threaded loop, but be safe)
-        const finalCount = nonRecurringCountPerDay.get(dateStr) || 0;
-        if (finalCount >= 4) {
-          // Count changed - skip this day
-          console.log('[v0] Skipping', dateStr, '- count changed to', finalCount, 'during scheduling');
-          continue;
-        }
-        
         // Found a slot!
         const scheduledTask = { ...task, start_date: dateStr };
         result.push(scheduledTask);
         scheduled = true;
         
-        nonRecurringCountPerDay.set(dateStr, finalCount + 1);
+        nonRecurringCountPerDay.set(dateStr, nonRecurringCount + 1);
         
         // Track if this is a reschedule
-        const oldDate = originalDates.get(task.id) ?? null;
+        const oldDate = originalDates.get(task.id);
         if (oldDate !== dateStr) {
           rescheduledTasks.push({
             task: scheduledTask,
@@ -409,6 +411,11 @@ export function assignStartDates(
         result.push(task);
         warnings.push(`Task "${task.title}" could not be scheduled. Please adjust capacity limits or task duration.`);
       }
+    } else if (!scheduled) {
+      // No due_date and couldn't fit - leave unscheduled
+      console.warn('[v0] Could not schedule', task.title, '- no capacity and no due_date');
+      result.push(task);
+      warnings.push(`Task "${task.title}" could not be scheduled. Please adjust capacity limits or task duration.`);
     }
   }
   

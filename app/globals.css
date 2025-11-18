@@ -123,3 +123,44 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .pb-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe-nav {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .pb-safe-nav {
+      padding-bottom: 2rem;
+    }
+  }
+
+  .dialog-sheet {
+    width: min(100vw, 28rem);
+    max-width: 28rem;
+  }
+
+  @media (max-width: 767px) {
+    .dialog-sheet {
+      inset: auto 0 0 0 !important;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-top-left-radius: 1.5rem;
+      border-top-right-radius: 1.5rem;
+      max-width: none;
+      width: 100vw;
+      min-height: 40vh;
+      padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (min-width: 768px) {
+    .dialog-sheet {
+      border-radius: calc(var(--radius) * 2);
+    }
+  }
+}
