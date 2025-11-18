@@ -49,10 +49,10 @@ export function ScheduleView({
 
   if (sortedDates.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-        <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium mb-2">No Scheduled Tasks</h3>
-        <p className="text-sm text-muted-foreground max-w-sm text-pretty">
+      <div className="flex flex-col items-center justify-center px-6 py-12 md:py-20 text-center">
+        <Calendar className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mb-4" />
+        <h3 className="text-base md:text-lg font-medium mb-2">No Scheduled Tasks</h3>
+        <p className="text-sm md:text-base text-muted-foreground max-w-sm text-pretty">
           Add tasks and they'll be automatically scheduled based on priority and capacity.
         </p>
       </div>
@@ -60,15 +60,15 @@ export function ScheduleView({
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="px-4 py-4 border-b bg-slate-50 dark:bg-slate-900">
-        <h1 className="text-2xl font-bold">Schedule</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="space-y-4 md:space-y-6">
+      <div className="px-4 py-4 md:px-6 md:py-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
+        <h1 className="text-xl md:text-3xl font-bold">Schedule</h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-1 md:mt-2">
           Your upcoming tasks organized by date
         </p>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="space-y-6 md:space-y-8">
         {sortedDates.map((dateStr) => {
           const dateTasks = groupedTasks.get(dateStr)!;
           
@@ -107,21 +107,23 @@ export function ScheduleView({
           if (isTomorrow) dateLabel = `Tomorrow, ${dateLabel}`;
 
           return (
-            <div key={dateStr} className="space-y-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold">{dateLabel}</h2>
-                <span className="text-sm text-muted-foreground">
-                  {(dateTasks.incomplete.length + dateTasks.completed.length)} task{(dateTasks.incomplete.length + dateTasks.completed.length) !== 1 ? 's' : ''}
+            <div key={dateStr} className="space-y-3 md:space-y-4">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                <h2 className="text-base md:text-lg font-semibold">{dateLabel}</h2>
+                <span className="text-xs md:text-sm text-muted-foreground">
+                   {(dateTasks.incomplete.length + dateTasks.completed.length)} task{(dateTasks.incomplete.length + dateTasks.completed.length) !== 1 ? 's' : ''}
                 </span>
                 {isPast && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                     Overdue
                   </span>
                 )}
               </div>
 
-              <div className="space-y-2">
+
+              <div className="space-y-2 md:space-y-3">
                 {incompleteTasks.map((task) => (
+
                   <TaskCard
                     key={task.id}
                     task={task}

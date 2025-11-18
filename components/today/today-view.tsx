@@ -115,7 +115,7 @@ export function TodayView({
 
   return (
     <>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col space-y-4 md:space-y-6">
         <TodayHeader
           completedCount={completedCount}
           totalCount={totalToShow}
@@ -123,7 +123,7 @@ export function TodayView({
           isExtraCredit={isExtraCredit}
         />
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="space-y-3 md:space-y-4">
           {allComplete ? (
             <CelebrationState 
               completedCount={completedCount} 
@@ -132,9 +132,9 @@ export function TodayView({
           ) : (
             <>
               {incompleteTasks.length === 0 && completedTasks.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p className="text-lg">No tasks scheduled for today</p>
-                  <p className="text-sm mt-2">Add a task to get started</p>
+                <div className="text-center py-12 md:py-16 text-muted-foreground">
+                  <p className="text-base md:text-lg">No tasks scheduled for today</p>
+                  <p className="text-sm md:text-base mt-2">Add a task to get started</p>
                 </div>
               )}
 
@@ -151,7 +151,7 @@ export function TodayView({
               {declineCount >= 2 && availableTasks.length > 0 && (
                 <button
                   onClick={() => setShowSelectTaskDialog(true)}
-                  className="w-full p-3 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-accent transition-colors"
+                  className="w-full p-3 md:p-4 border border-dashed rounded-lg text-sm md:text-base text-muted-foreground hover:bg-accent transition-colors"
                 >
                   Want to add more? Pull a task from your schedule
                 </button>
@@ -160,8 +160,8 @@ export function TodayView({
           )}
 
           {completedTasks.length > 0 && (
-            <div className="pt-4 space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground px-1">
+            <div className="pt-4 md:pt-6 space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-base font-medium text-muted-foreground px-1">
                 Completed Today
               </h3>
               {completedTasks.map((task) => (
