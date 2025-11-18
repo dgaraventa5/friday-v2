@@ -1,7 +1,7 @@
 'use client';
 
 import { Task } from '@/lib/types';
-import { groupTasksByDate } from '@/lib/utils/task-prioritization';
+import { addPriorityScores } from '@/lib/utils/task-prioritization';
 import { getTodayLocal, formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 import { TaskCard } from '@/components/today/task-card';
 import { Calendar } from 'lucide-react';
@@ -19,10 +19,30 @@ export function ScheduleView({
   onTaskEdit, 
   onTaskDelete 
 }: ScheduleViewProps) {
-  const groupedTasks = groupTasksByDate(tasks);
-  const sortedDates = Array.from(groupedTasks.keys()).sort();
-
+  const groupedTasks = new Map<string, { incomplete: Task[]; completed: Task[] }>();
+  
   const todayStr = getTodayLocal();
+
+  for (const task of tasks) {
+    if (!task.start_date) continue;
+    const date = task.start_date;
+    if (!groupedTasks.has(date)) {
+      groupedTasks.set(date, { incomplete: [], completed: [] });
+    }
+    const bucket = groupedTasks.get(date)!;
+    const isToday = date === todayStr;
+
+    if (task.completed && isToday) {
+      bucket.completed.push(task);
+    } else if (!task.completed) {
+      bucket.incomplete.push(task);
+    }
+  }
+  
+  const sortedDates = Array.from(groupedTasks.entries())
+    .filter(([_, tasksForDate]) => tasksForDate.incomplete.length > 0 || tasksForDate.completed.length > 0)
+    .map(([date]) => date)
+    .sort();
 
   console.log('[v0] ScheduleView - grouped dates:', sortedDates);
   console.log('[v0] ScheduleView - today (local):', todayStr);
@@ -51,6 +71,19 @@ export function ScheduleView({
       <div className="space-y-6 md:space-y-8">
         {sortedDates.map((dateStr) => {
           const dateTasks = groupedTasks.get(dateStr)!;
+          
+          const incompleteTasks = addPriorityScores(dateTasks.incomplete).sort(
+            (a, b) => b.priorityScore - a.priorityScore
+          );
+          
+          const completedTasks = [...dateTasks.completed].sort((a, b) => {
+            if (a.completed_at && b.completed_at) {
+              return new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime();
+            }
+            if (a.completed_at) return -1;
+            if (b.completed_at) return 1;
+            return a.title.localeCompare(b.title);
+          });
           const isToday = dateStr === todayStr;
           const isTomorrow = dateStr === formatDateLocal(new Date(Date.now() + 24 * 60 * 60 * 1000));
           
@@ -59,7 +92,10 @@ export function ScheduleView({
           today.setHours(0, 0, 0, 0);
           const isPast = taskDate < today && !isToday;
 
-          console.log('[v0] ScheduleView date:', dateStr, 'isToday:', isToday, 'tasks:', dateTasks.map(t => t.title));
+          console.log('[v0] ScheduleView date:', dateStr, 'isToday:', isToday, 'tasks:', [
+            ...dateTasks.incomplete.map(t => t.title),
+            ...dateTasks.completed.map(t => t.title),
+          ]);
 
           let dateLabel = taskDate.toLocaleDateString('en-US', {
             weekday: 'long',
@@ -75,7 +111,7 @@ export function ScheduleView({
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
                 <h2 className="text-base md:text-lg font-semibold">{dateLabel}</h2>
                 <span className="text-xs md:text-sm text-muted-foreground">
-                  {dateTasks.length} task{dateTasks.length !== 1 ? 's' : ''}
+                   {(dateTasks.incomplete.length + dateTasks.completed.length)} task{(dateTasks.incomplete.length + dateTasks.completed.length) !== 1 ? 's' : ''}
                 </span>
                 {isPast && (
                   <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
@@ -84,8 +120,10 @@ export function ScheduleView({
                 )}
               </div>
 
+
               <div className="space-y-2 md:space-y-3">
-                {dateTasks.map((task) => (
+                {incompleteTasks.map((task) => (
+
                   <TaskCard
                     key={task.id}
                     task={task}
@@ -95,6 +133,20 @@ export function ScheduleView({
                   />
                 ))}
               </div>
+              
+              {isToday && completedTasks.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  {completedTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onComplete={onTaskComplete}
+                      onEdit={onTaskEdit}
+                      onDelete={onTaskDelete}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

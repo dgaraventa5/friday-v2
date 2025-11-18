@@ -220,6 +220,155 @@ function testNextRecurringInstance() {
   console.log('✅ Next recurring instance calculated correctly!');
 }
 
+// Test 7: Non-recurring tasks capped at four per day
+function testDailyTaskCap() {
+  console.log('\n=== Test 7: Daily Task Cap ===');
+  
+  const today = getTodayLocal();
+  const tomorrow = addDaysToDateString(today, 1);
+  
+  const tasks = Array.from({ length: 6 }).map((_, idx) =>
+    createMockTask({
+      title: `Overflow Task ${idx + 1}`,
+      due_date: today,
+      start_date: undefined,
+      category: 'Home',
+      estimated_hours: 0.5, // Small tasks to avoid capacity limits
+    })
+  );
+  
+  const { tasks: scheduledTasks } = assignStartDates(
+    tasks,
+    mockCategoryLimits,
+    mockDailyMaxHours
+  );
+  
+  const todayTasks = scheduledTasks.filter(t => !t.completed && !t.is_recurring && t.start_date === today);
+  const tomorrowTasks = scheduledTasks.filter(t => !t.completed && !t.is_recurring && t.start_date === tomorrow);
+  
+  console.log('Tasks scheduled for today:', todayTasks.length);
+  console.log('Tasks scheduled for tomorrow:', tomorrowTasks.length);
+  
+  console.assert(todayTasks.length === 4, 'Exactly 4 tasks should be scheduled for today');
+  console.assert(
+    tomorrowTasks.length === 2,
+    'Remaining overflow tasks should move to the next day (tomorrow)'
+  );
+  
+  console.log('✅ Daily task cap respected!');
+}
+
+// Test 8: Fallback logic respects 4-task cap when due date is full
+function testFallbackRespectsTaskCap() {
+  console.log('\n=== Test 8: Fallback Logic Respects Task Cap ===');
+  
+  const today = getTodayLocal();
+  const dueDate = addDaysToDateString(today, 2); // 2 days from now
+  
+  // Create 5 tasks all due on the same date, with limited capacity
+  // This will force some to use the fallback logic
+  const tasks = Array.from({ length: 5 }).map((_, idx) =>
+    createMockTask({
+      title: `Due Date Task ${idx + 1}`,
+      due_date: dueDate,
+      start_date: undefined,
+      category: 'Home',
+      estimated_hours: 3, // Large tasks that will fill capacity quickly
+    })
+  );
+  
+  // Use very limited capacity to force fallback
+  const limitedCategoryLimits: CategoryLimits = {
+    Work: { weekday: 6, weekend: 2 },
+    Home: { weekday: 1, weekend: 1 }, // Very limited - will force overflow
+    Health: { weekday: 2, weekend: 2 },
+    Personal: { weekday: 2, weekend: 3 },
+  };
+  
+  const { tasks: scheduledTasks, warnings } = assignStartDates(
+    tasks,
+    limitedCategoryLimits,
+    mockDailyMaxHours
+  );
+  
+  const dueDateTasks = scheduledTasks.filter(t => !t.completed && !t.is_recurring && t.start_date === dueDate);
+  const afterDueDateTasks = scheduledTasks.filter(t => 
+    !t.completed && 
+    !t.is_recurring && 
+    t.start_date && 
+    t.start_date > dueDate
+  );
+  
+  console.log('Tasks scheduled on due date:', dueDateTasks.length);
+  console.log('Tasks scheduled after due date:', afterDueDateTasks.length);
+  console.log('Warnings:', warnings.length);
+  
+  // Due date should have at most 4 tasks
+  console.assert(
+    dueDateTasks.length <= 4,
+    `Due date should have at most 4 tasks, got ${dueDateTasks.length}`
+  );
+  
+  // If due date is full, remaining tasks should be scheduled after
+  if (dueDateTasks.length === 4) {
+    console.assert(
+      afterDueDateTasks.length > 0 || tasks.length <= 4,
+      'If due date is full, remaining tasks should be scheduled after due date'
+    );
+  }
+  
+  console.log('✅ Fallback logic respects task cap!');
+}
+
+// Test 9: Completed tasks keep their slots so new tasks aren't pulled into today
+function testCompletedTasksHoldSlots() {
+  console.log('\n=== Test 9: Completed Tasks Hold Slots ===');
+  
+  const today = getTodayLocal();
+  const tomorrow = addDaysToDateString(today, 1);
+  
+  // Four tasks already on today (2 completed, 2 incomplete)
+  const todaysExistingTasks = [
+    createMockTask({ title: 'Today Complete 1', start_date: today, due_date: today, completed: true, category: 'Home', estimated_hours: 0.5 }),
+    createMockTask({ title: 'Today Complete 2', start_date: today, due_date: today, completed: true, category: 'Home', estimated_hours: 0.5 }),
+    createMockTask({ title: 'Today Incomplete 1', start_date: today, due_date: today, category: 'Home', estimated_hours: 0.5 }),
+    createMockTask({ title: 'Today Incomplete 2', start_date: today, due_date: today, category: 'Home', estimated_hours: 0.5 }),
+  ];
+  
+  // Backlog tasks that would try to fill today
+  const backlogTasks = [
+    createMockTask({ title: 'Backlog A', due_date: today, category: 'Home', estimated_hours: 0.5 }),
+    createMockTask({ title: 'Backlog B', due_date: today, category: 'Home', estimated_hours: 0.5 }),
+  ];
+  
+  const { tasks: scheduledTasks } = assignStartDates(
+    [...todaysExistingTasks, ...backlogTasks],
+    mockCategoryLimits,
+    mockDailyMaxHours
+  );
+  
+  const todaysTasks = scheduledTasks.filter(
+    t => !t.is_recurring && t.start_date === today
+  );
+  const tomorrowTasks = scheduledTasks.filter(
+    t => !t.is_recurring && t.start_date === tomorrow
+  );
+  
+  console.log('Total tasks on today (including completed):', todaysTasks.length);
+  console.log('Tasks moved to tomorrow:', tomorrowTasks.length);
+  
+  console.assert(
+    todaysTasks.length === 4,
+    `Today should still have exactly 4 tasks total, got ${todaysTasks.length}`
+  );
+  console.assert(
+    tomorrowTasks.length >= backlogTasks.length,
+    'Backlog tasks should be pushed to tomorrow once today has 4 tasks'
+  );
+  
+  console.log('✅ Completed tasks keep their slots!');
+}
+
 // Run all tests
 function runAllTests() {
   console.log('🧪 Running Task Scheduling Tests...\n');
@@ -232,6 +381,9 @@ function runAllTests() {
     testTodayViewFiltering();
     testEditTaskDueDateUpdate();
     testNextRecurringInstance();
+    testDailyTaskCap();
+    testFallbackRespectsTaskCap();
+    testCompletedTasksHoldSlots();
     
     console.log('\n✅ All tests passed! 🎉');
   } catch (error) {
