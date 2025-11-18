@@ -399,53 +399,25 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <main className="flex-1 overflow-y-auto pb-safe-nav">
-        <div className="mx-auto w-full max-w-xl px-3 pt-4 sm:px-6">
-          <section className="sticky top-0 z-10 -mx-3 -mt-4 border-b border-border bg-background/95 px-3 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">View</p>
-                <h2 className="text-lg font-semibold">Choose your focus</h2>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {(['today', 'schedule'] as NavView[]).map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  onClick={() => setCurrentView(view)}
-                  className={cn(
-                    'rounded-full border px-4 py-2 text-sm font-medium transition-colors',
-                    currentView === view
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-border text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {view === 'today' ? 'Today' : 'Schedule'}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <div className="py-4">
-            {currentView === 'today' ? (
-              <TodayView
-                tasks={tasks}
-                profile={profile}
-                onTaskComplete={handleTaskComplete}
-                onTaskEdit={handleTaskEdit}
-                onTaskDelete={handleTaskDelete}
-                onPullTaskToToday={handlePullTaskToToday}
-                onOpenAddDialog={() => setShowAddDialog(true)}
-              />
-            ) : (
-              <ScheduleView
-                tasks={tasks}
-                onTaskComplete={handleTaskComplete}
-                onTaskEdit={handleTaskEdit}
-                onTaskDelete={handleTaskDelete}
-              />
-            )}
-          </div>
+        <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+          {currentView === 'today' ? (
+            <TodayView
+              tasks={tasks}
+              profile={profile}
+              onTaskComplete={handleTaskComplete}
+              onTaskEdit={handleTaskEdit}
+              onTaskDelete={handleTaskDelete}
+              onPullTaskToToday={handlePullTaskToToday}
+              onOpenAddDialog={() => setShowAddDialog(true)}
+            />
+          ) : (
+            <ScheduleView
+              tasks={tasks}
+              onTaskComplete={handleTaskComplete}
+              onTaskEdit={handleTaskEdit}
+              onTaskDelete={handleTaskDelete}
+            />
+          )}
         </div>
       </main>
 
