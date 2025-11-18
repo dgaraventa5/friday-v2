@@ -152,8 +152,10 @@ export function assignStartDates(
   // Step 2: Keep recurring tasks - they already have start_date = due_date
   const recurringTasks = tasks.filter(t => !t.completed && t.is_recurring);
   
-  // Step 3: Get ALL non-recurring incomplete tasks
-  const nonRecurringTasks = tasks.filter(t => !t.completed && !t.is_recurring);
+  // Step 3: Get ALL non-recurring tasks (both complete and incomplete) to track counts,
+  // but only incomplete tasks will be rescheduled
+  const allNonRecurringTasks = tasks.filter(t => !t.is_recurring);
+  const nonRecurringTasks = allNonRecurringTasks.filter(t => !t.completed);
   const todayStr = getTodayLocal();
   
   console.log('[v0] Re-scheduling', nonRecurringTasks.length, 'non-recurring tasks');
@@ -177,10 +179,26 @@ export function assignStartDates(
   // Step 5: Start with completed tasks and recurring tasks
   const result: Task[] = [...completedTasks, ...recurringTasks];
   
-  // Initialize count per day (all zeros)
+  // Initialize count per day with existing non-recurring tasks (including completed)
   const nonRecurringCountPerDay = new Map<string, number>();
+  for (const task of allNonRecurringTasks) {
+    if (task.start_date) {
+      const count = nonRecurringCountPerDay.get(task.start_date) || 0;
+      nonRecurringCountPerDay.set(task.start_date, count + 1);
+    }
+  }
   
-  // Step 6: Schedule each non-recurring task (excluding those already on today)
+  // Remove counts for tasks we're about to reschedule (incomplete non-recurring)
+  for (const task of nonRecurringTasks) {
+    if (task.start_date) {
+      const count = nonRecurringCountPerDay.get(task.start_date) || 0;
+      if (count > 0) {
+        nonRecurringCountPerDay.set(task.start_date, count - 1);
+      }
+    }
+  }
+  
+  // Step 6: Schedule each non-recurring task
   for (const task of scoredTasksToSchedule) {
     let scheduled = false;
     let attemptedDates: string[] = [];
@@ -308,26 +326,82 @@ export function assignStartDates(
     // If we couldn't schedule it, handle based on task type
     if (!scheduled) {
       if (task.due_date) {
-        // Could not fit before due_date - schedule on due_date even if over capacity
+        // Could not fit before due_date - try due_date first, but respect 4-task cap
         const dueDate = task.due_date;
-        console.warn('[v0] Could not fit', task.title, 'before due date. Scheduling on', dueDate, '(over capacity)');
+        const dueDateCount = nonRecurringCountPerDay.get(dueDate) || 0;
         
-        const scheduledTask = { ...task, start_date: dueDate };
-        result.push(scheduledTask);
-        
-        const nonRecurringCount = nonRecurringCountPerDay.get(dueDate) || 0;
-        nonRecurringCountPerDay.set(dueDate, nonRecurringCount + 1);
-        
-        warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but may exceed capacity limits.`);
-        
-        // Track reschedule
-        const oldDate = originalDates.get(task.id) ?? null;
-        if (oldDate !== dueDate) {
-          rescheduledTasks.push({
-            task: scheduledTask,
-            oldDate,
-            newDate: dueDate
-          });
+        if (dueDateCount < 4) {
+          // Due date has space - schedule there even if over capacity
+          console.warn('[v0] Could not fit', task.title, 'before due date. Scheduling on', dueDate, '(over capacity)');
+          
+          const scheduledTask = { ...task, start_date: dueDate };
+          result.push(scheduledTask);
+          
+          nonRecurringCountPerDay.set(dueDate, dueDateCount + 1);
+          
+          warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but may exceed capacity limits.`);
+          
+          // Track reschedule
+          const oldDate = originalDates.get(task.id) ?? null;
+          if (oldDate !== dueDate) {
+            rescheduledTasks.push({
+              task: scheduledTask,
+              oldDate,
+              newDate: dueDate
+            });
+          }
+        } else {
+          // Due date is full - find next available day after due date
+          const dueDateOffset = calculateDaysUntil(todayStr, dueDate);
+          let foundSlot = false;
+          
+          for (let dayOffset = dueDateOffset + 1; dayOffset < lookAheadDays && !foundSlot; dayOffset++) {
+            const dateStr = addDaysToDateString(todayStr, dayOffset);
+            const dateCount = nonRecurringCountPerDay.get(dateStr) || 0;
+            
+            if (dateCount < 4) {
+              // Found a slot after due date
+              const scheduledTask = { ...task, start_date: dateStr };
+              result.push(scheduledTask);
+              foundSlot = true;
+              
+              nonRecurringCountPerDay.set(dateStr, dateCount + 1);
+              
+              warnings.push(`Task "${task.title}" scheduled on ${dateStr} (due date ${dueDate} was full).`);
+              
+              const oldDate = originalDates.get(task.id) ?? null;
+              if (oldDate !== dateStr) {
+                rescheduledTasks.push({
+                  task: scheduledTask,
+                  oldDate,
+                  newDate: dateStr
+                });
+              }
+              
+              console.log('[v0] Scheduled', task.title, 'on', dateStr, '(due date was full)');
+            }
+          }
+          
+          if (!foundSlot) {
+            // Couldn't find any slot - force to due date with warning
+            console.warn('[v0] Could not find slot for', task.title, 'after due date. Forcing to', dueDate, '(exceeds 4-task limit)');
+            
+            const scheduledTask = { ...task, start_date: dueDate };
+            result.push(scheduledTask);
+            
+            nonRecurringCountPerDay.set(dueDate, dueDateCount + 1);
+            
+            warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but exceeds 4-task daily limit.`);
+            
+            const oldDate = originalDates.get(task.id) ?? null;
+            if (oldDate !== dueDate) {
+              rescheduledTasks.push({
+                task: scheduledTask,
+                oldDate,
+                newDate: dueDate
+              });
+            }
+          }
         }
       } else {
         // No due_date and couldn't fit - leave unscheduled
