@@ -1,7 +1,7 @@
 'use client';
 
 import { Task } from '@/lib/types';
-import { addPriorityScores } from '@/lib/utils/task-prioritization';
+import { addPriorityScores, getTodaysFocusTasks } from '@/lib/utils/task-prioritization';
 import { getTodayLocal, formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 import { TaskCard } from '@/components/today/task-card';
 import { Calendar } from 'lucide-react';
@@ -22,15 +22,25 @@ export function ScheduleView({
   const groupedTasks = new Map<string, { incomplete: Task[]; completed: Task[] }>();
   
   const todayStr = getTodayLocal();
+  
+  // For today, use getTodaysFocusTasks which enforces the 4-task cap
+  const todaysTasks = getTodaysFocusTasks(tasks);
+  const todaysTaskIds = new Set(todaysTasks.map(t => t.id));
 
   for (const task of tasks) {
     if (!task.start_date) continue;
     const date = task.start_date;
+    const isToday = date === todayStr;
+    
+    // For today, only include tasks that passed the 4-task cap filter
+    if (isToday && !todaysTaskIds.has(task.id)) {
+      continue;
+    }
+    
     if (!groupedTasks.has(date)) {
       groupedTasks.set(date, { incomplete: [], completed: [] });
     }
     const bucket = groupedTasks.get(date)!;
-    const isToday = date === todayStr;
 
     if (task.completed && isToday) {
       bucket.completed.push(task);
@@ -44,8 +54,9 @@ export function ScheduleView({
     .map(([date]) => date)
     .sort();
 
-  console.log('[v0] ScheduleView - grouped dates:', sortedDates);
-  console.log('[v0] ScheduleView - today (local):', todayStr);
+  console.log('[v1] ScheduleView - grouped dates:', sortedDates);
+  console.log('[v1] ScheduleView - today (local):', todayStr);
+  console.log('[v1] ScheduleView - today tasks capped at:', todaysTasks.length);
 
   if (sortedDates.length === 0) {
     return (
@@ -92,7 +103,7 @@ export function ScheduleView({
           today.setHours(0, 0, 0, 0);
           const isPast = taskDate < today && !isToday;
 
-          console.log('[v0] ScheduleView date:', dateStr, 'isToday:', isToday, 'tasks:', [
+          console.log('[v1] ScheduleView date:', dateStr, 'isToday:', isToday, 'tasks:', [
             ...dateTasks.incomplete.map(t => t.title),
             ...dateTasks.completed.map(t => t.title),
           ]);

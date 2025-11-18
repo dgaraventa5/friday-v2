@@ -158,52 +158,53 @@ export function assignStartDates(
   const nonRecurringTasks = allNonRecurringTasks.filter(t => !t.completed);
   const todayStr = getTodayLocal();
   
-  // Step 3.5: Preserve tasks already scheduled for today
-  // These should not be re-scheduled unless absolutely necessary
-  const tasksAlreadyOnToday = nonRecurringTasks.filter(t => t.start_date === todayStr);
-  const tasksToSchedule = nonRecurringTasks.filter(t => t.start_date !== todayStr);
-  
-  console.log('[v0] Re-scheduling', nonRecurringTasks.length, 'non-recurring tasks');
-  console.log('[v0] Preserving', tasksAlreadyOnToday.length, 'tasks already on today');
-  console.log('[v0] Re-scheduling', tasksToSchedule.length, 'other tasks');
+  console.log('[v1] Re-scheduling', nonRecurringTasks.length, 'incomplete non-recurring tasks');
   
   // Track original start_dates for comparison
   const originalDates = new Map(
     nonRecurringTasks.map(t => [t.id, t.start_date])
   );
   
-  // Step 4: Score and sort by priority (highest first) - only for tasks to schedule
-  const scoredTasksToSchedule = addPriorityScores(tasksToSchedule);
+  // Step 4: Score and sort by priority (highest first)
+  const scoredTasksToSchedule = addPriorityScores(nonRecurringTasks);
   scoredTasksToSchedule.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  console.log('[v0] Top 5 priorities:', scoredTasksToSchedule.slice(0, 5).map(t => ({
+  console.log('[v1] Top 5 priorities:', scoredTasksToSchedule.slice(0, 5).map(t => ({
     title: t.title,
     score: t.priorityScore,
     quadrant: t.quadrant,
-    due_date: t.due_date
+    due_date: t.due_date,
+    current_start: t.start_date
   })));
   
-  // Step 5: Start with completed tasks, recurring tasks, and tasks already on today
-  const result: Task[] = [...completedTasks, ...recurringTasks, ...tasksAlreadyOnToday];
+  // Step 5: Start with completed tasks and recurring tasks only
+  const result: Task[] = [...completedTasks, ...recurringTasks];
   
-  // Initialize count per day with existing non-recurring tasks (including completed)
-  const nonRecurringCountPerDay = new Map<string, number>();
-  for (const task of allNonRecurringTasks) {
+  // Initialize count per day with ALL tasks (both recurring and non-recurring, complete and incomplete)
+  // This is the critical change: we now count ALL tasks toward the 4-task daily cap
+  const tasksPerDay = new Map<string, number>();
+  
+  // Seed with all existing tasks
+  for (const task of tasks) {
     if (task.start_date) {
-      const count = nonRecurringCountPerDay.get(task.start_date) || 0;
-      nonRecurringCountPerDay.set(task.start_date, count + 1);
+      const count = tasksPerDay.get(task.start_date) || 0;
+      tasksPerDay.set(task.start_date, count + 1);
     }
   }
   
-  // Remove counts for tasks we're about to reschedule (incomplete non-recurring)
+  console.log('[v1] Initial task counts per day:', Array.from(tasksPerDay.entries()).slice(0, 10));
+  
+  // Remove counts for all incomplete non-recurring tasks we're about to reschedule
   for (const task of nonRecurringTasks) {
     if (task.start_date) {
-      const count = nonRecurringCountPerDay.get(task.start_date) || 0;
+      const count = tasksPerDay.get(task.start_date) || 0;
       if (count > 0) {
-        nonRecurringCountPerDay.set(task.start_date, count - 1);
+        tasksPerDay.set(task.start_date, count - 1);
       }
     }
   }
+  
+  console.log('[v1] After releasing slots for rescheduling:', Array.from(tasksPerDay.entries()).slice(0, 10));
   
   // Step 6: Schedule each non-recurring task
   for (const task of scoredTasksToSchedule) {
@@ -223,9 +224,9 @@ export function assignStartDates(
       const dateStr = addDaysToDateString(todayStr, dayOffset);
       attemptedDates.push(dateStr);
       
-      const nonRecurringCount = nonRecurringCountPerDay.get(dateStr) || 0;
-      if (nonRecurringCount >= 4) {
-        console.log('[v0] Skipping', dateStr, '- already has 4 non-recurring tasks');
+      const totalTaskCount = tasksPerDay.get(dateStr) || 0;
+      if (totalTaskCount >= 4) {
+        console.log('[v1] Skipping', dateStr, '- already has 4 tasks (any type)');
         continue;
       }
       
@@ -254,7 +255,7 @@ export function assignStartDates(
         result.push(scheduledTask);
         scheduled = true;
         
-        nonRecurringCountPerDay.set(dateStr, nonRecurringCount + 1);
+        tasksPerDay.set(dateStr, totalTaskCount + 1);
         
         // Track if this is a reschedule
         const oldDate = originalDates.get(task.id);
@@ -266,22 +267,22 @@ export function assignStartDates(
           });
         }
         
-        console.log('[v0] Scheduled', task.title, 'on', dateStr, '(priority:', task.priorityScore, ', non-recurring:', nonRecurringCount + 1, '/4)');
+        console.log('[v1] Scheduled', task.title, 'on', dateStr, '(priority:', task.priorityScore, ', total tasks:', totalTaskCount + 1, '/4)');
       }
     }
     
     // If still not scheduled and we limited by due date, try days beyond due date up to lookAhead
     if (
       !scheduled &&
-      cappedDueWindow < lookAheadDays
+      maxDayOffset < lookAheadDays
     ) {
-      for (let dayOffset = cappedDueWindow; dayOffset < lookAheadDays && !scheduled; dayOffset++) {
+      for (let dayOffset = maxDayOffset; dayOffset < lookAheadDays && !scheduled; dayOffset++) {
         const dateStr = addDaysToDateString(todayStr, dayOffset);
         attemptedDates.push(dateStr);
         
-        const nonRecurringCount = nonRecurringCountPerDay.get(dateStr) || 0;
-        if (nonRecurringCount >= 4) {
-          console.log('[v0] Skipping', dateStr, '- already has 4 non-recurring tasks (post-due search)');
+        const totalTaskCount = tasksPerDay.get(dateStr) || 0;
+        if (totalTaskCount >= 4) {
+          console.log('[v1] Skipping', dateStr, '- already has 4 tasks (post-due search)');
           continue;
         }
         
@@ -300,7 +301,7 @@ export function assignStartDates(
         const canFitDaily = totalHours + task.estimated_hours <= dailyLimit;
         
         if (canFitCategory && canFitDaily) {
-          const finalCount = nonRecurringCountPerDay.get(dateStr) || 0;
+          const finalCount = tasksPerDay.get(dateStr) || 0;
           if (finalCount >= 4) {
             continue;
           }
@@ -308,7 +309,7 @@ export function assignStartDates(
           const scheduledTask = { ...task, start_date: dateStr };
           result.push(scheduledTask);
           scheduled = true;
-          nonRecurringCountPerDay.set(dateStr, finalCount + 1);
+          tasksPerDay.set(dateStr, finalCount + 1);
           
           const oldDate = originalDates.get(task.id) ?? null;
           if (oldDate !== dateStr) {
@@ -320,7 +321,7 @@ export function assignStartDates(
             warnings.push(`Task "${task.title}" scheduled after due date on ${dateStr} to maintain daily limits.`);
           }
           
-          console.log('[v0] Scheduled', task.title, 'on', dateStr, '(post-due slot)');
+          console.log('[v1] Scheduled', task.title, 'on', dateStr, '(post-due slot)');
         }
       }
     }
@@ -330,16 +331,16 @@ export function assignStartDates(
       if (task.due_date) {
         // Could not fit before due_date - try due_date first, but respect 4-task cap
         const dueDate = task.due_date;
-        const dueDateCount = nonRecurringCountPerDay.get(dueDate) || 0;
+        const dueDateCount = tasksPerDay.get(dueDate) || 0;
         
         if (dueDateCount < 4) {
           // Due date has space - schedule there even if over capacity
-          console.warn('[v0] Could not fit', task.title, 'before due date. Scheduling on', dueDate, '(over capacity)');
+          console.warn('[v1] Could not fit', task.title, 'before due date. Scheduling on', dueDate, '(over capacity)');
           
           const scheduledTask = { ...task, start_date: dueDate };
           result.push(scheduledTask);
           
-          nonRecurringCountPerDay.set(dueDate, dueDateCount + 1);
+          tasksPerDay.set(dueDate, dueDateCount + 1);
           
           warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but may exceed capacity limits.`);
           
@@ -359,7 +360,7 @@ export function assignStartDates(
           
           for (let dayOffset = dueDateOffset + 1; dayOffset < lookAheadDays && !foundSlot; dayOffset++) {
             const dateStr = addDaysToDateString(todayStr, dayOffset);
-            const dateCount = nonRecurringCountPerDay.get(dateStr) || 0;
+            const dateCount = tasksPerDay.get(dateStr) || 0;
             
             if (dateCount < 4) {
               // Found a slot after due date
@@ -367,7 +368,7 @@ export function assignStartDates(
               result.push(scheduledTask);
               foundSlot = true;
               
-              nonRecurringCountPerDay.set(dateStr, dateCount + 1);
+              tasksPerDay.set(dateStr, dateCount + 1);
               
               warnings.push(`Task "${task.title}" scheduled on ${dateStr} (due date ${dueDate} was full).`);
               
@@ -380,18 +381,18 @@ export function assignStartDates(
                 });
               }
               
-              console.log('[v0] Scheduled', task.title, 'on', dateStr, '(due date was full)');
+              console.log('[v1] Scheduled', task.title, 'on', dateStr, '(due date was full)');
             }
           }
           
           if (!foundSlot) {
             // Couldn't find any slot - force to due date with warning
-            console.warn('[v0] Could not find slot for', task.title, 'after due date. Forcing to', dueDate, '(exceeds 4-task limit)');
+            console.warn('[v1] Could not find slot for', task.title, 'after due date. Forcing to', dueDate, '(exceeds 4-task limit)');
             
             const scheduledTask = { ...task, start_date: dueDate };
             result.push(scheduledTask);
             
-            nonRecurringCountPerDay.set(dueDate, dueDateCount + 1);
+            tasksPerDay.set(dueDate, dueDateCount + 1);
             
             warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but exceeds 4-task daily limit.`);
             
@@ -407,19 +408,31 @@ export function assignStartDates(
         }
       } else {
         // No due_date and couldn't fit - leave unscheduled
-        console.warn('[v0] Could not schedule', task.title, '- no capacity and no due_date');
+        console.warn('[v1] Could not schedule', task.title, '- no capacity and no due_date');
         result.push(task);
         warnings.push(`Task "${task.title}" could not be scheduled. Please adjust capacity limits or task duration.`);
       }
     } else if (!scheduled) {
       // No due_date and couldn't fit - leave unscheduled
-      console.warn('[v0] Could not schedule', task.title, '- no capacity and no due_date');
+      console.warn('[v1] Could not schedule', task.title, '- no capacity and no due_date');
       result.push(task);
       warnings.push(`Task "${task.title}" could not be scheduled. Please adjust capacity limits or task duration.`);
     }
   }
   
-  console.log('[v0] Scheduling complete:', {
+  // Final count verification
+  const finalCounts = new Map<string, number>();
+  for (const task of result) {
+    if (task.start_date) {
+      const count = finalCounts.get(task.start_date) || 0;
+      finalCounts.set(task.start_date, count + 1);
+    }
+  }
+  
+  console.log('[v1] Final task counts per day:', Array.from(finalCounts.entries()).slice(0, 10));
+  console.log('[v1] Today count:', finalCounts.get(todayStr) || 0);
+  
+  console.log('[v1] Scheduling complete:', {
     total: result.length,
     scheduled: result.filter(t => t.start_date).length,
     rescheduled: rescheduledTasks.length,
@@ -441,12 +454,12 @@ function calculateDaysUntil(fromDateStr: string, toDateStr: string): number {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
-// Get today's focus tasks (max 4)
+// Get today's focus tasks (max 4 total including completed)
 export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const todayStr = getTodayLocal();
-  const BASELINE_TASKS = 4;
+  const MAX_TASKS = 4;
   
-  console.log('[v0] getTodaysFocusTasks - today:', todayStr);
+  console.log('[v1] getTodaysFocusTasks - today:', todayStr);
   
   // Filter for tasks scheduled for today
   const incompleteTodayTasks = tasks
@@ -455,16 +468,28 @@ export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const completedTodayTasks = tasks
     .filter(t => t.completed && t.start_date === todayStr);
   
-  console.log('[v0] Incomplete today tasks:', incompleteTodayTasks.length);
-  console.log('[v0] Completed today tasks:', completedTodayTasks.length);
+  console.log('[v1] Raw incomplete today tasks:', incompleteTodayTasks.length);
+  console.log('[v1] Raw completed today tasks:', completedTodayTasks.length);
+  console.log('[v1] Total:', incompleteTodayTasks.length + completedTodayTasks.length);
   
   // Add priority scores and sort incomplete tasks
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);
   scoredIncompleteTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  // Return all tasks (no artificial limit on incomplete tasks)
-  // Users can add as many as they want for "extra credit"
-  return [...scoredIncompleteTasks, ...completedTodayTasks];
+  // CRITICAL: Enforce max 4 tasks total (completed + incomplete)
+  // Completed tasks "hold their slots" - they earned them by being completed
+  const slotsRemaining = MAX_TASKS - completedTodayTasks.length;
+  const cappedIncompleteTasks = scoredIncompleteTasks.slice(0, Math.max(0, slotsRemaining));
+  
+  console.log('[v1] Slots remaining after completed:', slotsRemaining);
+  console.log('[v1] Capped incomplete tasks:', cappedIncompleteTasks.length);
+  console.log('[v1] Final total:', cappedIncompleteTasks.length + completedTodayTasks.length);
+  
+  if (scoredIncompleteTasks.length > cappedIncompleteTasks.length) {
+    console.warn('[v1] Had to cap incomplete tasks from', scoredIncompleteTasks.length, 'to', cappedIncompleteTasks.length);
+  }
+  
+  return [...cappedIncompleteTasks, ...completedTodayTasks];
 }
 
 // Group tasks by start date

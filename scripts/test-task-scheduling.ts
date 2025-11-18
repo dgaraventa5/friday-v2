@@ -88,7 +88,7 @@ function testNonRecurringScheduling() {
   console.log('Task due date:', task.due_date);
   console.log('Today:', today);
   
-  const scheduled = assignStartDates([task], mockCategoryLimits, mockDailyMaxHours);
+  const { tasks: scheduled } = assignStartDates([task], mockCategoryLimits, mockDailyMaxHours);
   
   console.log('Scheduled start_date:', scheduled[0].start_date);
   console.assert(scheduled[0].start_date === today, 'Task should be scheduled for today');
@@ -369,6 +369,83 @@ function testCompletedTasksHoldSlots() {
   console.log('✅ Completed tasks keep their slots!');
 }
 
+// Test 10: Recurring + non-recurring tasks together capped at 4 per day
+function testMixedTaskTypeCap() {
+  console.log('\n=== Test 10: Mixed Task Type Cap (Recurring + Non-Recurring) ===');
+  
+  const today = getTodayLocal();
+  const tomorrow = addDaysToDateString(today, 1);
+  
+  // Create 2 recurring tasks for today
+  const recurringTasks = [
+    createMockTask({
+      title: 'Daily Standup',
+      is_recurring: true,
+      recurring_interval: 'daily',
+      due_date: today,
+      start_date: today,
+      category: 'Work',
+      estimated_hours: 0.5,
+    }),
+    createMockTask({
+      title: 'Morning Exercise',
+      is_recurring: true,
+      recurring_interval: 'daily',
+      due_date: today,
+      start_date: today,
+      category: 'Health',
+      estimated_hours: 0.5,
+    }),
+  ];
+  
+  // Create 5 non-recurring tasks that should try to fill today
+  const nonRecurringTasks = Array.from({ length: 5 }).map((_, idx) =>
+    createMockTask({
+      title: `Non-recurring Task ${idx + 1}`,
+      due_date: today,
+      start_date: undefined,
+      category: 'Home',
+      estimated_hours: 0.5,
+      is_recurring: false,
+    })
+  );
+  
+  const { tasks: scheduledTasks } = assignStartDates(
+    [...recurringTasks, ...nonRecurringTasks],
+    mockCategoryLimits,
+    mockDailyMaxHours
+  );
+  
+  const todaysTasks = scheduledTasks.filter(t => !t.completed && t.start_date === today);
+  const todaysRecurring = todaysTasks.filter(t => t.is_recurring);
+  const todaysNonRecurring = todaysTasks.filter(t => !t.is_recurring);
+  const tomorrowTasks = scheduledTasks.filter(t => !t.completed && t.start_date === tomorrow);
+  
+  console.log('Total tasks on today:', todaysTasks.length);
+  console.log('  - Recurring:', todaysRecurring.length);
+  console.log('  - Non-recurring:', todaysNonRecurring.length);
+  console.log('Tasks scheduled for tomorrow:', tomorrowTasks.length);
+  
+  console.assert(
+    todaysTasks.length === 4,
+    `Today should have exactly 4 tasks total (recurring + non-recurring), got ${todaysTasks.length}`
+  );
+  console.assert(
+    todaysRecurring.length === 2,
+    `Today should have 2 recurring tasks, got ${todaysRecurring.length}`
+  );
+  console.assert(
+    todaysNonRecurring.length === 2,
+    `Today should have 2 non-recurring tasks (to make 4 total), got ${todaysNonRecurring.length}`
+  );
+  console.assert(
+    tomorrowTasks.length === 3,
+    `Tomorrow should have 3 overflow non-recurring tasks, got ${tomorrowTasks.length}`
+  );
+  
+  console.log('✅ Mixed task type cap enforced!');
+}
+
 // Run all tests
 function runAllTests() {
   console.log('🧪 Running Task Scheduling Tests...\n');
@@ -384,6 +461,7 @@ function runAllTests() {
     testDailyTaskCap();
     testFallbackRespectsTaskCap();
     testCompletedTasksHoldSlots();
+    testMixedTaskTypeCap();
     
     console.log('\n✅ All tests passed! 🎉');
   } catch (error) {
