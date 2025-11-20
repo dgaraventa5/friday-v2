@@ -2,6 +2,7 @@ import { Task, TaskWithScore, EisenhowerQuadrant, CategoryLimits, DailyMaxHours 
 import { getTodayLocal, formatDateLocal, parseDateLocal, compareDateStrings, addDaysToDateString, getDayOfWeek } from './date-utils';
 
 // Eisenhower Matrix base scores
+// These form the foundation of priority, representing the importance and urgency dimensions
 const QUADRANT_SCORES = {
   'urgent-important': 100,
   'not-urgent-important': 80,
@@ -20,55 +21,140 @@ export function getEisenhowerQuadrant(task: Task): EisenhowerQuadrant {
   return 'not-urgent-not-important';
 }
 
-// Calculate priority score for a task
+/**
+ * Calculate due date score using a continuous function to ensure smooth priority transitions.
+ * 
+ * Design principles:
+ * - Overdue tasks get massive priority boost (prevents missed deadlines)
+ * - Due today tasks get maximum urgency boost
+ * - Continuous gradient from 1-30 days ensures no "cliff effects"
+ * - Tasks 30+ days out still get small reminder bonus
+ * 
+ * Examples:
+ * - Overdue by 2 days: +80 (50 + 2*15)
+ * - Due today: +100
+ * - Due in 3 days: +53 (80 * (7-3)/6 = 80 * 0.67)
+ * - Due in 10 days: +34 (40 * (14-10)/7 = 40 * 0.57)
+ * - Due in 20 days: +13 (20 * (30-20)/16 = 20 * 0.625)
+ * - Due in 45 days: +5
+ */
+function calculateDueDateScore(task: Task): number {
+  if (!task.due_date || task.completed) {
+    return 0;
+  }
+
+  const todayStr = getTodayLocal();
+  const today = parseDateLocal(todayStr);
+  const dueDate = parseDateLocal(task.due_date);
+  const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Overdue: Strong penalty that increases with time
+  if (daysUntilDue < 0) {
+    const daysOverdue = Math.abs(daysUntilDue);
+    return 50 + (daysOverdue * 15);
+  }
+
+  // Due today: Maximum urgency
+  if (daysUntilDue === 0) {
+    return 100;
+  }
+
+  // Due in 1-7 days: High urgency with gradient
+  if (daysUntilDue >= 1 && daysUntilDue <= 7) {
+    return 80 * ((7 - daysUntilDue) / 6);
+  }
+
+  // Due in 8-14 days: Medium urgency with gradient
+  if (daysUntilDue >= 8 && daysUntilDue <= 14) {
+    return 40 * ((14 - daysUntilDue) / 7);
+  }
+
+  // Due in 15-30 days: Low but present urgency with gradient
+  if (daysUntilDue >= 15 && daysUntilDue <= 30) {
+    return 20 * ((30 - daysUntilDue) / 16);
+  }
+
+  // Due in 30+ days: Small constant reminder
+  return 5;
+}
+
+/**
+ * Calculate duration pressure factor to prioritize large tasks with approaching deadlines.
+ * 
+ * This ensures that tasks requiring significant time investment are scheduled with
+ * sufficient lead time before their due dates.
+ * 
+ * Formula: (estimated_hours / max(days_until_due, 0.5)) × 15
+ * 
+ * Examples:
+ * - 4-hour task due in 2 days: (4 / 2) * 15 = +30
+ * - 1-hour task due in 2 days: (1 / 2) * 15 = +7.5
+ * - 8-hour task due in 1 day: (8 / 1) * 15 = +120 (high urgency!)
+ * - 2-hour task due in 10 days: (2 / 10) * 15 = +3
+ * 
+ * The 0.5 minimum prevents division by zero and ensures same-day tasks get high scores.
+ */
+function calculateDurationPressure(task: Task): number {
+  if (!task.due_date || task.completed) {
+    return 0;
+  }
+
+  const todayStr = getTodayLocal();
+  const today = parseDateLocal(todayStr);
+  const dueDate = parseDateLocal(task.due_date);
+  const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Only apply pressure for future or today tasks (not overdue)
+  if (daysUntilDue < 0) {
+    return 0;
+  }
+
+  const daysRemaining = Math.max(daysUntilDue, 0.5);
+  return (task.estimated_hours / daysRemaining) * 15;
+}
+
+/**
+ * Calculate priority score for a task using a balanced, multi-factor approach.
+ * 
+ * Score Components:
+ * 1. Base Score (40-100): Eisenhower matrix quadrant
+ * 2. Due Date Score (0-100+): Continuous function based on time until due
+ * 3. Duration Pressure (0-120+): Prioritizes large tasks with approaching deadlines
+ * 4. Age Factor (0-10): Small bonus for older tasks to prevent starvation
+ * 
+ * Total possible range: ~40 to 330+ (extreme cases)
+ * Typical range: 40-180 for most tasks
+ * 
+ * This design ensures:
+ * - Tasks with due dates are prioritized appropriately across all time horizons
+ * - Large tasks get scheduled with sufficient lead time
+ * - Old tasks without due dates don't get forgotten
+ * - No single factor dominates (balanced weighting)
+ * - Smooth priority transitions (no sudden jumps)
+ */
 export function calculatePriorityScore(task: Task): number {
   const quadrant = getEisenhowerQuadrant(task);
+  
+  // 1. Base score from Eisenhower matrix (40-100)
   let score = QUADRANT_SCORES[quadrant];
 
-  // Add overdue bonus (+10 per day)
-  if (task.due_date && !task.completed) {
-    const todayStr = getTodayLocal();
-    const comparison = compareDateStrings(todayStr, task.due_date);
-    
-    if (comparison > 0) {
-      // Task is overdue
-      const today = parseDateLocal(todayStr);
-      const dueDate = parseDateLocal(task.due_date);
-      const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-      score += daysOverdue * 10;
-    }
-  }
+  // 2. Due date component (0-100+)
+  const dueDateScore = calculateDueDateScore(task);
+  score += dueDateScore;
 
-  // Add due today bonus (+40)
-  if (task.due_date && !task.completed) {
-    const todayStr = getTodayLocal();
-    if (task.due_date === todayStr) {
-      score += 40;
-    }
-  }
+  // 3. Duration pressure factor (0-120+)
+  const durationPressure = calculateDurationPressure(task);
+  score += durationPressure;
 
-  // Add due soon bonus (+20 within 1 day, +10 within 3 days)
-  if (task.due_date && !task.completed) {
-    const todayStr = getTodayLocal();
-    const today = parseDateLocal(todayStr);
-    const dueDate = parseDateLocal(task.due_date);
-    const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilDue === 1) {
-      score += 20;
-    } else if (daysUntilDue > 1 && daysUntilDue <= 3) {
-      score += 10;
-    }
-  }
-
-  // Add age bonus (+2 per day since creation, max +20)
+  // 4. Age factor: Reduced from +2/day max +20 to +1/day max +10
+  // This prevents old tasks from overshadowing tasks with actual deadlines
   const todayStr = getTodayLocal();
   const today = parseDateLocal(todayStr);
   const createdDate = new Date(task.created_at);
   createdDate.setHours(0, 0, 0, 0);
   
   const daysOld = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-  const ageBonus = Math.min(daysOld * 2, 20);
+  const ageBonus = Math.min(daysOld * 1, 10); // Reduced impact
   score += ageBonus;
 
   return score;

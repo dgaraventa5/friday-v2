@@ -57,3 +57,12 @@ export function getDayOfWeek(dateStr: string): number {
   const date = parseDateLocal(dateStr);
   return date.getDay();
 }
+
+/**
+ * Format a date string (YYYY-MM-DD) for display in local timezone
+ * This prevents timezone shift issues when displaying dates
+ */
+export function formatDateStringForDisplay(dateStr: string, options?: Intl.DateTimeFormatOptions): string {
+  const date = parseDateLocal(dateStr);
+  return date.toLocaleDateString(undefined, options);
+}

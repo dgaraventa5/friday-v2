@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Task } from "@/lib/types";
+import { formatDateStringForDisplay } from "@/lib/utils/date-utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
@@ -114,7 +115,7 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
                   )}
                   {task.due_date && (
                     <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                      Due: {new Date(task.due_date).toLocaleDateString()}
+                      Due: {formatDateStringForDisplay(task.due_date)}
                     </span>
                   )}
                 </div>

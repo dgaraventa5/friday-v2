@@ -1,5 +1,6 @@
 import { Task } from '@/lib/types';
 import { getEisenhowerQuadrant } from '@/lib/utils/task-prioritization';
+import { formatDateStringForDisplay } from '@/lib/utils/date-utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { MoreVertical, Clock, Calendar, Repeat } from 'lucide-react';
@@ -122,7 +123,7 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
             {task.due_date && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                <span>{new Date(task.due_date).toLocaleDateString()}</span>
+                <span>{formatDateStringForDisplay(task.due_date)}</span>
               </div>
             )}
           </div>

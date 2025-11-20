@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Plus, Clock, Calendar } from 'lucide-react';
 import { addPriorityScores } from '@/lib/utils/task-prioritization';
-import { getTodayLocal } from '@/lib/utils/date-utils';
+import { getTodayLocal, formatDateStringForDisplay } from '@/lib/utils/date-utils';
 
 interface SelectTaskDialogProps {
   open: boolean;
@@ -63,7 +63,7 @@ export function SelectTaskDialog({
                     {task.start_date && (
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(task.start_date + 'T00:00:00').toLocaleDateString('en-US', {
+                        {formatDateStringForDisplay(task.start_date, {
                           month: 'short',
                           day: 'numeric',
                         })}
