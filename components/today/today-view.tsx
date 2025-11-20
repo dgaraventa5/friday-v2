@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Task, Profile } from '@/lib/types';
 import { getTodaysFocusTasks } from '@/lib/utils/task-prioritization';
-import { TodayHeader } from './today-header';
 import { TaskCard } from './task-card';
 import { CelebrationState } from './celebration-state';
 import { WelcomeMessage } from './welcome-message';
@@ -116,12 +115,7 @@ export function TodayView({
   return (
     <>
       <div className="flex flex-col space-y-4 md:space-y-6">
-        <TodayHeader
-          completedCount={completedCount}
-          totalCount={totalToShow}
-          currentStreak={profile.current_streak}
-          isExtraCredit={isExtraCredit}
-        />
+        <h1 className="text-2xl md:text-3xl font-bold">Today's Focus</h1>
 
         <div className="space-y-3 md:space-y-4">
           {allComplete ? (

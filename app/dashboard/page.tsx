@@ -22,5 +22,11 @@ export default async function DashboardPage() {
     .eq("user_id", data.user.id)
     .order("created_at", { ascending: false });
 
-  return <DashboardClient initialTasks={tasks || []} profile={profile} />;
+  return (
+    <DashboardClient 
+      initialTasks={tasks || []} 
+      profile={profile} 
+      userEmail={data.user.email}
+    />
+  );
 }

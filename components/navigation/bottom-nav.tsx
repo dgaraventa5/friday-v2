@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Home, Plus } from 'lucide-react';
+import { Calendar, List, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type NavView = 'today' | 'schedule';
@@ -13,42 +13,45 @@ interface BottomNavProps {
 
 export function BottomNav({ currentView, onViewChange, onAddTask }: BottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-safe-area backdrop-blur supports-[backdrop-filter]:bg-background/80 md:border-t-0 md:border md:rounded-t-2xl md:mx-auto md:mb-4 md:max-w-2xl md:shadow-lg">
-      <div className="mx-auto flex w-full items-center gap-2 px-4 py-3 md:gap-3 md:px-6 md:py-4">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-safe-area backdrop-blur supports-backdrop-filter:bg-background/80">
+      <div className="relative mx-auto flex w-full max-w-md items-center justify-between px-8 py-4">
+        {/* Today Button */}
         <button
           onClick={() => onViewChange('today')}
           className={cn(
-            'flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-medium transition-all md:text-sm md:px-6 md:py-3',
+            'flex flex-col items-center justify-center gap-1 transition-colors',
             currentView === 'today'
-              ? 'bg-primary text-primary-foreground shadow-sm scale-105'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              ? 'text-blue-600 dark:text-blue-500'
+              : 'text-muted-foreground hover:text-foreground'
           )}
           aria-pressed={currentView === 'today'}
         >
-          <Home className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Today</span>
+          <List className="h-6 w-6" />
+          <span className="text-xs font-medium">Today</span>
         </button>
 
+        {/* Floating Add Button */}
         <button
           onClick={onAddTask}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg hover:scale-105 md:text-sm md:px-6 md:py-3"
+          className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl hover:scale-105 active:scale-95"
+          aria-label="Add task"
         >
-          <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Add Task</span>
+          <Plus className="h-7 w-7" strokeWidth={2.5} />
         </button>
 
+        {/* Schedule Button */}
         <button
           onClick={() => onViewChange('schedule')}
           className={cn(
-            'flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-medium transition-all md:text-sm md:px-6 md:py-3',
+            'flex flex-col items-center justify-center gap-1 transition-colors',
             currentView === 'schedule'
-              ? 'bg-primary text-primary-foreground shadow-sm scale-105'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              ? 'text-blue-600 dark:text-blue-500'
+              : 'text-muted-foreground hover:text-foreground'
           )}
           aria-pressed={currentView === 'schedule'}
         >
-          <Calendar className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Schedule</span>
+          <Calendar className="h-6 w-6" />
+          <span className="text-xs font-medium">Schedule</span>
         </button>
       </div>
     </nav>

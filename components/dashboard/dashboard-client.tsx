@@ -5,6 +5,7 @@ import { Task, Profile } from '@/lib/types';
 import { TodayView } from '@/components/today/today-view';
 import { ScheduleView } from '@/components/schedule/schedule-view';
 import { BottomNav } from '@/components/navigation/bottom-nav';
+import { AppHeader } from '@/components/dashboard/app-header';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AddTaskForm } from '@/components/task/add-task-form';
 import { EditTaskDialog } from '@/components/task/edit-task-dialog';
@@ -19,11 +20,12 @@ import { cn } from '@/lib/utils';
 interface DashboardClientProps {
   initialTasks: Task[];
   profile: Profile;
+  userEmail?: string;
 }
 
 type NavView = 'today' | 'schedule';
 
-export function DashboardClient({ initialTasks, profile }: DashboardClientProps) {
+export function DashboardClient({ initialTasks, profile, userEmail }: DashboardClientProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [currentView, setCurrentView] = useState<NavView>('today');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -398,6 +400,8 @@ export function DashboardClient({ initialTasks, profile }: DashboardClientProps)
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
+      <AppHeader tasks={tasks} profile={profile} userEmail={userEmail} />
+      
       <main className="flex-1 overflow-y-auto pb-safe-nav">
         <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
           {currentView === 'today' ? (
