@@ -446,6 +446,141 @@ function testMixedTaskTypeCap() {
   console.log('✅ Mixed task type cap enforced!');
 }
 
+// Test 11: Overdue tasks are rescheduled for today
+function testOverdueTaskScheduling() {
+  console.log('\n=== Test 11: Overdue Tasks Scheduled for Today ===');
+  
+  const today = getTodayLocal();
+  const yesterday = addDaysToDateString(today, -1);
+  const tomorrow = addDaysToDateString(today, 1);
+  
+  // Create an overdue urgent+important task
+  const overdueTask = createMockTask({
+    title: 'Buy plane tickets to mexico',
+    due_date: yesterday, // Due yesterday!
+    start_date: yesterday, // Was scheduled for yesterday
+    importance: 'important',
+    urgency: 'urgent',
+    category: 'Home',
+    estimated_hours: 1,
+  });
+  
+  // Create a lower priority task also for today
+  const lowPriorityTask = createMockTask({
+    title: 'Low priority task',
+    due_date: tomorrow,
+    importance: 'not-important',
+    urgency: 'not-urgent',
+    category: 'Home',
+    estimated_hours: 1,
+  });
+  
+  const { tasks: scheduledTasks } = assignStartDates(
+    [overdueTask, lowPriorityTask],
+    mockCategoryLimits,
+    mockDailyMaxHours
+  );
+  
+  const overdueScheduled = scheduledTasks.find(t => t.title === 'Buy plane tickets to mexico');
+  const lowPriorityScheduled = scheduledTasks.find(t => t.title === 'Low priority task');
+  
+  console.log('Overdue task scheduled for:', overdueScheduled?.start_date);
+  console.log('Low priority task scheduled for:', lowPriorityScheduled?.start_date);
+  
+  // The overdue urgent task should be scheduled for today
+  console.assert(
+    overdueScheduled?.start_date === today,
+    `Overdue urgent task should be scheduled for today (${today}), got ${overdueScheduled?.start_date}`
+  );
+  
+  // The lower priority task should not bump the overdue task
+  console.assert(
+    overdueScheduled?.start_date === today || lowPriorityScheduled?.start_date !== today,
+    'Overdue task should take priority over low priority tasks'
+  );
+  
+  console.log('✅ Overdue tasks scheduled for today!');
+}
+
+// Test 12: Overdue task competes with today's tasks by priority
+function testOverdueTaskPriorityCompetition() {
+  console.log('\n=== Test 12: Overdue Task Priority Competition ===');
+  
+  const today = getTodayLocal();
+  const yesterday = addDaysToDateString(today, -1);
+  const tomorrow = addDaysToDateString(today, 1);
+  
+  // Fill today with 3 medium-priority tasks
+  const todaysTasks = [
+    createMockTask({ 
+      title: 'Today Task 1', 
+      start_date: today, 
+      due_date: today,
+      importance: 'not-important',
+      urgency: 'urgent',
+      category: 'Home', 
+      estimated_hours: 0.5 
+    }),
+    createMockTask({ 
+      title: 'Today Task 2', 
+      start_date: today, 
+      due_date: today,
+      importance: 'important',
+      urgency: 'not-urgent',
+      category: 'Work', 
+      estimated_hours: 0.5 
+    }),
+    createMockTask({ 
+      title: 'Today Task 3', 
+      start_date: today, 
+      due_date: today,
+      importance: 'not-important',
+      urgency: 'not-urgent',
+      category: 'Personal', 
+      estimated_hours: 0.5 
+    }),
+  ];
+  
+  // Create an overdue high-priority task
+  const overdueUrgentTask = createMockTask({
+    title: 'Overdue urgent task',
+    due_date: yesterday,
+    start_date: yesterday,
+    importance: 'important',
+    urgency: 'urgent',
+    category: 'Home',
+    estimated_hours: 0.5,
+  });
+  
+  const { tasks: scheduledTasks } = assignStartDates(
+    [...todaysTasks, overdueUrgentTask],
+    mockCategoryLimits,
+    mockDailyMaxHours
+  );
+  
+  const overdueScheduled = scheduledTasks.find(t => t.title === 'Overdue urgent task');
+  const todaysScheduled = scheduledTasks.filter(t => !t.completed && t.start_date === today);
+  
+  console.log('Overdue task scheduled for:', overdueScheduled?.start_date);
+  console.log('Total tasks on today:', todaysScheduled.length);
+  console.log('Today\'s tasks:', todaysScheduled.map(t => t.title).join(', '));
+  
+  // The overdue urgent+important task should get scheduled for today
+  // because it has the highest priority score
+  console.assert(
+    overdueScheduled?.start_date === today,
+    `Overdue urgent+important task should be scheduled for today, got ${overdueScheduled?.start_date}`
+  );
+  
+  // Today should have 4 tasks total
+  console.assert(
+    todaysScheduled.length === 4,
+    `Today should have 4 tasks, got ${todaysScheduled.length}`
+  );
+  
+  console.log('✅ Overdue task competes by priority!');
+}
+
 // Run all tests
 function runAllTests() {
   console.log('🧪 Running Task Scheduling Tests...\n');
@@ -462,6 +597,8 @@ function runAllTests() {
     testFallbackRespectsTaskCap();
     testCompletedTasksHoldSlots();
     testMixedTaskTypeCap();
+    testOverdueTaskScheduling();
+    testOverdueTaskPriorityCompetition();
     
     console.log('\n✅ All tests passed! 🎉');
   } catch (error) {

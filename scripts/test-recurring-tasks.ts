@@ -116,8 +116,8 @@ function testSchedulingRespectsRecurringDays() {
     }),
   ];
 
-  const scheduled = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, 14);
-  const scheduledTask = scheduled.find(t => t.title === 'Gym');
+  const schedulingResult = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, 14);
+  const scheduledTask = schedulingResult.tasks.find(t => t.title === 'Gym');
 
   if (scheduledTask?.start_date) {
     const startDate = new Date(scheduledTask.start_date);
@@ -224,10 +224,92 @@ function testRecurringEndCount() {
   }
 }
 
+// Test 5: Deduplication of recurring tasks with same start_date
+function testRecurringDeduplication() {
+  console.log('\n=== Test 5: Recurring Task Deduplication ===');
+  
+  const recurringSeriesId = crypto.randomUUID();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+  
+  // Create 3 duplicate instances of the same recurring task with same start_date
+  // Simulate the bug where all instances have the same date
+  const tasks: Task[] = [
+    createMockTask({
+      id: crypto.randomUUID(),
+      title: 'Work out',
+      category: 'Health',
+      is_recurring: true,
+      recurring_interval: 'weekly',
+      recurring_days: [0, 2, 4], // Sun, Tue, Thu
+      recurring_series_id: recurringSeriesId,
+      due_date: todayStr,
+      start_date: todayStr, // All have same date (the bug)
+      created_at: new Date(Date.now() - 3000).toISOString(), // Oldest
+      estimated_hours: 1,
+    }),
+    createMockTask({
+      id: crypto.randomUUID(),
+      title: 'Work out',
+      category: 'Health',
+      is_recurring: true,
+      recurring_interval: 'weekly',
+      recurring_days: [0, 2, 4],
+      recurring_series_id: recurringSeriesId,
+      due_date: todayStr,
+      start_date: todayStr, // Same date (duplicate)
+      created_at: new Date(Date.now() - 2000).toISOString(), // Middle
+      estimated_hours: 1,
+    }),
+    createMockTask({
+      id: crypto.randomUUID(),
+      title: 'Work out',
+      category: 'Health',
+      is_recurring: true,
+      recurring_interval: 'weekly',
+      recurring_days: [0, 2, 4],
+      recurring_series_id: recurringSeriesId,
+      due_date: todayStr,
+      start_date: todayStr, // Same date (duplicate)
+      created_at: new Date(Date.now() - 1000).toISOString(), // Newest
+      estimated_hours: 1,
+    }),
+  ];
+  
+  console.log(`Created ${tasks.length} duplicate recurring task instances`);
+  
+  const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, 14);
+  
+  // Count how many instances of this recurring series are in the result
+  const recurringInstancesInResult = result.tasks.filter(
+    t => t.recurring_series_id === recurringSeriesId && t.start_date === todayStr && !t.completed
+  );
+  
+  console.log(`After deduplication: ${recurringInstancesInResult.length} instance(s) on ${todayStr}`);
+  
+  if (recurringInstancesInResult.length === 1) {
+    console.log('✅ PASS: Duplicates removed, only 1 instance remains');
+    
+    // Verify it kept the oldest instance (earliest created_at)
+    const keptTask = recurringInstancesInResult[0];
+    const isOldest = tasks[0].id === keptTask.id;
+    
+    if (isOldest) {
+      console.log('✅ PASS: Kept the oldest instance (earliest created_at)');
+    } else {
+      console.log('⚠️  WARNING: Did not keep the oldest instance');
+    }
+  } else {
+    console.log(`❌ FAIL: Expected 1 instance, got ${recurringInstancesInResult.length}`);
+  }
+}
+
 // Run all tests
 console.log('🧪 Running Recurring Tasks Unit Tests...');
 testGenerateInitialInstances();
 testSchedulingRespectsRecurringDays();
 testNextInstanceGeneration();
 testRecurringEndCount();
+testRecurringDeduplication();
 console.log('\n✨ Tests complete!\n');

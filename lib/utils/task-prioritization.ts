@@ -236,7 +236,48 @@ export function assignStartDates(
   const completedTasks = tasks.filter(t => t.completed);
   
   // Step 2: Keep recurring tasks - they already have start_date = due_date
-  const recurringTasks = tasks.filter(t => !t.completed && t.is_recurring);
+  const rawRecurringTasks = tasks.filter(t => !t.completed && t.is_recurring);
+  
+  // Step 2a: Deduplicate recurring tasks with the same start_date and recurring_series_id
+  // This prevents multiple instances of the same recurring series from appearing on the same day
+  const recurringTasksMap = new Map<string, Task>();
+  const duplicatesFound: string[] = [];
+  
+  for (const task of rawRecurringTasks) {
+    if (!task.start_date || !task.recurring_series_id) {
+      recurringTasksMap.set(task.id, task);
+      continue;
+    }
+    
+    // Create a unique key for this date + series combination
+    const key = `${task.start_date}:${task.recurring_series_id}`;
+    
+    if (recurringTasksMap.has(key)) {
+      // Duplicate found - keep the one with the earlier created_at (first instance)
+      const existing = recurringTasksMap.get(key)!;
+      const existingCreatedAt = new Date(existing.created_at).getTime();
+      const currentCreatedAt = new Date(task.created_at).getTime();
+      
+      if (currentCreatedAt < existingCreatedAt) {
+        // Current task is older, replace the existing one
+        duplicatesFound.push(`${task.title} on ${task.start_date} (kept older instance)`);
+        recurringTasksMap.set(key, task);
+      } else {
+        duplicatesFound.push(`${task.title} on ${task.start_date} (removed duplicate)`);
+      }
+    } else {
+      recurringTasksMap.set(key, task);
+    }
+  }
+  
+  const recurringTasks = Array.from(recurringTasksMap.values());
+  
+  if (duplicatesFound.length > 0) {
+    console.warn('[v1] Found and removed', duplicatesFound.length, 'duplicate recurring task instances:');
+    duplicatesFound.forEach(msg => console.warn('  -', msg));
+  }
+  
+  console.log('[v1] Recurring tasks after deduplication:', recurringTasks.length, '(was', rawRecurringTasks.length, ')');
   
   // Step 3: Get ALL non-recurring tasks (both complete and incomplete) to track counts,
   // but only incomplete tasks will be rescheduled
@@ -300,7 +341,11 @@ export function assignStartDates(
     // Calculate max days to look ahead (up to due_date or lookAheadDays)
     const maxDayOffset = task.due_date 
       ? Math.min(
-          Math.max(0, calculateDaysUntil(todayStr, task.due_date) + 1), // +1 to include due_date
+          // If overdue, schedule from today onwards for full lookAheadDays
+          // If not overdue, schedule from today up to due_date
+          calculateDaysUntil(todayStr, task.due_date) < 0 
+            ? lookAheadDays 
+            : Math.max(0, calculateDaysUntil(todayStr, task.due_date) + 1), // +1 to include due_date
           lookAheadDays
         )
       : lookAheadDays;
