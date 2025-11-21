@@ -46,10 +46,8 @@ export function HowItWorksSection() {
 
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-            {steps.map((step, index) => {
+            {steps.map((step) => {
               const Icon = step.icon;
-              const isLastInRow = (index + 1) % 2 === 0;
-              const isNotLastStep = index < steps.length - 1;
               
               return (
                 <div key={step.number} className="relative">
@@ -69,25 +67,6 @@ export function HowItWorksSection() {
                       {step.description}
                     </p>
                   </div>
-
-                  {/* Connection arrow - only show on desktop between steps */}
-                  {isNotLastStep && (
-                    <div className="hidden md:block absolute top-1/2 -translate-y-1/2 z-10">
-                      {!isLastInRow ? (
-                        // Horizontal arrow to the right
-                        <div className="absolute left-full ml-4 lg:ml-6">
-                          <div className="w-8 lg:w-12 h-0.5 bg-linear-to-r from-yellow-300 to-yellow-500 dark:from-yellow-700 dark:to-yellow-500" />
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-4 border-l-yellow-500 border-y-4 border-y-transparent" />
-                        </div>
-                      ) : (
-                        // Diagonal arrow down-left
-                        <div className="absolute left-1/2 top-full mt-4 -translate-x-1/2">
-                          <div className="w-0.5 h-8 bg-linear-to-b from-yellow-300 to-yellow-500 dark:from-yellow-700 dark:to-yellow-500" />
-                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 border-t-4 border-t-yellow-500 border-x-4 border-x-transparent" />
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               );
             })}
