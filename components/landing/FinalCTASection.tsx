@@ -27,13 +27,13 @@ export function FinalCTASection() {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white">
+    <section className="py-16 md:py-24 bg-linear-to-br from-yellow-500 to-orange-500 text-slate-900">
       <div className="container mx-auto px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-balance">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             Ready to reduce your stress and accomplish what matters?
           </h2>
-          <p className="text-lg md:text-xl text-indigo-100 mb-10">
+          <p className="text-lg md:text-xl text-slate-800 mb-10">
             Join thousands of people who are focusing on their top priorities
           </p>
 
@@ -42,7 +42,7 @@ export function FinalCTASection() {
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <div className="flex-1">
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input
                     type="email"
                     placeholder="Enter your email"
@@ -51,20 +51,20 @@ export function FinalCTASection() {
                       setEmail(e.target.value);
                       setIsValidEmail(true);
                     }}
-                    className={`pl-10 h-12 bg-white text-gray-900 placeholder:text-gray-500 ${
+                    className={`pl-10 h-12 bg-white text-slate-900 placeholder:text-slate-500 border-slate-300 ${
                       !isValidEmail ? 'border-red-500' : ''
                     }`}
                     required
                   />
                 </div>
                 {!isValidEmail && (
-                  <p className="text-xs text-red-200 mt-1 text-left">Please enter a valid email address</p>
+                  <p className="text-xs text-red-700 mt-1 text-left">Please enter a valid email address</p>
                 )}
               </div>
               <Button 
                 type="submit"
                 size="lg" 
-                className="bg-white text-indigo-600 hover:bg-gray-100 h-12 px-8 whitespace-nowrap"
+                className="bg-slate-900 text-white hover:bg-slate-800 h-12 px-8 whitespace-nowrap font-medium"
               >
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -75,15 +75,15 @@ export function FinalCTASection() {
           {/* Alternative: Sign up with Google */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex-1 h-px bg-indigo-400/30" />
-              <span className="text-sm text-indigo-200">or</span>
-              <div className="flex-1 h-px bg-indigo-400/30" />
+              <div className="flex-1 h-px bg-slate-800/30" />
+              <span className="text-sm text-slate-800">or</span>
+              <div className="flex-1 h-px bg-slate-800/30" />
             </div>
             <Link href="/auth/sign-up">
               <Button 
                 size="lg"
                 variant="outline"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-12 px-8"
+                className="bg-white/90 border-slate-300 text-slate-900 hover:bg-white h-12 px-8 font-medium"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path
@@ -109,17 +109,17 @@ export function FinalCTASection() {
           </div>
 
           {/* Trust signals */}
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-indigo-100">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-800">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
               <span>No credit card required</span>
             </div>
-            <div className="hidden sm:block w-1 h-1 rounded-full bg-indigo-300" />
+            <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-700" />
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
               <span>Free forever</span>
             </div>
-            <div className="hidden sm:block w-1 h-1 rounded-full bg-indigo-300" />
+            <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-700" />
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
               <span>Takes 60 seconds</span>
@@ -130,4 +130,3 @@ export function FinalCTASection() {
     </section>
   );
 }
-

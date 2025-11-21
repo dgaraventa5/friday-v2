@@ -70,10 +70,10 @@ export function SelectTaskDialog({
                       </span>
                     )}
                     <span className="px-2 py-0.5 bg-muted rounded-full text-xs">
-                      {task.quadrant === 'urgent-important' && 'High Priority'}
-                      {task.quadrant === 'not-urgent-important' && 'Important'}
+                      {task.quadrant === 'urgent-important' && 'Critical'}
+                      {task.quadrant === 'not-urgent-important' && 'Plan'}
                       {task.quadrant === 'urgent-not-important' && 'Urgent'}
-                      {task.quadrant === 'not-urgent-not-important' && 'Low Priority'}
+                      {task.quadrant === 'not-urgent-not-important' && 'Backlog'}
                     </span>
                   </div>
                 </button>

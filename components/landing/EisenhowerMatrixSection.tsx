@@ -6,7 +6,7 @@ import { AlertCircle, Calendar, Users, Trash2 } from "lucide-react";
 const quadrants = [
   {
     id: "q1",
-    label: "Q1: Do First",
+    label: "Q1: Critical",
     title: "Urgent + Important",
     color: "red",
     bgClass: "bg-red-50 dark:bg-red-950/30",
@@ -22,12 +22,12 @@ const quadrants = [
   },
   {
     id: "q2",
-    label: "Q2: Schedule",
+    label: "Q2: Plan",
     title: "Important, Not Urgent",
-    color: "green",
-    bgClass: "bg-green-50 dark:bg-green-950/30",
-    borderClass: "border-green-500",
-    textClass: "text-green-700 dark:text-green-400",
+    color: "blue",
+    bgClass: "bg-blue-50 dark:bg-blue-950/30",
+    borderClass: "border-blue-500",
+    textClass: "text-blue-700 dark:text-blue-400",
     icon: Calendar,
     examples: [
       "Strategic planning",
@@ -38,12 +38,12 @@ const quadrants = [
   },
   {
     id: "q3",
-    label: "Q3: Delegate",
+    label: "Q3: Urgent",
     title: "Urgent, Not Important",
-    color: "yellow",
-    bgClass: "bg-yellow-50 dark:bg-yellow-950/30",
-    borderClass: "border-yellow-500",
-    textClass: "text-yellow-700 dark:text-yellow-400",
+    color: "amber",
+    bgClass: "bg-amber-50 dark:bg-amber-950/30",
+    borderClass: "border-amber-500",
+    textClass: "text-amber-700 dark:text-amber-400",
     icon: Users,
     examples: [
       "Some emails and calls",
@@ -54,12 +54,12 @@ const quadrants = [
   },
   {
     id: "q4",
-    label: "Q4: Eliminate",
+    label: "Q4: Backlog",
     title: "Neither Urgent nor Important",
-    color: "gray",
-    bgClass: "bg-gray-50 dark:bg-gray-950/30",
-    borderClass: "border-gray-400",
-    textClass: "text-gray-700 dark:text-gray-400",
+    color: "slate",
+    bgClass: "bg-slate-50 dark:bg-slate-950/30",
+    borderClass: "border-slate-400",
+    textClass: "text-slate-700 dark:text-slate-400",
     icon: Trash2,
     examples: [
       "Mindless scrolling",
@@ -74,18 +74,18 @@ export function EisenhowerMatrixSection() {
   const [hoveredQuadrant, setHoveredQuadrant] = useState<string | null>(null);
 
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
+    <section className="py-16 md:py-24 bg-white dark:bg-slate-800">
       <div className="container mx-auto px-6">
         <div className="max-w-3xl mx-auto text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-800 dark:text-slate-100">
             Built on a proven framework
           </h2>
-          <p className="text-lg text-muted-foreground mb-2">
+          <p className="text-lg text-slate-600 dark:text-slate-400 mb-2">
             Friday uses the Eisenhower Matrix, the prioritization method used by presidents, CEOs, and top performers
           </p>
-          <blockquote className="text-sm italic text-muted-foreground border-l-2 border-indigo-600 pl-4 mt-6 max-w-2xl mx-auto text-left">
+          <blockquote className="text-sm italic text-slate-600 dark:text-slate-400 border-l-2 border-yellow-500 pl-4 mt-6 max-w-2xl mx-auto text-left">
             "What is important is seldom urgent, and what is urgent is seldom important."
-            <footer className="text-xs mt-2 not-italic">— Dwight D. Eisenhower</footer>
+            <footer className="text-xs mt-2 not-italic text-slate-500 dark:text-slate-500">— Dwight D. Eisenhower</footer>
           </blockquote>
         </div>
 
@@ -133,7 +133,7 @@ export function EisenhowerMatrixSection() {
                     {quadrant.examples.map((example, i) => (
                       <div 
                         key={i}
-                        className="text-xs p-2 bg-white/50 dark:bg-black/20 rounded backdrop-blur-sm"
+                        className="text-xs p-2 bg-white/50 dark:bg-black/20 rounded backdrop-blur-sm text-slate-700 dark:text-slate-300"
                       >
                         • {example}
                       </div>
@@ -145,17 +145,17 @@ export function EisenhowerMatrixSection() {
           </div>
 
           {/* How Friday uses this */}
-          <div className="bg-card rounded-2xl border shadow-lg p-6 md:p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-950/30 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 md:p-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-4">
               <div className="text-2xl">🎯</div>
             </div>
-            <h3 className="text-xl font-bold mb-3">
+            <h3 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-100">
               How Friday uses this framework
             </h3>
-            <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              When you add tasks, you mark them as <span className="font-semibold">important</span> or <span className="font-semibold">urgent</span>. 
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+              When you add tasks, you mark them as <span className="font-semibold text-slate-800 dark:text-slate-100">important</span> or <span className="font-semibold text-slate-800 dark:text-slate-100">urgent</span>. 
               Friday's algorithm automatically categorizes them into the right quadrant and prioritizes your top 4 tasks each day, 
-              focusing on Q1 (Do First) and Q2 (Schedule) items that drive real results.
+              focusing on Q1 (Critical) and Q2 (Plan) items that drive real results.
             </p>
           </div>
         </div>
@@ -163,4 +163,3 @@ export function EisenhowerMatrixSection() {
     </section>
   );
 }
-

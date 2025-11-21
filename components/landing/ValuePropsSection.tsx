@@ -1,5 +1,4 @@
 import { Target, FolderKanban, Sparkles } from "lucide-react";
-import Image from "next/image";
 
 const valueProps = [
   {
@@ -43,47 +42,47 @@ const valueProps = [
 const MatrixVisual = () => (
   <div className="relative w-full h-full min-h-[300px] flex items-center justify-center p-4">
     <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-      {/* Q1 - Do First */}
+      {/* Q1 - Critical */}
       <div className="bg-red-50 dark:bg-red-950/30 border-2 border-red-500 rounded-lg p-4 transition-transform hover:scale-105">
-        <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2">Q1: DO FIRST</div>
+        <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2">Q1: CRITICAL</div>
         <div className="text-xs text-red-600 dark:text-red-400 mb-1">Urgent + Important</div>
         <div className="mt-2 space-y-1">
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Fix production bug</div>
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Client deadline</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Fix production bug</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Client deadline</div>
         </div>
       </div>
 
-      {/* Q2 - Schedule */}
-      <div className="bg-green-50 dark:bg-green-950/30 border-2 border-green-500 rounded-lg p-4 transition-transform hover:scale-105">
-        <div className="text-xs font-semibold text-green-700 dark:text-green-400 mb-2">Q2: SCHEDULE</div>
-        <div className="text-xs text-green-600 dark:text-green-400 mb-1">Important, Not Urgent</div>
+      {/* Q2 - Plan */}
+      <div className="bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500 rounded-lg p-4 transition-transform hover:scale-105">
+        <div className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2">Q2: PLAN</div>
+        <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">Important, Not Urgent</div>
         <div className="mt-2 space-y-1">
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Plan Q2 strategy</div>
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Learn new skill</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Plan Q2 strategy</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Learn new skill</div>
         </div>
       </div>
 
-      {/* Q3 - Delegate */}
-      <div className="bg-yellow-50 dark:bg-yellow-950/30 border-2 border-yellow-500 rounded-lg p-4 transition-transform hover:scale-105">
-        <div className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 mb-2">Q3: DELEGATE</div>
-        <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-1">Urgent, Not Important</div>
+      {/* Q3 - Urgent */}
+      <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-500 rounded-lg p-4 transition-transform hover:scale-105">
+        <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">Q3: URGENT</div>
+        <div className="text-xs text-amber-600 dark:text-amber-400 mb-1">Urgent, Not Important</div>
         <div className="mt-2 space-y-1">
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Meeting request</div>
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Email responses</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Meeting request</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Email responses</div>
         </div>
       </div>
 
-      {/* Q4 - Eliminate */}
-      <div className="bg-gray-50 dark:bg-gray-950/30 border-2 border-gray-400 rounded-lg p-4 transition-transform hover:scale-105">
-        <div className="text-xs font-semibold text-gray-700 dark:text-gray-400 mb-2">Q4: ELIMINATE</div>
-        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Neither Urgent nor Important</div>
+      {/* Q4 - Backlog */}
+      <div className="bg-slate-50 dark:bg-slate-950/30 border-2 border-slate-400 rounded-lg p-4 transition-transform hover:scale-105">
+        <div className="text-xs font-semibold text-slate-700 dark:text-slate-400 mb-2">Q4: BACKLOG</div>
+        <div className="text-xs text-slate-600 dark:text-slate-400 mb-1">Neither Urgent nor Important</div>
         <div className="mt-2 space-y-1">
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Busy work</div>
-          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">Time wasters</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Busy work</div>
+          <div className="text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 text-slate-700 dark:text-slate-300">Time wasters</div>
         </div>
       </div>
     </div>
-    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs px-4 py-2 rounded-full shadow-lg whitespace-nowrap">
+    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-slate-900 text-xs px-4 py-2 rounded-full shadow-lg whitespace-nowrap font-medium">
       → Your Top 4 Tasks
     </div>
   </div>
@@ -92,40 +91,40 @@ const MatrixVisual = () => (
 const CategoriesVisual = () => (
   <div className="relative w-full h-full min-h-[300px] flex items-center justify-center p-6">
     <div className="space-y-4 w-full max-w-md">
-      <div className="bg-card border rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium">
+          <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 font-medium">
             💼 Work
           </span>
-          <span className="text-xs text-muted-foreground">3/4 today</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">3/4 today</span>
         </div>
         <div className="space-y-2">
-          <div className="text-sm p-2 bg-muted/30 rounded">Review proposals</div>
-          <div className="text-sm p-2 bg-muted/30 rounded">Team standup</div>
+          <div className="text-sm p-2 bg-slate-50 dark:bg-slate-900 rounded text-slate-700 dark:text-slate-300">Review proposals</div>
+          <div className="text-sm p-2 bg-slate-50 dark:bg-slate-900 rounded text-slate-700 dark:text-slate-300">Team standup</div>
         </div>
       </div>
 
-      <div className="bg-card border rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium">
+          <span className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 font-medium">
             🏠 Personal
           </span>
-          <span className="text-xs text-muted-foreground">1/2 today</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">1/2 today</span>
         </div>
         <div className="space-y-2">
-          <div className="text-sm p-2 bg-muted/30 rounded">Grocery shopping</div>
+          <div className="text-sm p-2 bg-slate-50 dark:bg-slate-900 rounded text-slate-700 dark:text-slate-300">Grocery shopping</div>
         </div>
       </div>
 
-      <div className="bg-card border rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs px-2 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium">
+          <span className="text-xs px-2 py-1 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400 font-medium">
             ❤️ Health
           </span>
-          <span className="text-xs text-muted-foreground">0/1 today</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">0/1 today</span>
         </div>
         <div className="space-y-2">
-          <div className="text-sm p-2 bg-muted/30 rounded text-muted-foreground">Morning workout</div>
+          <div className="text-sm p-2 bg-slate-50 dark:bg-slate-900 rounded text-slate-500 dark:text-slate-400">Morning workout</div>
         </div>
       </div>
     </div>
@@ -134,45 +133,47 @@ const CategoriesVisual = () => (
 
 const InterfaceVisual = () => (
   <div className="relative w-full h-full min-h-[300px] flex items-center justify-center p-6">
-    <div className="bg-gradient-to-br from-muted/50 to-muted rounded-2xl p-6 w-full max-w-md shadow-2xl border">
+    <div className="bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg" />
-          <span className="font-semibold">Friday</span>
+          <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
+            <span className="text-slate-900 font-bold text-sm">F</span>
+          </div>
+          <span className="font-semibold text-slate-800 dark:text-slate-100">Friday</span>
         </div>
-        <div className="flex gap-2">
-          <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-          <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-          <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+        {/* Streak indicator */}
+        <div className="flex items-center gap-1 bg-linear-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 px-2 py-1 rounded-full border border-orange-200 dark:border-orange-800">
+          <span className="text-base">🔥</span>
+          <span className="text-xs font-bold text-orange-500">7</span>
         </div>
       </div>
       
       <div className="space-y-3">
-        <div className="h-16 bg-card rounded-lg border shadow-sm flex items-center px-4">
-          <div className="w-4 h-4 rounded border-2 mr-3" />
+        <div className="h-16 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm flex items-center px-4">
+          <div className="w-4 h-4 rounded border-2 border-slate-300 dark:border-slate-500 mr-3" />
           <div className="flex-1">
-            <div className="h-3 bg-muted-foreground/20 rounded w-2/3 mb-2" />
-            <div className="h-2 bg-muted-foreground/10 rounded w-1/2" />
+            <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-2/3 mb-2" />
+            <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded w-1/2" />
           </div>
         </div>
-        <div className="h-16 bg-card rounded-lg border shadow-sm flex items-center px-4">
-          <div className="w-4 h-4 rounded border-2 mr-3" />
+        <div className="h-16 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm flex items-center px-4">
+          <div className="w-4 h-4 rounded border-2 border-slate-300 dark:border-slate-500 mr-3" />
           <div className="flex-1">
-            <div className="h-3 bg-muted-foreground/20 rounded w-3/4 mb-2" />
-            <div className="h-2 bg-muted-foreground/10 rounded w-1/3" />
+            <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-3/4 mb-2" />
+            <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded w-1/3" />
           </div>
         </div>
-        <div className="h-16 bg-card rounded-lg border shadow-sm flex items-center px-4">
-          <div className="w-4 h-4 rounded border-2 mr-3" />
+        <div className="h-16 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm flex items-center px-4">
+          <div className="w-4 h-4 rounded border-2 border-slate-300 dark:border-slate-500 mr-3" />
           <div className="flex-1">
-            <div className="h-3 bg-muted-foreground/20 rounded w-1/2 mb-2" />
-            <div className="h-2 bg-muted-foreground/10 rounded w-2/3" />
+            <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-1/2 mb-2" />
+            <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded w-2/3" />
           </div>
         </div>
       </div>
 
-      <div className="mt-6 pt-4 border-t text-center">
-        <div className="text-xs text-muted-foreground">Clean. Simple. Focused.</div>
+      <div className="mt-6 pt-4 border-t border-slate-300 dark:border-slate-600 text-center">
+        <div className="text-xs text-slate-600 dark:text-slate-400">Clean. Simple. Focused.</div>
       </div>
     </div>
   </div>
@@ -180,13 +181,13 @@ const InterfaceVisual = () => (
 
 export function ValuePropsSection() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-16 md:py-24 bg-slate-50 dark:bg-slate-900">
       <div className="container mx-auto px-6">
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-800 dark:text-slate-100">
             How Friday is different
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-slate-600 dark:text-slate-400">
             Built for people who want to achieve more without the overwhelm
           </p>
         </div>
@@ -205,17 +206,17 @@ export function ValuePropsSection() {
               >
                 {/* Text content */}
                 <div className={isReversed ? 'lg:col-start-2' : ''}>
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-950/30 mb-6">
-                    <Icon className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 mb-6">
+                    <Icon className="h-8 w-8 text-yellow-500" />
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold mb-6 text-balance">
+                  <h3 className="text-2xl md:text-3xl font-bold mb-6 text-slate-800 dark:text-slate-100">
                     {prop.title}
                   </h3>
                   <ul className="space-y-4">
                     {prop.points.map((point, i) => (
                       <li key={i} className="flex gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-2 flex-shrink-0" />
-                        <p className="text-muted-foreground leading-relaxed">{point}</p>
+                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-2 shrink-0" />
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{point}</p>
                       </li>
                     ))}
                   </ul>
@@ -223,7 +224,7 @@ export function ValuePropsSection() {
 
                 {/* Visual */}
                 <div className={isReversed ? 'lg:col-start-1 lg:row-start-1' : ''}>
-                  <div className="bg-gradient-to-br from-muted/30 to-muted/50 rounded-2xl border shadow-xl overflow-hidden">
+                  <div className="bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
                     {prop.visual === "matrix" && <MatrixVisual />}
                     {prop.visual === "categories" && <CategoriesVisual />}
                     {prop.visual === "interface" && <InterfaceVisual />}
@@ -237,4 +238,3 @@ export function ValuePropsSection() {
     </section>
   );
 }
-

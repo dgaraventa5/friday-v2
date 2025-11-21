@@ -22,22 +22,22 @@ interface TaskCardProps {
 const QUADRANT_STYLES = {
   'urgent-important': {
     badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    label: 'Do First',
+    label: 'Critical',
     border: 'border-l-red-500',
   },
   'not-urgent-important': {
     badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    label: 'Schedule',
+    label: 'Plan',
     border: 'border-l-blue-500',
   },
   'urgent-not-important': {
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    label: 'Delegate',
+    label: 'Urgent',
     border: 'border-l-amber-500',
   },
   'not-urgent-not-important': {
     badge: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
-    label: 'Eliminate',
+    label: 'Backlog',
     border: 'border-l-slate-500',
   },
 };
