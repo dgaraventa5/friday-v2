@@ -93,7 +93,7 @@ export function TaskCardExamples() {
             <h4 className="font-medium text-slate-800 dark:text-slate-100">Fix critical bug</h4>
             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
               <span className="px-2 py-0.5 bg-red-50 text-red-700 rounded-full text-xs font-medium">
-                Do First
+                Critical
               </span>
               <span>Due today</span>
             </div>
@@ -109,7 +109,7 @@ export function TaskCardExamples() {
             <h4 className="font-medium text-slate-800 dark:text-slate-100">Plan Q1 strategy</h4>
             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
               <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                Schedule
+                Plan
               </span>
               <span>Due next week</span>
             </div>
@@ -125,7 +125,7 @@ export function TaskCardExamples() {
             <h4 className="font-medium text-slate-800 dark:text-slate-100">Reply to emails</h4>
             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
               <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
-                Delegate
+                Urgent
               </span>
               <span>Due tomorrow</span>
             </div>
@@ -141,7 +141,7 @@ export function TaskCardExamples() {
             <h4 className="font-medium text-slate-800 dark:text-slate-100">Organize desk</h4>
             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
               <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
-                Eliminate
+                Backlog
               </span>
               <span>Someday</span>
             </div>

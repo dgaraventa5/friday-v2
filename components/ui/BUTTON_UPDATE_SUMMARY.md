@@ -12,9 +12,9 @@ The Button component has been successfully updated to match the Friday design sy
 ```tsx
 <Button>Add Task</Button>
 ```
-- **Background**: Yellow-500 (#F59E0B)
+- **Background**: Yellow-500 (#FDE047) - Butter yellow
 - **Text**: Slate-900 (black)
-- **Hover**: Yellow-400 (lighter)
+- **Hover**: Yellow-400 (#FEF08A) - Lighter butter yellow
 - **Shadow**: Subtle shadow-sm
 - **Use case**: Main CTAs (use sparingly!)
 

@@ -268,7 +268,7 @@ export function ButtonDemo() {
         <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
           <li className="flex items-center gap-2">
             <span className="text-green-500">✓</span>
-            Yellow-500 primary color (#F59E0B)
+            Yellow-500 butter yellow primary (#FDE047)
           </li>
           <li className="flex items-center gap-2">
             <span className="text-green-500">✓</span>

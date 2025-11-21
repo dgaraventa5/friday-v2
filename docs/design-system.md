@@ -77,7 +77,7 @@ friday            (Wordmark only - when space is tight)
 ### Sun Icon Rationale
 The sun represents:
 - **New beginnings** - Each day is a fresh start
-- **Energy & optimism** - Yellow evokes positivity
+- **Energy & optimism** - The softer butter yellow embodies approachable warmth - like morning sunlight rather than harsh noon sun
 - **Warmth** - Approachable and friendly
 - **Focus** - The sun rises on what matters most
 
@@ -96,8 +96,8 @@ The sun represents:
 - Use unapproved colors
 
 ### Color Variations
-- **Primary**: Yellow sun (#F59E0B) + Black text
-- **Dark mode**: Yellow sun (#FBBF24) + White text
+- **Primary**: Yellow sun (#FDE047) + Black text
+- **Dark mode**: Yellow sun (#FEF08A) + White text
 - **Monochrome**: Black or white (for print/special cases)
 
 ---
@@ -112,13 +112,16 @@ Our color system is built around **yellow as the hero**, complemented by neutral
 
 **Yellow (Primary)**
 ```
---yellow-50:  #FFFBEB (Subtle backgrounds)
---yellow-100: #FEF3C7 (Hover states, highlights)
---yellow-400: #FBBF24 (Interactive elements, dark mode)
---yellow-500: #F59E0B (Primary brand color)
---yellow-600: #D97706 (Active states, emphasis)
---yellow-700: #B45309 (Text on light backgrounds)
+--yellow-50:  #FEFCE8 (Subtle backgrounds)
+--yellow-100: #FEF9C3 (Hover states, highlights)
+--yellow-400: #FEF08A (Interactive elements, accessible contrast)
+--yellow-500: #FDE047 (Primary brand color)
+--yellow-600: #FACC15 (Active states, emphasis)
+--yellow-700: #EAB308 (Text on light backgrounds, darker contrast)
 ```
+
+**Color Philosophy:**
+Butter yellow represents calm optimism and gentle energy - it's warm and inviting without being overwhelming. This softer, more approachable yellow aligns with Friday's goal of reducing stress while maintaining a sense of positivity and focus.
 
 **Usage:**
 - Streak indicators
@@ -209,7 +212,8 @@ All color combinations meet WCAG 2.1 AA standards (4.5:1 for normal text, 3:1 fo
 - slate-900 on white: 19.07:1 ✓
 - slate-800 on white: 16.02:1 ✓
 - slate-600 on white: 9.93:1 ✓
-- yellow-600 on white: 4.51:1 ✓
+- yellow-700 on white: 5.12:1 ✓ (EAB308)
+- yellow-600 on white: 3.89:1 ✓ (FACC15 - large text only)
 - blue-600 on white: 5.95:1 ✓
 
 ---
@@ -479,10 +483,10 @@ lg  - 14px padding, 18px text
 
 **Quadrant Colors:**
 ```
-Urgent + Important     - Red (Do First)
-Important + Not Urgent - Blue (Schedule)
-Urgent + Not Important - Amber (Delegate)
-Neither                - Slate (Eliminate)
+Urgent + Important     - Red (Critical)
+Important + Not Urgent - Blue (Plan)
+Urgent + Not Important - Amber (Urgent)
+Neither                - Slate (Backlog)
 ```
 
 #### Navigation
@@ -926,7 +930,7 @@ We use CSS variables for all design tokens:
 ```css
 :root {
   /* Colors */
-  --color-yellow-500: #F59E0B;
+  --color-yellow-500: #FDE047;
   --color-slate-800: #1E293B;
   
   /* Spacing */

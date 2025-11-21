@@ -32,13 +32,13 @@
      FRIDAY DESIGN SYSTEM - LIGHT MODE
      ============================================ */
   
-  /* Yellow - Primary Brand Color */
-  --yellow-50: #FFFBEB;
-  --yellow-100: #FEF3C7;
-  --yellow-400: #FBBF24;
-  --yellow-500: #F59E0B;
-  --yellow-600: #D97706;
-  --yellow-700: #B45309;
+  /* Yellow - Primary Brand Color (Butter Yellow) */
+  --yellow-50: #FEFCE8;
+  --yellow-100: #FEF9C3;
+  --yellow-400: #FEF08A;
+  --yellow-500: #FDE047;
+  --yellow-600: #FACC15;
+  --yellow-700: #EAB308;
   
   /* Slate - Neutral Palette */
   --slate-50: #F8FAFC;
@@ -142,9 +142,9 @@
      FRIDAY DESIGN SYSTEM - DARK MODE
      ============================================ */
   
-  /* Yellow - Adjusted for dark mode */
-  --yellow-400: #FBBF24;
-  --yellow-500: #F59E0B;
+  /* Yellow - Adjusted for dark mode (Butter Yellow) */
+  --yellow-400: #FEF08A;
+  --yellow-500: #FDE047;
   
   /* Slate - Inverted for dark mode */
   --slate-50: #0F172A;
@@ -196,13 +196,13 @@
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
   --font-mono: 'Geist Mono', 'SF Mono', Monaco, Consolas, monospace;
   
-  /* Friday Brand Colors - Yellow (Primary) */
-  --color-yellow-50: #FFFBEB;
-  --color-yellow-100: #FEF3C7;
-  --color-yellow-400: #FBBF24;
-  --color-yellow-500: #F59E0B;
-  --color-yellow-600: #D97706;
-  --color-yellow-700: #B45309;
+  /* Friday Brand Colors - Yellow (Primary - Butter Yellow) */
+  --color-yellow-50: #FEFCE8;
+  --color-yellow-100: #FEF9C3;
+  --color-yellow-400: #FEF08A;
+  --color-yellow-500: #FDE047;
+  --color-yellow-600: #FACC15;
+  --color-yellow-700: #EAB308;
   
   /* Slate (Primary Neutral) */
   --color-slate-50: #F8FAFC;
@@ -236,9 +236,9 @@
   --color-orange-500: #F97316;
   --color-orange-600: #EA580C;
   
-  /* Amber (For quadrants) */
-  --color-amber-500: #F59E0B;
-  --color-amber-600: #D97706;
+  /* Amber (For quadrants - uses butter yellow) */
+  --color-amber-500: #FDE047;
+  --color-amber-600: #FACC15;
   
   /* Semantic Colors */
   --color-background: var(--background);

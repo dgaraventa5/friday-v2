@@ -94,7 +94,7 @@ export function AuthForm() {
           disabled={isLoading}
           className="h-12 text-base font-medium rounded-xl"
           style={{
-            backgroundColor: "#D97706",
+            backgroundColor: "#FACC15",
             color: "#FFFFFF",
           }}
         >

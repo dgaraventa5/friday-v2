@@ -48,13 +48,13 @@ export default function AuthSuccessPage() {
                   width="60"
                   height="40"
                   rx="4"
-                  stroke="#F59E0B"
+                  stroke="#FDE047"
                   strokeWidth="2"
-                  fill="#FEF3C7"
+                  fill="#FEF9C3"
                 />
                 <path
                   d="M10 24L40 44L70 24"
-                  stroke="#F59E0B"
+                  stroke="#FDE047"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"

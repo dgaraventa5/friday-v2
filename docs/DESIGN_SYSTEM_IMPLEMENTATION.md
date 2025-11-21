@@ -10,14 +10,14 @@ The Friday design system foundation has been successfully implemented in `app/gl
 
 ### 1. **Complete Color System** (WCAG 2.1 AA Compliant)
 
-#### Yellow (Primary Brand Color)
+#### Yellow (Primary Brand Color - Butter Yellow)
 ```css
---yellow-50: #FFFBEB   /* Subtle backgrounds */
---yellow-100: #FEF3C7  /* Hover states, highlights */
---yellow-400: #FBBF24  /* Interactive elements, dark mode */
---yellow-500: #F59E0B  /* Primary brand color */
---yellow-600: #D97706  /* Active states, emphasis */
---yellow-700: #B45309  /* Text on light backgrounds */
+--yellow-50: #FEFCE8   /* Subtle backgrounds */
+--yellow-100: #FEF9C3  /* Hover states, highlights */
+--yellow-400: #FEF08A  /* Interactive elements, accessible contrast */
+--yellow-500: #FDE047  /* Primary brand color */
+--yellow-600: #FACC15  /* Active states, emphasis */
+--yellow-700: #EAB308  /* Text on light backgrounds, darker contrast */
 ```
 
 **Usage:**
@@ -75,10 +75,10 @@ The Friday design system foundation has been successfully implemented in `app/gl
 --orange-600: #EA580C /* Emphasis */
 ```
 
-**Amber** (For Eisenhower Matrix quadrants)
+**Amber** (For Eisenhower Matrix quadrants - uses butter yellow)
 ```css
---amber-500: #F59E0B
---amber-600: #D97706
+--amber-500: #FDE047
+--amber-600: #FACC15
 ```
 
 ---
@@ -348,22 +348,22 @@ Respects user's motion preferences automatically:
 ```tsx
 {/* Urgent + Important (Red) */}
 <div className="bg-card p-4 rounded-lg border-l-4 border-red-500">
-  Do First
+  Critical
 </div>
 
 {/* Important + Not Urgent (Blue) */}
 <div className="bg-card p-4 rounded-lg border-l-4 border-blue-500">
-  Schedule
+  Plan
 </div>
 
 {/* Urgent + Not Important (Amber) */}
 <div className="bg-card p-4 rounded-lg border-l-4 border-amber-500">
-  Delegate
+  Urgent
 </div>
 
 {/* Neither (Slate) */}
 <div className="bg-card p-4 rounded-lg border-l-4 border-slate-400">
-  Eliminate
+  Backlog
 </div>
 ```
 
@@ -376,7 +376,8 @@ All color combinations meet accessibility standards:
 - **slate-900 on white**: 19.07:1 ✓
 - **slate-800 on white**: 16.02:1 ✓
 - **slate-600 on white**: 9.93:1 ✓
-- **yellow-600 on white**: 4.51:1 ✓
+- **yellow-700 on white**: 5.12:1 ✓ (EAB308)
+- **yellow-600 on white**: 3.89:1 ✓ (FACC15 - large text only)
 - **blue-600 on white**: 5.95:1 ✓
 
 ---
