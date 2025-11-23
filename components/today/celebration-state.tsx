@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 
 interface CelebrationStateProps {
@@ -17,7 +20,13 @@ export function CelebrationState({
   completedCount,
   baselineCount = 4,
 }: CelebrationStateProps) {
-  const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  // Use state to avoid hydration mismatch from Math.random()
+  const [quote, setQuote] = useState(QUOTES[0]);
+  
+  useEffect(() => {
+    // Set random quote only on client side after mount
+    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+  }, []);
   
   const isExtraCredit = completedCount > baselineCount;
   const title = isExtraCredit

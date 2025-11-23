@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { Task, Profile } from '@/lib/types';
-import { getTodaysFocusTasks } from '@/lib/utils/task-prioritization';
+import { getTodaysFocusTasks, addPriorityScores } from '@/lib/utils/task-prioritization';
 import { TaskCard } from './task-card';
 import { CelebrationState } from './celebration-state';
 import { WelcomeMessage } from './welcome-message';
 import { AddAnotherTaskDialog } from './add-another-task-dialog';
-import { SelectTaskDialog } from './select-task-dialog';
 import { getTodayLocal } from '@/lib/utils/date-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface TodayViewProps {
   tasks: Task[];
@@ -32,10 +32,10 @@ export function TodayView({
   onOpenAddDialog,
 }: TodayViewProps) {
   const [showAddAnotherDialog, setShowAddAnotherDialog] = useState(false);
-  const [showSelectTaskDialog, setShowSelectTaskDialog] = useState(false);
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [declineCount, setDeclineCount] = useState(0);
+  const { toast } = useToast();
 
   const focusTasks = getTodaysFocusTasks(tasks);
   const incompleteTasks = focusTasks.filter(t => !t.completed);
@@ -50,7 +50,13 @@ export function TodayView({
 
   const handleTaskComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    if (!task || task.completed) return;
+    if (!task) return;
+
+    // If task is already completed, allow unchecking without dialog
+    if (task.completed) {
+      onTaskComplete(taskId, true);
+      return;
+    }
 
     // If user has declined 2+ times, skip auto-scheduling
     if (declineCount >= 2) {
@@ -64,15 +70,43 @@ export function TodayView({
     setShowAddAnotherDialog(true);
   };
 
-  const handleAddAnotherYes = () => {
+  const handleAddAnotherYes = async () => {
     setShowAddAnotherDialog(false);
     setDeclineCount(0);
-    // Complete the task but skip auto-scheduling since user wants to manually select
+    
+    // Complete the pending task (await to prevent race condition)
     if (pendingTaskId) {
-      onTaskComplete(pendingTaskId, true);
+      await onTaskComplete(pendingTaskId, true);
       setPendingTaskId(null);
     }
-    setShowSelectTaskDialog(true);
+    
+    // Auto-pull the next highest priority task
+    const todayStr = getTodayLocal();
+    const availableTasks = tasks.filter(
+      t => !t.completed && 
+           !t.is_recurring && 
+           t.start_date && 
+           t.start_date > todayStr
+    );
+    
+    if (availableTasks.length === 0) {
+      toast({
+        title: 'No Tasks Available',
+        description: 'There are no upcoming tasks to add to today.',
+      });
+      return;
+    }
+    
+    // Score and sort by priority
+    const scoredTasks = addPriorityScores(availableTasks);
+    scoredTasks.sort((a, b) => b.priorityScore - a.priorityScore);
+    
+    // Pull the highest priority task
+    const nextTask = scoredTasks[0];
+    if (onPullTaskToToday) {
+      await onPullTaskToToday(nextTask.id);
+      // Toast notification is already handled in handlePullTaskToToday
+    }
   };
 
   const handleAddAnotherNo = () => {
@@ -85,27 +119,6 @@ export function TodayView({
     }
   };
 
-  const handleSelectTask = (taskId: string) => {
-    setShowSelectTaskDialog(false);
-    if (onPullTaskToToday) {
-      onPullTaskToToday(taskId);
-    }
-  };
-
-  const handleCreateNew = () => {
-    setShowSelectTaskDialog(false);
-    if (onOpenAddDialog) {
-      onOpenAddDialog();
-    }
-  };
-
-  const todayStr = getTodayLocal();
-  const availableTasks = tasks.filter(
-    t => !t.completed && 
-         !t.is_recurring && 
-         t.start_date && 
-         t.start_date > todayStr
-  );
 
   // Show welcome message if no tasks and onboarding not complete
   if (tasks.length === 0 && !profile.onboarding_completed) {
@@ -141,15 +154,6 @@ export function TodayView({
                   onDelete={onTaskDelete}
                 />
               ))}
-
-              {declineCount >= 2 && availableTasks.length > 0 && (
-                <button
-                  onClick={() => setShowSelectTaskDialog(true)}
-                  className="w-full p-3 md:p-4 border border-dashed rounded-lg text-sm md:text-base text-muted-foreground hover:bg-accent transition-colors"
-                >
-                  Want to add more? Pull a task from your schedule
-                </button>
-              )}
             </>
           )}
 
@@ -185,14 +189,6 @@ export function TodayView({
         completedTask={completedTask}
         onYes={handleAddAnotherYes}
         onNo={handleAddAnotherNo}
-      />
-
-      <SelectTaskDialog
-        open={showSelectTaskDialog}
-        onOpenChange={setShowSelectTaskDialog}
-        availableTasks={availableTasks}
-        onSelectTask={handleSelectTask}
-        onCreateNew={handleCreateNew}
       />
     </>
   );

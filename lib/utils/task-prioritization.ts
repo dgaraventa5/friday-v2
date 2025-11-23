@@ -585,10 +585,11 @@ function calculateDaysUntil(fromDateStr: string, toDateStr: string): number {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
-// Get today's focus tasks (max 4 total including completed)
+// Get today's focus tasks (all tasks scheduled for today)
+// Note: The 4-task limit is enforced during automatic scheduling in assignStartDates(),
+// not here. This allows users to manually pull additional tasks when they choose to.
 export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const todayStr = getTodayLocal();
-  const MAX_TASKS = 4;
   
   console.log('[v1] getTodaysFocusTasks - today:', todayStr);
   
@@ -607,20 +608,9 @@ export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);
   scoredIncompleteTasks.sort((a, b) => b.priorityScore - a.priorityScore);
   
-  // CRITICAL: Enforce max 4 tasks total (completed + incomplete)
-  // Completed tasks "hold their slots" - they earned them by being completed
-  const slotsRemaining = MAX_TASKS - completedTodayTasks.length;
-  const cappedIncompleteTasks = scoredIncompleteTasks.slice(0, Math.max(0, slotsRemaining));
-  
-  console.log('[v1] Slots remaining after completed:', slotsRemaining);
-  console.log('[v1] Capped incomplete tasks:', cappedIncompleteTasks.length);
-  console.log('[v1] Final total:', cappedIncompleteTasks.length + completedTodayTasks.length);
-  
-  if (scoredIncompleteTasks.length > cappedIncompleteTasks.length) {
-    console.warn('[v1] Had to cap incomplete tasks from', scoredIncompleteTasks.length, 'to', cappedIncompleteTasks.length);
-  }
-  
-  return [...cappedIncompleteTasks, ...completedTodayTasks];
+  // Return all tasks scheduled for today, sorted by priority
+  // The 4-task cap is handled during scheduling, not display
+  return [...scoredIncompleteTasks, ...completedTodayTasks];
 }
 
 // Group tasks by start date

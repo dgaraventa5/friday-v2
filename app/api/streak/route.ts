@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { updateStreak } from '@/lib/utils/streak-tracking';
+import { updateStreak, recalculateStreak } from '@/lib/utils/streak-tracking';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -11,7 +11,15 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await updateStreak(user.id);
+    // Check if this is a recalculation request (for unchecking tasks)
+    const body = await request.json().catch(() => ({}));
+    const action = body.action || 'update';
+
+    if (action === 'recalculate') {
+      await recalculateStreak(user.id);
+    } else {
+      await updateStreak(user.id);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

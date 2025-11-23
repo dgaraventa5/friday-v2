@@ -163,7 +163,12 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
       if (updateError) throw updateError;
 
       if (newCompletedState) {
-        await fetch('/api/streak', { method: 'POST' });
+        // Task was completed - update streak
+        await fetch('/api/streak', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update' })
+        });
         
         // Handle recurring task next instance
         if (task.is_recurring) {
@@ -221,6 +226,12 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
           setTasks(updatedTasks);
         }
       } else {
+        // Task was unchecked - recalculate streak
+        await fetch('/api/streak', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'recalculate' })
+        });
         setTasks(updatedTasks);
       }
 
@@ -376,11 +387,12 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
 
       if (error) throw error;
 
-      // Update local state
-      const updatedTasks = tasks.map(t => 
-        t.id === taskId ? { ...t, start_date: todayStr } : t
+      // Update local state (use functional update to get latest state)
+      setTasks(currentTasks => 
+        currentTasks.map(t => 
+          t.id === taskId ? { ...t, start_date: todayStr } : t
+        )
       );
-      setTasks(updatedTasks);
 
       toast({
         title: 'Task Added',
