@@ -29,6 +29,12 @@ export function ScheduleView({
 
   for (const task of tasks) {
     if (!task.start_date) continue;
+    
+    // Skip past incomplete recurring tasks - we only show current/future instances
+    if (task.is_recurring && !task.completed && task.start_date < todayStr) {
+      continue;
+    }
+    
     const date = task.start_date;
     const isToday = date === todayStr;
     
