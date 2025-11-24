@@ -35,6 +35,7 @@ export interface Profile {
   last_completion_date: string | null;
   category_limits: CategoryLimits;
   daily_max_hours: DailyMaxHours;
+  daily_max_tasks: DailyMaxTasks;
   onboarding_completed: boolean;
 }
 
@@ -46,6 +47,11 @@ export interface CategoryLimits {
 }
 
 export interface DailyMaxHours {
+  weekday: number;
+  weekend: number;
+}
+
+export interface DailyMaxTasks {
   weekday: number;
   weekend: number;
 }

@@ -1,4 +1,4 @@
-import { Task, TaskWithScore, EisenhowerQuadrant, CategoryLimits, DailyMaxHours } from '@/lib/types';
+import { Task, TaskWithScore, EisenhowerQuadrant, CategoryLimits, DailyMaxHours, DailyMaxTasks } from '@/lib/types';
 import { getTodayLocal, formatDateLocal, parseDateLocal, compareDateStrings, addDaysToDateString, getDayOfWeek } from './date-utils';
 
 // Eisenhower Matrix base scores
@@ -227,6 +227,7 @@ export function assignStartDates(
   tasks: Task[],
   categoryLimits: CategoryLimits,
   dailyMaxHours: DailyMaxHours,
+  dailyMaxTasks: DailyMaxTasks = { weekday: 4, weekend: 4 },
   lookAheadDays: number = 90
 ): SchedulingResult {
   const warnings: string[] = [];
@@ -338,6 +339,8 @@ export function assignStartDates(
     let scheduled = false;
     let attemptedDates: string[] = [];
     
+    console.log(`[v1] Attempting to schedule: "${task.title}" (${task.category}, ${task.estimated_hours}h, priority: ${task.priorityScore})`);
+    
     // Calculate max days to look ahead (up to due_date or lookAheadDays)
     const maxDayOffset = task.due_date 
       ? Math.min(
@@ -355,13 +358,15 @@ export function assignStartDates(
       const dateStr = addDaysToDateString(todayStr, dayOffset);
       attemptedDates.push(dateStr);
       
+      const weekend = isWeekend(dateStr);
+      const maxTasksForDay = weekend ? dailyMaxTasks.weekend : dailyMaxTasks.weekday;
       const totalTaskCount = tasksPerDay.get(dateStr) || 0;
-      if (totalTaskCount >= 4) {
-        console.log('[v1] Skipping', dateStr, '- already has 4 tasks (any type)');
+      
+      if (totalTaskCount >= maxTasksForDay) {
+        console.log('[v1] Skipping', dateStr, `- already has ${maxTasksForDay} tasks (${weekend ? 'weekend' : 'weekday'} limit)`);
         continue;
       }
       
-      const weekend = isWeekend(dateStr);
       const category = task.category;
       
       // Get limits for this day and category
@@ -379,6 +384,13 @@ export function assignStartDates(
       // Check if we can fit this task
       const canFitCategory = categoryHours + task.estimated_hours <= categoryLimit;
       const canFitDaily = totalHours + task.estimated_hours <= dailyLimit;
+      
+      console.log(`[v1]   Checking ${dateStr} (${weekend ? 'weekend' : 'weekday'}):`, {
+        tasks: `${totalTaskCount}/${maxTasksForDay}`,
+        categoryHours: `${categoryHours.toFixed(1)}/${categoryLimit}h`,
+        totalHours: `${totalHours.toFixed(1)}/${dailyLimit}h`,
+        canFit: canFitCategory && canFitDaily
+      });
       
       if (canFitCategory && canFitDaily) {
         // Found a slot!
@@ -398,7 +410,9 @@ export function assignStartDates(
           });
         }
         
-        console.log('[v1] Scheduled', task.title, 'on', dateStr, '(priority:', task.priorityScore, ', total tasks:', totalTaskCount + 1, '/4)');
+        console.log(`[v1] ✓ Scheduled "${task.title}" on ${dateStr} (priority: ${task.priorityScore}, tasks: ${totalTaskCount + 1}/${maxTasksForDay})`);
+      } else {
+        console.log(`[v1]   Cannot fit: category ${canFitCategory ? '✓' : '✗'}, daily ${canFitDaily ? '✓' : '✗'}`);
       }
     }
     
@@ -411,13 +425,15 @@ export function assignStartDates(
         const dateStr = addDaysToDateString(todayStr, dayOffset);
         attemptedDates.push(dateStr);
         
+        const weekend = isWeekend(dateStr);
+        const maxTasksForDay = weekend ? dailyMaxTasks.weekend : dailyMaxTasks.weekday;
         const totalTaskCount = tasksPerDay.get(dateStr) || 0;
-        if (totalTaskCount >= 4) {
-          console.log('[v1] Skipping', dateStr, '- already has 4 tasks (post-due search)');
+        
+        if (totalTaskCount >= maxTasksForDay) {
+          console.log('[v1] Skipping', dateStr, `- already has ${maxTasksForDay} tasks (post-due search)`);
           continue;
         }
         
-        const weekend = isWeekend(dateStr);
         const category = task.category;
         const categoryLimit = weekend 
           ? categoryLimits[category].weekend 
@@ -432,8 +448,10 @@ export function assignStartDates(
         const canFitDaily = totalHours + task.estimated_hours <= dailyLimit;
         
         if (canFitCategory && canFitDaily) {
+          const weekend2 = isWeekend(dateStr);
+          const maxTasksForDay2 = weekend2 ? dailyMaxTasks.weekend : dailyMaxTasks.weekday;
           const finalCount = tasksPerDay.get(dateStr) || 0;
-          if (finalCount >= 4) {
+          if (finalCount >= maxTasksForDay2) {
             continue;
           }
           
@@ -460,11 +478,13 @@ export function assignStartDates(
     // If we couldn't schedule it, handle based on task type
     if (!scheduled) {
       if (task.due_date) {
-        // Could not fit before due_date - try due_date first, but respect 4-task cap
+        // Could not fit before due_date - try due_date first, but respect task cap
         const dueDate = task.due_date;
+        const dueDateWeekend = isWeekend(dueDate);
+        const maxTasksForDueDate = dueDateWeekend ? dailyMaxTasks.weekend : dailyMaxTasks.weekday;
         const dueDateCount = tasksPerDay.get(dueDate) || 0;
         
-        if (dueDateCount < 4) {
+        if (dueDateCount < maxTasksForDueDate) {
           // Due date has space - schedule there even if over capacity
           console.warn('[v1] Could not fit', task.title, 'before due date. Scheduling on', dueDate, '(over capacity)');
           
@@ -491,9 +511,11 @@ export function assignStartDates(
           
           for (let dayOffset = dueDateOffset + 1; dayOffset < lookAheadDays && !foundSlot; dayOffset++) {
             const dateStr = addDaysToDateString(todayStr, dayOffset);
+            const dateWeekend = isWeekend(dateStr);
+            const maxTasksForDate = dateWeekend ? dailyMaxTasks.weekend : dailyMaxTasks.weekday;
             const dateCount = tasksPerDay.get(dateStr) || 0;
             
-            if (dateCount < 4) {
+            if (dateCount < maxTasksForDate) {
               // Found a slot after due date
               const scheduledTask = { ...task, start_date: dateStr };
               result.push(scheduledTask);
@@ -525,7 +547,7 @@ export function assignStartDates(
             
             tasksPerDay.set(dueDate, dueDateCount + 1);
             
-            warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but exceeds 4-task daily limit.`);
+            warnings.push(`Task "${task.title}" scheduled on due date (${dueDate}) but exceeds ${maxTasksForDueDate}-task daily limit.`);
             
             const oldDate = originalDates.get(task.id) ?? null;
             if (oldDate !== dueDate) {

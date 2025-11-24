@@ -31,6 +31,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isRescheduling, setIsRescheduling] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -39,11 +40,32 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
   useEffect(() => {
     const runInitialScheduling = async () => {
       console.log('[v0] Running initial scheduling for all tasks');
+      console.log('[v0] Profile data:', {
+        category_limits: profile.category_limits,
+        daily_max_hours: profile.daily_max_hours,
+        daily_max_tasks: profile.daily_max_tasks,
+        daily_max_tasks_type: typeof profile.daily_max_tasks,
+        daily_max_tasks_is_null: profile.daily_max_tasks === null,
+        daily_max_tasks_is_undefined: profile.daily_max_tasks === undefined,
+      });
+      
+      // Improve null/undefined handling for daily_max_tasks
+      const dailyMaxTasks = profile.daily_max_tasks && 
+        typeof profile.daily_max_tasks === 'object' &&
+        'weekday' in profile.daily_max_tasks &&
+        'weekend' in profile.daily_max_tasks &&
+        typeof profile.daily_max_tasks.weekday === 'number' &&
+        typeof profile.daily_max_tasks.weekend === 'number'
+          ? profile.daily_max_tasks
+          : { weekday: 4, weekend: 4 };
+      
+      console.log('[v0] Using daily_max_tasks:', dailyMaxTasks);
       
       const schedulingResult = assignStartDates(
         tasks,
         profile.category_limits,
-        profile.daily_max_hours
+        profile.daily_max_hours,
+        dailyMaxTasks
       );
       
       // Find tasks that need database updates
@@ -77,6 +99,72 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     
     runInitialScheduling();
   }, []);
+  
+  // Manual reschedule function for debugging
+  const handleManualReschedule = async () => {
+    setIsRescheduling(true);
+    try {
+      console.log('[v0] Manual reschedule triggered');
+      console.log('[v0] Current profile:', {
+        category_limits: profile.category_limits,
+        daily_max_hours: profile.daily_max_hours,
+        daily_max_tasks: profile.daily_max_tasks,
+      });
+      
+      const dailyMaxTasks = profile.daily_max_tasks && 
+        typeof profile.daily_max_tasks === 'object' &&
+        'weekday' in profile.daily_max_tasks &&
+        'weekend' in profile.daily_max_tasks &&
+        typeof profile.daily_max_tasks.weekday === 'number' &&
+        typeof profile.daily_max_tasks.weekend === 'number'
+          ? profile.daily_max_tasks
+          : { weekday: 4, weekend: 4 };
+      
+      console.log('[v0] Manual reschedule using limits:', dailyMaxTasks);
+      
+      const schedulingResult = assignStartDates(
+        tasks,
+        profile.category_limits,
+        profile.daily_max_hours,
+        dailyMaxTasks
+      );
+      
+      // Update all tasks with new start_dates
+      const tasksToUpdate = schedulingResult.rescheduledTasks
+        .filter(({ newDate }) => newDate !== null);
+      
+      if (tasksToUpdate.length > 0) {
+        console.log('[v0] Updating', tasksToUpdate.length, 'tasks in database');
+        
+        await Promise.all(
+          tasksToUpdate.map(({ task }) =>
+            supabase
+              .from('tasks')
+              .update({ start_date: task.start_date })
+              .eq('id', task.id)
+          )
+        );
+      }
+      
+      setTasks(schedulingResult.tasks);
+      
+      toast({
+        title: 'Reschedule Complete',
+        description: `Updated ${tasksToUpdate.length} task(s). Check console for details.`,
+      });
+      
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error during manual reschedule:', error);
+      toast({
+        title: 'Reschedule Failed',
+        description: 'Could not reschedule tasks. Check console for errors.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRescheduling(false);
+    }
+  };
 
   const handleTaskAdded = async (newTasks: Task | Task[]) => {
     const tasksArray = Array.isArray(newTasks) ? newTasks : [newTasks];
@@ -86,10 +174,20 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     const updatedTaskList = [...tasks, ...tasksArray];
     
     // Run full scheduling
+    const dailyMaxTasks = profile.daily_max_tasks && 
+      typeof profile.daily_max_tasks === 'object' &&
+      'weekday' in profile.daily_max_tasks &&
+      'weekend' in profile.daily_max_tasks &&
+      typeof profile.daily_max_tasks.weekday === 'number' &&
+      typeof profile.daily_max_tasks.weekend === 'number'
+        ? profile.daily_max_tasks
+        : { weekday: 4, weekend: 4 };
+        
     const schedulingResult = assignStartDates(
       updatedTaskList,
       profile.category_limits,
-      profile.daily_max_hours
+      profile.daily_max_hours,
+      dailyMaxTasks
     );
     
     // Update all tasks with new start_dates
@@ -193,10 +291,20 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
         if (!skipAutoSchedule) {
           // Re-run scheduling to backfill the freed capacity
           console.log('[v0] Task completed - re-optimizing schedule');
+          const dailyMaxTasks = profile.daily_max_tasks && 
+            typeof profile.daily_max_tasks === 'object' &&
+            'weekday' in profile.daily_max_tasks &&
+            'weekend' in profile.daily_max_tasks &&
+            typeof profile.daily_max_tasks.weekday === 'number' &&
+            typeof profile.daily_max_tasks.weekend === 'number'
+              ? profile.daily_max_tasks
+              : { weekday: 4, weekend: 4 };
+              
           const schedulingResult = assignStartDates(
             updatedTasks,
             profile.category_limits,
-            profile.daily_max_hours
+            profile.daily_max_hours,
+            dailyMaxTasks
           );
           
           // Update tasks with new start_dates
@@ -257,10 +365,20 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     
     // Run full scheduling
     console.log('[v0] Re-running scheduling algorithm after edit...');
+    const dailyMaxTasks = profile.daily_max_tasks && 
+      typeof profile.daily_max_tasks === 'object' &&
+      'weekday' in profile.daily_max_tasks &&
+      'weekend' in profile.daily_max_tasks &&
+      typeof profile.daily_max_tasks.weekday === 'number' &&
+      typeof profile.daily_max_tasks.weekend === 'number'
+        ? profile.daily_max_tasks
+        : { weekday: 4, weekend: 4 };
+        
     const schedulingResult = assignStartDates(
       updatedTaskList,
       profile.category_limits,
-      profile.daily_max_hours
+      profile.daily_max_hours,
+      dailyMaxTasks
     );
     
     // Find tasks that need database updates (excluding the edited task itself)
@@ -333,10 +451,20 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
       
       // Re-run scheduling to backfill freed capacity
       console.log('[v0] Task deleted - re-optimizing schedule');
+      const dailyMaxTasks = profile.daily_max_tasks && 
+        typeof profile.daily_max_tasks === 'object' &&
+        'weekday' in profile.daily_max_tasks &&
+        'weekend' in profile.daily_max_tasks &&
+        typeof profile.daily_max_tasks.weekday === 'number' &&
+        typeof profile.daily_max_tasks.weekend === 'number'
+          ? profile.daily_max_tasks
+          : { weekday: 4, weekend: 4 };
+          
       const schedulingResult = assignStartDates(
         updatedTasks,
         profile.category_limits,
-        profile.daily_max_hours
+        profile.daily_max_hours,
+        dailyMaxTasks
       );
       
       // Update tasks with new start_dates
@@ -417,15 +545,32 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
       <main className="flex-1 overflow-y-auto pb-safe-nav">
         <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
           {currentView === 'today' ? (
-            <TodayView
-              tasks={tasks}
-              profile={profile}
-              onTaskComplete={handleTaskComplete}
-              onTaskEdit={handleTaskEdit}
-              onTaskDelete={handleTaskDelete}
-              onPullTaskToToday={handlePullTaskToToday}
-              onOpenAddDialog={() => setShowAddDialog(true)}
-            />
+            <>
+              {/* Debug: Manual Reschedule Button */}
+              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-yellow-800 dark:text-yellow-300">
+                    <strong>Debug Tool:</strong> If tasks aren't showing correctly, click here to force a full reschedule.
+                  </div>
+                  <button
+                    onClick={handleManualReschedule}
+                    disabled={isRescheduling}
+                    className="ml-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-slate-900 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRescheduling ? 'Rescheduling...' : 'Reschedule All Tasks'}
+                  </button>
+                </div>
+              </div>
+              <TodayView
+                tasks={tasks}
+                profile={profile}
+                onTaskComplete={handleTaskComplete}
+                onTaskEdit={handleTaskEdit}
+                onTaskDelete={handleTaskDelete}
+                onPullTaskToToday={handlePullTaskToToday}
+                onOpenAddDialog={() => setShowAddDialog(true)}
+              />
+            </>
           ) : (
             <ScheduleView
               tasks={tasks}

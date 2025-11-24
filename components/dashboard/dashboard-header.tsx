@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter } from 'next/navigation';
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/lib/types";
-import { Info } from 'lucide-react';
+import { Info, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { ProductivityGuideDialog } from './productivity-guide-dialog';
 
@@ -76,6 +76,11 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   Log out

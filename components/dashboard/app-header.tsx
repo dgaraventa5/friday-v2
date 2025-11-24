@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Sun } from 'lucide-react';
+import { Flame, Sun, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -141,6 +141,11 @@ export function AppHeader({ tasks, profile, userEmail }: AppHeaderProps) {
                   )}
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 Log out
