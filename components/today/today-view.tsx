@@ -127,10 +127,10 @@ export function TodayView({
 
   return (
     <>
-      <div className="flex flex-col space-y-4 md:space-y-6">
-        <h1 className="text-2xl md:text-3xl font-bold">Today's Focus</h1>
+      <div className="flex flex-col space-y-3 md:space-y-4 lg:space-y-6">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Today's Focus</h1>
 
-        <div className="space-y-3 md:space-y-4">
+        <div className="space-y-2 md:space-y-3 lg:space-y-4">
           {allComplete ? (
             <CelebrationState 
               completedCount={completedCount} 
@@ -158,8 +158,8 @@ export function TodayView({
           )}
 
           {completedTasks.length > 0 && (
-            <div className="pt-4 md:pt-6 space-y-3 md:space-y-4">
-              <h3 className="text-sm md:text-base font-medium text-muted-foreground px-1">
+            <div className="pt-3 md:pt-4 lg:pt-6 space-y-2 md:space-y-3 lg:space-y-4">
+              <h3 className="text-xs md:text-sm lg:text-base font-medium text-muted-foreground px-1">
                 Completed Today
               </h3>
               {completedTasks.map((task) => (

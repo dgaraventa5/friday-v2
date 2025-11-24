@@ -49,6 +49,13 @@ const CATEGORY_COLORS = {
   Personal: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400',
 };
 
+const CATEGORY_EMOJIS = {
+  Work: '💼',
+  Home: '🏠',
+  Health: '❤️',
+  Personal: '⭐',
+};
+
 export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) {
   const quadrant = getEisenhowerQuadrant(task);
   const styles = QUADRANT_STYLES[quadrant];
@@ -56,78 +63,102 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-4 shadow-sm transition-all duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
+        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-3 md:p-3.5 lg:p-4 shadow-sm transition-all duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
         styles.border,
         task.completed && 'opacity-50'
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3">
         <Checkbox
           checked={task.completed}
           onCheckedChange={() => onComplete(task.id)}
-          className="mt-1 h-5 w-5"
+          className="h-5 w-5 shrink-0"
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 md:gap-3">
             <h3
               className={cn(
-                'text-base font-semibold leading-snug text-slate-800 dark:text-slate-100',
+                'text-sm md:text-base font-semibold leading-tight md:leading-snug text-slate-800 dark:text-slate-100',
                 task.completed && 'line-through text-slate-500'
               )}
             >
               {task.title}
             </h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700">
-                  <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(task)}>
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDelete(task.id)}
-                  className="text-destructive"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={cn('text-xs px-2 py-1 rounded-full font-medium', styles.badge)}>
-              {styles.label}
-            </span>
-            <span className={cn('text-xs px-2 py-1 rounded-full font-medium', CATEGORY_COLORS[task.category])}>
-              {task.category}
-            </span>
+            {/* Only recurring indicator stays on left side */}
             {task.is_recurring && (
-              <div className="flex items-center gap-1 text-sm text-slate-500">
-                <Repeat className="h-4 w-4" />
+              <div className="flex items-center gap-1 text-xs md:text-sm text-slate-500 whitespace-nowrap">
+                <Repeat className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 <span>{task.recurring_interval}</span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-4 mt-3 text-sm text-slate-500">
+          {/* Mobile metadata - shown only on mobile */}
+          <div className="flex md:hidden items-center flex-wrap gap-2 mt-2 text-xs text-slate-500">
+            <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', styles.badge)}>
+              {styles.label}
+            </span>
+            <span className="text-base" title={task.category}>
+              {CATEGORY_EMOJIS[task.category]}
+            </span>
             {task.estimated_hours && (
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-slate-500" />
+                <Clock className="h-3.5 w-3.5 text-slate-500" />
                 <span>{task.estimated_hours}h</span>
               </div>
             )}
             {task.due_date && (
               <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4 text-slate-500" />
+                <Calendar className="h-3.5 w-3.5 text-slate-500" />
                 <span>{formatDateStringForDisplay(task.due_date)}</span>
               </div>
             )}
           </div>
         </div>
+
+        {/* Desktop metadata - shown only on tablet/desktop, right side */}
+        <div className="hidden md:flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-slate-500 shrink-0">
+          <span className={cn('text-xs px-2 py-0.5 md:py-1 rounded-full font-medium', styles.badge)}>
+            {styles.label}
+          </span>
+          <span className="text-base lg:text-lg" title={task.category}>
+            {CATEGORY_EMOJIS[task.category]}
+          </span>
+          {task.estimated_hours && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5 lg:h-4 lg:w-4 text-slate-500" />
+              <span>{task.estimated_hours}h</span>
+            </div>
+          )}
+          {task.due_date && (
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5 lg:h-4 lg:w-4 text-slate-500" />
+              <span>{formatDateStringForDisplay(task.due_date)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Menu - now outside of the flex-1 container */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0">
+              <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(task)}>
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(task.id)}
+              className="text-destructive"
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

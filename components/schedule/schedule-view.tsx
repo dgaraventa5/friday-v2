@@ -77,15 +77,15 @@ export function ScheduleView({
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="px-4 py-4 md:px-6 md:py-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
-        <h1 className="text-xl md:text-3xl font-bold">Schedule</h1>
-        <p className="text-sm md:text-base text-muted-foreground mt-1 md:mt-2">
+    <div className="space-y-3 md:space-y-4 lg:space-y-6">
+      <div className="px-3 py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Schedule</h1>
+        <p className="text-xs md:text-sm lg:text-base text-muted-foreground mt-1 md:mt-1.5 lg:mt-2">
           Your upcoming tasks organized by date
         </p>
       </div>
 
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-4 md:space-y-6 lg:space-y-8">
         {sortedDates.map((dateStr) => {
           const dateTasks = groupedTasks.get(dateStr)!;
           
@@ -124,21 +124,21 @@ export function ScheduleView({
           if (isTomorrow) dateLabel = `Tomorrow, ${dateLabel}`;
 
           return (
-            <div key={dateStr} className="space-y-3 md:space-y-4">
-              <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                <h2 className="text-base md:text-lg font-semibold">{dateLabel}</h2>
+            <div key={dateStr} className="space-y-2 md:space-y-3 lg:space-y-4">
+              <div className="flex flex-wrap items-center gap-1.5 md:gap-2 lg:gap-3">
+                <h2 className="text-sm md:text-base lg:text-lg font-semibold">{dateLabel}</h2>
                 <span className="text-xs md:text-sm text-muted-foreground">
                    {(dateTasks.incomplete.length + dateTasks.completed.length)} task{(dateTasks.incomplete.length + dateTasks.completed.length) !== 1 ? 's' : ''}
                 </span>
                 {isPast && (
-                  <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <span className="text-xs md:text-sm px-2 py-0.5 md:py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                     Overdue
                   </span>
                 )}
               </div>
 
 
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-2 md:space-y-2.5 lg:space-y-3">
                 {incompleteTasks.map((task) => (
 
                   <TaskCard
@@ -152,7 +152,7 @@ export function ScheduleView({
               </div>
               
               {isToday && completedTasks.length > 0 && (
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 md:space-y-2.5 lg:space-y-3 pt-2 md:pt-2.5 lg:pt-3">
                   {completedTasks.map((task) => (
                     <TaskCard
                       key={task.id}
