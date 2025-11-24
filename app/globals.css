@@ -491,4 +491,23 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
+
+  /* Checkbox Check Animation */
+  @keyframes checkbox-check {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-checkbox-check {
+    animation: checkbox-check 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
 }

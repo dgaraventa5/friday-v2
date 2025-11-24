@@ -2,12 +2,27 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
-function Card({ className, ...props }: React.ComponentProps<'div'>) {
+type CardVariant = 'default' | 'elevated' | 'outlined'
+
+interface CardProps extends React.ComponentProps<'div'> {
+  variant?: CardVariant
+  hover?: boolean
+}
+
+function Card({ className, variant = 'default', hover = false, ...props }: CardProps) {
+  const variantStyles = {
+    default: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm',
+    elevated: 'bg-white dark:bg-slate-800 shadow-lg',
+    outlined: 'bg-transparent border-2 border-slate-300 dark:border-slate-600',
+  }
+
   return (
     <div
       data-slot="card"
       className={cn(
-        'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm',
+        'flex flex-col gap-6 rounded-lg py-6 transition-all duration-[250ms] ease-out',
+        variantStyles[variant],
+        hover && 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
         className,
       )}
       {...props}
@@ -42,7 +57,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-slate-600 dark:text-slate-400 text-sm', className)}
       {...props}
     />
   )

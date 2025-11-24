@@ -72,15 +72,15 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dialog-sheet max-h-[90vh] overflow-y-auto">
+      <DialogContent className="dialog-sheet">
         <DialogHeader>
           <DialogTitle>Add New Task</DialogTitle>
           <DialogDescription>
             Create a new task and prioritize it for today
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
             <Label htmlFor="title">Task Title</Label>
             <Input
               id="title"
@@ -91,7 +91,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="description">Description (optional)</Label>
             <Textarea
               id="description"
@@ -102,7 +102,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="priority">Priority</Label>
             <Select value={priority} onValueChange={(v) => setPriority(v as "A" | "B" | "C" | "")}>
               <SelectTrigger>
@@ -117,7 +117,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="dueDate">Due Date (optional)</Label>
             <Input
               id="dueDate"
@@ -127,29 +127,31 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Checkbox
               id="mit"
               checked={isMit}
               onCheckedChange={(checked) => setIsMit(checked as boolean)}
+              className="h-5 w-5"
             />
             <Label
               htmlFor="mit"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="!mb-0 cursor-pointer"
             >
               Mark as Most Important Task (MIT)
             </Label>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="w-full md:w-auto"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
               {isLoading ? "Adding..." : "Add Task"}
             </Button>
           </div>

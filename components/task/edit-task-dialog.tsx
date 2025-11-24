@@ -132,7 +132,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dialog-sheet max-h-[90vh] overflow-y-auto">
+      <DialogContent className="dialog-sheet">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
         </DialogHeader>
@@ -144,7 +144,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             </div>
           )}
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="edit-title">Task Name</Label>
             <Input
               id="edit-title"
@@ -154,7 +154,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="edit-category">Category</Label>
             <Select value={category} onValueChange={(value: any) => setCategory(value)}>
               <SelectTrigger id="edit-category">
@@ -169,7 +169,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label>Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -177,7 +177,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
                   variant="outline"
                   className={cn(
                     'w-full justify-start text-left font-normal',
-                    !dueDate && 'text-muted-foreground'
+                    !dueDate && 'text-slate-400'
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -195,7 +195,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             </Popover>
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="edit-hours">Estimated Hours</Label>
             <Input
               id="edit-hours"
@@ -207,9 +207,9 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             />
           </div>
 
-          <div className="space-y-3">
-            <Label>Importance</Label>
-            <div className="flex gap-2">
+          <div>
+            <Label className="mb-3">Importance</Label>
+            <div className="flex gap-3">
               <Button
                 type="button"
                 variant={importance === 'important' ? 'default' : 'outline'}
@@ -229,9 +229,9 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             </div>
           </div>
 
-          <div className="space-y-3">
-            <Label>Urgency</Label>
-            <div className="flex gap-2">
+          <div>
+            <Label className="mb-3">Urgency</Label>
+            <div className="flex gap-3">
               <Button
                 type="button"
                 variant={urgency === 'urgent' ? 'default' : 'outline'}
@@ -251,16 +251,16 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              className="w-full md:w-auto"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
+            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

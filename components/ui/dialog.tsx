@@ -38,7 +38,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50 backdrop-blur-sm',
         className,
       )}
       {...props}
@@ -63,22 +63,30 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg',
-          // Only apply centering transforms for non-bottom-sheet dialogs
-          !isBottomSheet && 'top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]',
-          // For bottom sheets, apply mobile-friendly positioning
-          isBottomSheet && 'md:top-[50%] md:left-[50%] md:translate-x-[-50%] md:translate-y-[-50%]',
+          'bg-white dark:bg-slate-800 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed z-50 w-full',
+          // Mobile (sheet style)
+          isBottomSheet && 'bottom-0 left-0 right-0 rounded-t-3xl p-6 pb-safe max-h-[85vh] overflow-y-auto',
+          isBottomSheet && 'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom duration-300',
+          // Desktop (center modal)
+          isBottomSheet && 'md:top-[50%] md:left-[50%] md:bottom-auto md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:p-8 md:max-w-[480px] md:max-h-none md:shadow-2xl',
+          // Non-sheet dialogs (standard centered)
+          !isBottomSheet && 'top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 rounded-2xl p-8 max-w-[480px] shadow-2xl',
+          !isBottomSheet && 'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200',
           className,
         )}
         {...props}
       >
+        {/* Drag handle for mobile sheet */}
+        {isBottomSheet && (
+          <div className="md:hidden absolute top-3 left-1/2 -translate-x-1/2 w-8 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
+        )}
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className="absolute top-4 right-4 w-8 h-8 rounded-md opacity-70 transition-opacity hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:pointer-events-none flex items-center justify-center"
           >
-            <XIcon />
+            <XIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -91,7 +99,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      className={cn('flex flex-col gap-2 text-left mb-6', className)}
       {...props}
     />
   )
@@ -102,7 +110,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
+        'flex flex-col gap-3 md:flex-row md:justify-end md:gap-3 pt-6',
         className,
       )}
       {...props}
@@ -117,7 +125,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-none font-semibold', className)}
+      className={cn('text-2xl font-semibold text-slate-800 dark:text-slate-100', className)}
       {...props}
     />
   )
@@ -130,7 +138,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-base text-slate-600 dark:text-slate-400', className)}
       {...props}
     />
   )

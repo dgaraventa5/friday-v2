@@ -86,15 +86,15 @@ export function EditTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dialog-sheet max-h-[90vh] overflow-y-auto">
+      <DialogContent className="dialog-sheet">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
             Update your task details and priorities
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
             <Label htmlFor="edit-title">Task Title</Label>
             <Input
               id="edit-title"
@@ -105,7 +105,7 @@ export function EditTaskDialog({
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="edit-description">Description (optional)</Label>
             <Textarea
               id="edit-description"
@@ -116,7 +116,7 @@ export function EditTaskDialog({
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="edit-priority">Priority</Label>
             <Select
               value={priority}
@@ -134,7 +134,7 @@ export function EditTaskDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="edit-dueDate">Due Date (optional)</Label>
             <Input
               id="edit-dueDate"
@@ -144,29 +144,31 @@ export function EditTaskDialog({
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Checkbox
               id="edit-mit"
               checked={isMit}
               onCheckedChange={(checked) => setIsMit(checked as boolean)}
+              className="h-5 w-5"
             />
             <Label
               htmlFor="edit-mit"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="!mb-0 cursor-pointer"
             >
               Mark as Most Important Task (MIT)
             </Label>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="w-full md:w-auto"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
               {isLoading ? "Saving..." : "Save Changes"}
             </Button>
           </div>
