@@ -43,11 +43,11 @@ export function getEisenhowerQuadrant(task: Task): EisenhowerQuadrant {
  * - Overdue by 1 day: +225 (200 + 1*25)
  * - Overdue by 3 days: +275 (200 + 3*25)
  * - Due today: +150
- * - Due in 1 day: +140
- * - Due in 3 days: +100
- * - Due in 5 days: +70
- * - Due in 10 days: +38
- * - Due in 20 days: +13
+ * - Due in 1 day: +140 (100 + 40*1)
+ * - Due in 3 days: +100 (100 + 40*0)
+ * - Due in 5 days: +77 (50 + 40*(2/3))
+ * - Due in 10 days: +42 (25 + 25*(4/6))
+ * - Due in 20 days: +15 (5 + 15*(10/15))
  * - Due in 45 days: +5
  */
 function calculateDueDateScore(task: Task): number {
