@@ -22,20 +22,32 @@ export function getEisenhowerQuadrant(task: Task): EisenhowerQuadrant {
 }
 
 /**
- * Calculate due date score using a continuous function to ensure smooth priority transitions.
+ * Calculate due date score using exponential multipliers as deadlines approach.
  * 
  * Design principles:
- * - Overdue tasks get massive priority boost (prevents missed deadlines)
- * - Due today tasks get maximum urgency boost
- * - Continuous gradient from 1-30 days ensures no "cliff effects"
- * - Tasks 30+ days out still get small reminder bonus
+ * - Important tasks (Eisenhower) dominate when deadlines are far away
+ * - Deadline pressure naturally overtakes importance as time runs out
+ * - Overdue tasks always bubble to the top regardless of quadrant
+ * - Smooth gradients within each tier prevent cliff effects
+ * 
+ * Multiplier tiers:
+ * - Overdue:     8x base + escalation → 200+ (guarantees top priority)
+ * - Due today:   6x → 150
+ * - 1-3 days:    4x → ~100-140
+ * - 4-7 days:    2x → ~50-90
+ * - 8-14 days:   1.5x → ~25-50
+ * - 15-30 days:  1x → ~5-20
+ * - 30+ days:    1x → 5
  * 
  * Examples:
- * - Overdue by 2 days: +80 (50 + 2*15)
- * - Due today: +100
- * - Due in 3 days: +53 (80 * (7-3)/6 = 80 * 0.67)
- * - Due in 10 days: +34 (40 * (14-10)/7 = 40 * 0.57)
- * - Due in 20 days: +13 (20 * (30-20)/16 = 20 * 0.625)
+ * - Overdue by 1 day: +225 (200 + 1*25)
+ * - Overdue by 3 days: +275 (200 + 3*25)
+ * - Due today: +150
+ * - Due in 1 day: +140
+ * - Due in 3 days: +100
+ * - Due in 5 days: +70
+ * - Due in 10 days: +38
+ * - Due in 20 days: +13
  * - Due in 45 days: +5
  */
 function calculateDueDateScore(task: Task): number {
@@ -48,33 +60,43 @@ function calculateDueDateScore(task: Task): number {
   const dueDate = parseDateLocal(task.due_date);
   const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  // Overdue: Strong penalty that increases with time
+  // Overdue: 8x multiplier with escalation - guarantees top priority
+  // Base 200 + 25 per day overdue ensures overdue tasks always win
   if (daysUntilDue < 0) {
     const daysOverdue = Math.abs(daysUntilDue);
-    return 50 + (daysOverdue * 15);
+    return 200 + (daysOverdue * 25);
   }
 
-  // Due today: Maximum urgency
+  // Due today: 6x multiplier - very high urgency
   if (daysUntilDue === 0) {
-    return 100;
+    return 150;
   }
 
-  // Due in 1-7 days: High urgency with gradient
-  if (daysUntilDue >= 1 && daysUntilDue <= 7) {
-    return 80 * ((7 - daysUntilDue) / 6);
+  // Due in 1-3 days: 4x multiplier - high urgency with gradient
+  // Gradient: 140 (1 day) → 100 (3 days)
+  if (daysUntilDue >= 1 && daysUntilDue <= 3) {
+    return 100 + (40 * ((3 - daysUntilDue) / 2));
   }
 
-  // Due in 8-14 days: Medium urgency with gradient
+  // Due in 4-7 days: 2x multiplier - moderate urgency with gradient
+  // Gradient: 90 (4 days) → 50 (7 days)
+  if (daysUntilDue >= 4 && daysUntilDue <= 7) {
+    return 50 + (40 * ((7 - daysUntilDue) / 3));
+  }
+
+  // Due in 8-14 days: 1.5x multiplier - mild urgency with gradient
+  // Gradient: 50 (8 days) → 25 (14 days)
   if (daysUntilDue >= 8 && daysUntilDue <= 14) {
-    return 40 * ((14 - daysUntilDue) / 7);
+    return 25 + (25 * ((14 - daysUntilDue) / 6));
   }
 
-  // Due in 15-30 days: Low but present urgency with gradient
+  // Due in 15-30 days: 1x multiplier - low urgency with gradient
+  // Gradient: 20 (15 days) → 5 (30 days)
   if (daysUntilDue >= 15 && daysUntilDue <= 30) {
-    return 20 * ((30 - daysUntilDue) / 16);
+    return 5 + (15 * ((30 - daysUntilDue) / 15));
   }
 
-  // Due in 30+ days: Small constant reminder
+  // Due in 30+ days: minimal reminder
   return 5;
 }
 
