@@ -78,7 +78,7 @@ export function ScheduleView({
 
   return (
     <div className="space-y-3 md:space-y-4 lg:space-y-6">
-      <div className="px-3 py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
+      <div className="px-3 py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
         <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Schedule</h1>
         <p className="text-xs md:text-sm lg:text-base text-muted-foreground mt-1 md:mt-1.5 lg:mt-2">
           Your upcoming tasks organized by date

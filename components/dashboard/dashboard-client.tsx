@@ -174,11 +174,21 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     if (!task) return;
 
     const newCompletedState = !task.completed;
+    const todayStr = getTodayLocal();
+    
+    // If completing a task scheduled for the future, move it to today
+    // This ensures it shows as "Completed Today" in both Schedule and Today views
+    const shouldMoveToToday = newCompletedState && task.start_date && task.start_date > todayStr;
 
     // Optimistic update
     const updatedTasks = tasks.map(t => 
       t.id === taskId 
-        ? { ...t, completed: newCompletedState, completed_at: newCompletedState ? new Date().toISOString() : null }
+        ? { 
+            ...t, 
+            completed: newCompletedState, 
+            completed_at: newCompletedState ? new Date().toISOString() : null,
+            ...(shouldMoveToToday && { start_date: todayStr })
+          }
         : t
     );
 
@@ -187,7 +197,8 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
         .from('tasks')
         .update({ 
           completed: newCompletedState,
-          completed_at: newCompletedState ? new Date().toISOString() : null
+          completed_at: newCompletedState ? new Date().toISOString() : null,
+          ...(shouldMoveToToday && { start_date: todayStr })
         })
         .eq('id', taskId);
 
