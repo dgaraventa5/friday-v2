@@ -1,4 +1,73 @@
 import { createClient } from '@/lib/supabase/server';
+import { Profile } from '@/lib/types';
+import { getTodayLocal, addDaysToDateString } from '@/lib/utils/date-utils';
+
+/**
+ * Validates the user's streak on page load.
+ * If last_completion_date is more than 1 day ago, resets streak to 0.
+ * Returns the profile (updated if necessary) for immediate use.
+ */
+export async function validateStreak(userId: string): Promise<Profile | null> {
+  const supabase = await createClient();
+  
+  // Get current profile
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error || !profile) return null;
+
+  // Use local timezone date strings for consistent comparison
+  const todayStr = getTodayLocal();
+  const yesterdayStr = addDaysToDateString(todayStr, -1);
+  const lastCompletionStr = profile.last_completion_date;
+
+  // If no last completion date, streak should already be 0
+  if (!lastCompletionStr) {
+    if (profile.current_streak !== 0) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ current_streak: 0 })
+        .eq('id', userId);
+      
+      if (updateError) {
+        console.error('[validateStreak] Failed to reset streak:', updateError);
+        // Return original profile to reflect actual DB state
+        return profile;
+      }
+      return { ...profile, current_streak: 0 };
+    }
+    return profile;
+  }
+
+  // Compare date strings directly (YYYY-MM-DD format is lexicographically sortable)
+  const wasToday = lastCompletionStr === todayStr;
+  const wasYesterday = lastCompletionStr === yesterdayStr;
+
+  // If last completion was today or yesterday, streak is still valid
+  if (wasToday || wasYesterday) {
+    return profile;
+  }
+
+  // Last completion was more than 1 day ago - reset streak to 0
+  if (profile.current_streak !== 0) {
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ current_streak: 0 })
+      .eq('id', userId);
+    
+    if (updateError) {
+      console.error('[validateStreak] Failed to reset streak:', updateError);
+      // Return original profile to reflect actual DB state
+      return profile;
+    }
+    return { ...profile, current_streak: 0 };
+  }
+
+  return profile;
+}
 
 export async function updateStreak(userId: string) {
   const supabase = await createClient();

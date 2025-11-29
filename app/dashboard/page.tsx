@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
+import { validateStreak } from "@/lib/utils/streak-tracking";
 
 export const dynamic = 'force-dynamic'; // Disable caching for this page
 
@@ -16,13 +17,13 @@ export default async function DashboardPage({
     redirect("/auth/login");
   }
 
-  // Always fetch fresh profile data (not cached)
-  // This is especially important when returning from settings
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
+  // Validate and fetch profile - this ensures streak is reset if user missed a day
+  const profile = await validateStreak(data.user.id);
+
+  // If profile fetch failed, redirect to login
+  if (!profile) {
+    redirect("/auth/login");
+  }
 
   const { data: tasks } = await supabase
     .from("tasks")
