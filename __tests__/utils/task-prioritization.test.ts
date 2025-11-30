@@ -50,6 +50,7 @@ describe('Task Prioritization and Scheduling', () => {
     urgency: 'not-urgent',
     estimated_hours: 1,
     start_date: null,
+    pinned_date: null,
     category: 'Personal',
     recurring_series_id: null,
     is_recurring: false,
@@ -310,6 +311,170 @@ describe('Task Prioritization and Scheduling', () => {
       const task = createMockTask({ importance: 'not-important', urgency: 'not-urgent' });
       const quadrant = getEisenhowerQuadrant(task);
       expect(quadrant).toBe('not-urgent-not-important');
+    });
+  });
+
+  describe('Pinned Date (Pull to Today)', () => {
+    test('should NOT reschedule tasks that are pinned for today', () => {
+      // Today is mocked to 2025-11-25
+      const pinnedTask = createMockTask({
+        id: 'pinned-task',
+        title: 'Pinned Task',
+        start_date: '2025-11-25',
+        pinned_date: '2025-11-25', // Pinned for today
+        estimated_hours: 2,
+      });
+      
+      const unpinnedTask = createMockTask({
+        id: 'unpinned-task',
+        title: 'Unpinned Task',
+        start_date: '2025-11-25',
+        pinned_date: null, // Not pinned
+        estimated_hours: 2,
+      });
+
+      const tasks: Task[] = [pinnedTask, unpinnedTask];
+      const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      
+      const resultPinnedTask = result.tasks.find(t => t.id === 'pinned-task');
+      
+      // Pinned task should stay on its original date (today)
+      expect(resultPinnedTask?.start_date).toBe('2025-11-25');
+    });
+
+    test('should reschedule tasks that are pinned for a PAST date (not today)', () => {
+      // Today is mocked to 2025-11-25
+      // Task was pinned yesterday - should now be rescheduled
+      const oldPinnedTask = createMockTask({
+        id: 'old-pinned',
+        title: 'Old Pinned Task',
+        start_date: '2025-11-24', // Was pinned yesterday
+        pinned_date: '2025-11-24', // Pinned for yesterday (not today)
+        due_date: '2025-11-30',
+        estimated_hours: 1,
+      });
+
+      const tasks: Task[] = [oldPinnedTask];
+      const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      
+      const resultTask = result.tasks.find(t => t.id === 'old-pinned');
+      
+      // Task should be rescheduled since it's not pinned for today
+      // It could be scheduled from today onwards
+      expect(resultTask?.start_date).toBeTruthy();
+    });
+
+    test('should preserve pinned task even when at daily capacity', () => {
+      // Create 4 tasks for today (at capacity)
+      const fillerTasks = Array.from({ length: 3 }, (_, i) => 
+        createMockTask({
+          id: `filler-${i}`,
+          title: `Filler Task ${i + 1}`,
+          start_date: '2025-11-25',
+          pinned_date: null,
+          estimated_hours: 1,
+        })
+      );
+      
+      // Add a pinned task that should NOT be moved
+      const pinnedTask = createMockTask({
+        id: 'pinned-important',
+        title: 'Pinned Important Task',
+        start_date: '2025-11-25',
+        pinned_date: '2025-11-25', // Pinned for today
+        estimated_hours: 1,
+      });
+
+      const tasks: Task[] = [...fillerTasks, pinnedTask];
+      const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      
+      const resultPinnedTask = result.tasks.find(t => t.id === 'pinned-important');
+      
+      // Pinned task should still be on today even if at capacity
+      expect(resultPinnedTask?.start_date).toBe('2025-11-25');
+    });
+
+    test('should NOT include pinned tasks in rescheduledTasks list', () => {
+      const pinnedTask = createMockTask({
+        id: 'pinned-no-reschedule',
+        title: 'Should Not Reschedule',
+        start_date: '2025-11-25',
+        pinned_date: '2025-11-25',
+        estimated_hours: 1,
+      });
+
+      const tasks: Task[] = [pinnedTask];
+      const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      
+      // Pinned task should not appear in rescheduled tasks
+      const rescheduledIds = result.rescheduledTasks.map(r => r.task.id);
+      expect(rescheduledIds).not.toContain('pinned-no-reschedule');
+    });
+
+    test('should allow unpinned tasks to be rescheduled normally', () => {
+      // Task with start_date but no pinned_date can be rescheduled
+      const unpinnedTask = createMockTask({
+        id: 'can-reschedule',
+        title: 'Can Be Rescheduled',
+        start_date: '2025-11-26', // Tomorrow
+        pinned_date: null, // Not pinned
+        due_date: '2025-12-01',
+        estimated_hours: 1,
+      });
+
+      const tasks: Task[] = [unpinnedTask];
+      const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      
+      const resultTask = result.tasks.find(t => t.id === 'can-reschedule');
+      
+      // Task could be rescheduled to today since there's capacity
+      expect(resultTask?.start_date).toBeTruthy();
+    });
+
+    test('should handle mix of pinned and unpinned tasks correctly', () => {
+      const pinnedTask = createMockTask({
+        id: 'pinned',
+        title: 'Pinned',
+        start_date: '2025-11-25',
+        pinned_date: '2025-11-25',
+        estimated_hours: 2,
+      });
+      
+      const unpinnedTask1 = createMockTask({
+        id: 'unpinned-1',
+        title: 'Unpinned 1',
+        start_date: null,
+        pinned_date: null,
+        due_date: '2025-11-26',
+        importance: 'important',
+        urgency: 'urgent',
+        estimated_hours: 2,
+      });
+      
+      const unpinnedTask2 = createMockTask({
+        id: 'unpinned-2',
+        title: 'Unpinned 2',
+        start_date: null,
+        pinned_date: null,
+        due_date: '2025-11-30',
+        estimated_hours: 2,
+      });
+
+      const tasks: Task[] = [pinnedTask, unpinnedTask1, unpinnedTask2];
+      const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      
+      // All tasks should have start dates
+      expect(result.tasks.every(t => t.start_date !== null)).toBe(true);
+      
+      // Pinned task should stay on its date
+      const resultPinned = result.tasks.find(t => t.id === 'pinned');
+      expect(resultPinned?.start_date).toBe('2025-11-25');
+      
+      // Unpinned tasks should be scheduled
+      const resultUnpinned1 = result.tasks.find(t => t.id === 'unpinned-1');
+      const resultUnpinned2 = result.tasks.find(t => t.id === 'unpinned-2');
+      expect(resultUnpinned1?.start_date).toBeTruthy();
+      expect(resultUnpinned2?.start_date).toBeTruthy();
     });
   });
 });

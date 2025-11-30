@@ -14,6 +14,7 @@ export interface Task {
   urgency: 'urgent' | 'not-urgent';
   estimated_hours: number;
   start_date: string | null;
+  pinned_date: string | null;
   category: 'Work' | 'Home' | 'Health' | 'Personal';
   recurring_series_id: string | null;
   is_recurring: boolean;

@@ -451,10 +451,12 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     const todayStr = getTodayLocal();
     
     try {
-      // Update task's start_date to today
+      // Update task's start_date and pinned_date to today
+      // pinned_date prevents the scheduling algorithm from moving this task
+      // (only respected for the current day - resets on new day)
       const { error } = await supabase
         .from('tasks')
-        .update({ start_date: todayStr })
+        .update({ start_date: todayStr, pinned_date: todayStr })
         .eq('id', taskId);
 
       if (error) throw error;
@@ -462,7 +464,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
       // Update local state (use functional update to get latest state)
       setTasks(currentTasks => 
         currentTasks.map(t => 
-          t.id === taskId ? { ...t, start_date: todayStr } : t
+          t.id === taskId ? { ...t, start_date: todayStr, pinned_date: todayStr } : t
         )
       );
 

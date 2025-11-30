@@ -302,20 +302,34 @@ export function assignStartDates(
   
   console.log('[v1] Recurring tasks after deduplication:', recurringTasks.length, '(was', rawRecurringTasks.length, ')');
   
-  // Step 3: Get ALL non-recurring tasks (both complete and incomplete) to track counts,
-  // but only incomplete tasks will be rescheduled
-  const allNonRecurringTasks = tasks.filter(t => !t.is_recurring);
-  const nonRecurringTasks = allNonRecurringTasks.filter(t => !t.completed);
   const todayStr = getTodayLocal();
   
-  console.log('[v1] Re-scheduling', nonRecurringTasks.length, 'incomplete non-recurring tasks');
+  // Step 3: Keep tasks that are pinned for TODAY (user manually pulled them)
+  // Pinned tasks are only respected for the current day - on a new day they get rescheduled
+  const pinnedTodayTasks = tasks.filter(t => 
+    !t.completed && 
+    !t.is_recurring && 
+    t.pinned_date === todayStr
+  );
+  
+  console.log('[v1] Tasks pinned for today:', pinnedTodayTasks.length);
+  
+  // Step 4: Get ALL non-recurring tasks (both complete and incomplete) to track counts,
+  // but only incomplete NON-PINNED tasks will be rescheduled
+  const allNonRecurringTasks = tasks.filter(t => !t.is_recurring);
+  const nonRecurringTasks = allNonRecurringTasks.filter(t => 
+    !t.completed && 
+    t.pinned_date !== todayStr  // Exclude tasks pinned for today
+  );
+  
+  console.log('[v1] Re-scheduling', nonRecurringTasks.length, 'incomplete non-recurring tasks (excluding', pinnedTodayTasks.length, 'pinned)');
   
   // Track original start_dates for comparison
   const originalDates = new Map(
     nonRecurringTasks.map(t => [t.id, t.start_date])
   );
   
-  // Step 4: Score and sort by priority (highest first)
+  // Step 5: Score and sort by priority (highest first)
   const scoredTasksToSchedule = addPriorityScores(nonRecurringTasks);
   scoredTasksToSchedule.sort((a, b) => b.priorityScore - a.priorityScore);
   
@@ -327,8 +341,8 @@ export function assignStartDates(
     current_start: t.start_date
   })));
   
-  // Step 5: Start with completed tasks and recurring tasks only
-  const result: Task[] = [...completedTasks, ...recurringTasks];
+  // Step 6: Start with completed tasks, recurring tasks, AND pinned tasks (all kept as-is)
+  const result: Task[] = [...completedTasks, ...recurringTasks, ...pinnedTodayTasks];
   
   // Initialize count per day with ALL tasks (both recurring and non-recurring, complete and incomplete)
   // This is the critical change: we now count ALL tasks toward the 4-task daily cap
@@ -356,7 +370,7 @@ export function assignStartDates(
   
   console.log('[v1] After releasing slots for rescheduling:', Array.from(tasksPerDay.entries()).slice(0, 10));
   
-  // Step 6: Schedule each non-recurring task
+  // Step 7: Schedule each non-recurring, non-pinned task
   for (const task of scoredTasksToSchedule) {
     let scheduled = false;
     let attemptedDates: string[] = [];

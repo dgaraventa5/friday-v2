@@ -91,6 +91,8 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
         importance,
         urgency,
         updated_at: new Date().toISOString(),
+        // Clear pinned_date when task is edited so it can be rescheduled normally
+        pinned_date: null,
       };
       
       if (!task.is_recurring) {
