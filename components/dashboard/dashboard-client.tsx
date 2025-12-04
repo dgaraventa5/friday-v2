@@ -216,17 +216,28 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
         if (task.is_recurring) {
           const nextInstance = generateNextRecurringInstance(task);
           if (nextInstance) {
-            const { data, error: insertError } = await supabase
-              .from('tasks')
-              .insert({
-                ...nextInstance,
-                user_id: task.user_id,
-              })
-              .select()
-              .single();
+            // Check if instance already exists for this date + series (prevent duplicates)
+            const existingInstance = updatedTasks.find(
+              t => t.recurring_series_id === task.recurring_series_id &&
+                   t.start_date === nextInstance.start_date &&
+                   !t.completed
+            );
+            
+            if (!existingInstance) {
+              const { data, error: insertError } = await supabase
+                .from('tasks')
+                .insert({
+                  ...nextInstance,
+                  user_id: task.user_id,
+                })
+                .select()
+                .single();
 
-            if (!insertError && data) {
-              updatedTasks.push(data);
+              if (!insertError && data) {
+                updatedTasks.push(data);
+              }
+            } else {
+              console.log('[v0] Skipping duplicate recurring instance for', nextInstance.start_date);
             }
           }
         }
