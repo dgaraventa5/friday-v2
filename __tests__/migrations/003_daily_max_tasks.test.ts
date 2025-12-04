@@ -85,7 +85,7 @@ describe('Migration 003: Add daily_max_tasks', () => {
         { weekday: 4, weekend: 25 }, // too high
       ];
 
-      invalidLimits.forEach(limit => {
+      invalidLimits.forEach((limit: any) => {
         const isValid = 
           limit &&
           typeof limit === 'object' &&

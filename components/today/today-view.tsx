@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { Task, Profile } from '@/lib/types';
 import { getTodaysFocusTasks, addPriorityScores } from '@/lib/utils/task-prioritization';
 import { TaskCard } from './task-card';
 import { CelebrationState } from './celebration-state';
 import { WelcomeMessage } from './welcome-message';
-import { AddAnotherTaskDialog } from './add-another-task-dialog';
+import { AddTaskGhost } from './add-task-ghost';
 import { getTodayLocal } from '@/lib/utils/date-utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,10 +30,6 @@ export function TodayView({
   onPullTaskToToday,
   onOpenAddDialog,
 }: TodayViewProps) {
-  const [showAddAnotherDialog, setShowAddAnotherDialog] = useState(false);
-  const [completedTask, setCompletedTask] = useState<Task | null>(null);
-  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
-  const [declineCount, setDeclineCount] = useState(0);
   const { toast } = useToast();
 
   const focusTasks = getTodaysFocusTasks(tasks);
@@ -42,45 +37,16 @@ export function TodayView({
   const completedTasks = focusTasks.filter(t => t.completed);
   
   const completedCount = completedTasks.length;
-  const totalTasks = incompleteTasks.length + completedTasks.length;
   const allComplete = incompleteTasks.length === 0 && completedTasks.length > 0;
-  
-  const isExtraCredit = completedCount > BASELINE_TASKS;
-  const totalToShow = BASELINE_TASKS; // Always show "of 4"
 
   const handleTaskComplete = (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    // If task is already completed, allow unchecking without dialog
-    if (task.completed) {
-      onTaskComplete(taskId, true);
-      return;
-    }
-
-    // If user has declined 2+ times, skip auto-scheduling
-    if (declineCount >= 2) {
-      onTaskComplete(taskId, true);
-      return;
-    }
-
-    // Show "add another" prompt and store the task ID
-    setPendingTaskId(taskId);
-    setCompletedTask(task);
-    setShowAddAnotherDialog(true);
+    // Always skip auto-schedule to prevent immediate backfill,
+    // allowing the user to decide when to pull the next task
+    onTaskComplete(taskId, true);
   };
 
-  const handleAddAnotherYes = async () => {
-    setShowAddAnotherDialog(false);
-    setDeclineCount(0);
-    
-    // Complete the pending task (await to prevent race condition)
-    if (pendingTaskId) {
-      await onTaskComplete(pendingTaskId, true);
-      setPendingTaskId(null);
-    }
-    
-    // Auto-pull the next highest priority task
+  const handleAutoPullTask = async () => {
+    // Auto-pull the next highest priority task from backlog
     const todayStr = getTodayLocal();
     const availableTasks = tasks.filter(
       t => !t.completed && 
@@ -108,17 +74,6 @@ export function TodayView({
       // Toast notification is already handled in handlePullTaskToToday
     }
   };
-
-  const handleAddAnotherNo = () => {
-    setShowAddAnotherDialog(false);
-    setDeclineCount(prev => prev + 1);
-    // Complete the task but skip auto-scheduling
-    if (pendingTaskId) {
-      onTaskComplete(pendingTaskId, true);
-      setPendingTaskId(null);
-    }
-  };
-
 
   // Show welcome message if no tasks and onboarding not complete
   if (tasks.length === 0 && !profile.onboarding_completed) {
@@ -157,6 +112,11 @@ export function TodayView({
             </>
           )}
 
+          {/* Only show ghost button after 2 tasks completed to reduce anxiety */}
+          {completedCount >= 2 && (
+            <AddTaskGhost onClick={handleAutoPullTask} />
+          )}
+
           {completedTasks.length > 0 && (
             <div className="pt-3 md:pt-4 lg:pt-6 space-y-2 md:space-y-3 lg:space-y-4">
               <h3 className="text-xs md:text-sm lg:text-base font-medium text-muted-foreground px-1">
@@ -175,21 +135,6 @@ export function TodayView({
           )}
         </div>
       </div>
-
-      <AddAnotherTaskDialog
-        open={showAddAnotherDialog}
-        onOpenChange={(open) => {
-          setShowAddAnotherDialog(open);
-          // If dialog is closed without selecting, complete task with skipAutoSchedule
-          if (!open && pendingTaskId) {
-            onTaskComplete(pendingTaskId, true);
-            setPendingTaskId(null);
-          }
-        }}
-        completedTask={completedTask}
-        onYes={handleAddAnotherYes}
-        onNo={handleAddAnotherNo}
-      />
     </>
   );
 }

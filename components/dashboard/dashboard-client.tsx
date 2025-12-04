@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Task, Profile } from '@/lib/types';
 import { TodayView } from '@/components/today/today-view';
 import { ScheduleView } from '@/components/schedule/schedule-view';
@@ -31,10 +31,121 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  
+  // Queue for sequential processing of pulled tasks to avoid race conditions
+  const [pullQueue, setPullQueue] = useState<string[]>([]);
+  const isProcessingQueue = useRef(false);
+  
   const router = useRouter();
   const { toast } = useToast();
 
   const supabase = createBrowserClient();
+
+  // Helper to get daily max tasks configuration safely
+  const getDailyMaxTasks = () => {
+    return profile.daily_max_tasks && 
+      typeof profile.daily_max_tasks === 'object' &&
+      'weekday' in profile.daily_max_tasks &&
+      'weekend' in profile.daily_max_tasks &&
+      typeof profile.daily_max_tasks.weekday === 'number' &&
+      typeof profile.daily_max_tasks.weekend === 'number'
+        ? profile.daily_max_tasks
+        : { weekday: 4, weekend: 4 };
+  };
+
+  // Process the pull queue sequentially
+  useEffect(() => {
+    const processQueue = async () => {
+      if (pullQueue.length === 0) return;
+      if (isProcessingQueue.current) return;
+
+      isProcessingQueue.current = true;
+      const taskId = pullQueue[0];
+      const todayStr = getTodayLocal();
+
+      try {
+        // 1. Find the task in the CURRENT state
+        // Note: tasks dependency ensures we have the latest state here
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) {
+          console.warn(`Task ${taskId} not found in current state, skipping`);
+          setPullQueue(prev => prev.slice(1));
+          isProcessingQueue.current = false;
+          return;
+        }
+
+        // 2. Update task in Supabase first (optimistic UI will follow)
+        const { error } = await supabase
+          .from('tasks')
+          .update({ start_date: todayStr, pinned_date: todayStr })
+          .eq('id', taskId);
+
+        if (error) throw error;
+
+        // 3. Calculate new schedule based on latest state
+        // Update local state first with the pinned task
+        const updatedTasks = tasks.map(t => 
+          t.id === taskId ? { ...t, start_date: todayStr, pinned_date: todayStr } : t
+        );
+
+        console.log('[v0] Task pulled to today - optimizing schedule to fill gaps');
+        const dailyMaxTasks = getDailyMaxTasks();
+            
+        const schedulingResult = assignStartDates(
+          updatedTasks,
+          profile.category_limits,
+          profile.daily_max_hours,
+          dailyMaxTasks
+        );
+        
+        // 4. Find tasks that need database updates (excluding the pinned task itself)
+        const tasksToUpdate = schedulingResult.rescheduledTasks
+          .filter(({ newDate, task: t }) => newDate !== null && t.id !== taskId);
+        
+        if (tasksToUpdate.length > 0) {
+          console.log('[v0] Rescheduling', tasksToUpdate.length, 'additional tasks to fill gaps');
+          
+          await Promise.all(
+            tasksToUpdate.map(({ task: t }) =>
+              supabase
+                .from('tasks')
+                .update({ start_date: t.start_date })
+                .eq('id', t.id)
+            )
+          );
+          
+          toast({
+            title: 'Schedule Optimized',
+            description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} moved to fill available time.`,
+          });
+        }
+
+        // 5. Update state with the full scheduled result
+        setTasks(schedulingResult.tasks);
+
+        toast({
+          title: 'Task Added',
+          description: `"${task.title}" has been added to today's focus!`,
+        });
+
+        router.refresh();
+      } catch (error) {
+        console.error('[v0] Error pulling task to today:', error);
+        toast({
+          title: 'Update Failed',
+          description: 'Could not add task to today. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        // 6. Remove from queue and allow next processing
+        setPullQueue(prev => prev.slice(1));
+        isProcessingQueue.current = false;
+      }
+    };
+
+    processQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pullQueue, tasks]); // Depend on tasks to ensure we always use latest state
 
   useEffect(() => {
     const runInitialScheduling = async () => {
@@ -48,16 +159,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
         daily_max_tasks_is_undefined: profile.daily_max_tasks === undefined,
       });
       
-      // Improve null/undefined handling for daily_max_tasks
-      const dailyMaxTasks = profile.daily_max_tasks && 
-        typeof profile.daily_max_tasks === 'object' &&
-        'weekday' in profile.daily_max_tasks &&
-        'weekend' in profile.daily_max_tasks &&
-        typeof profile.daily_max_tasks.weekday === 'number' &&
-        typeof profile.daily_max_tasks.weekend === 'number'
-          ? profile.daily_max_tasks
-          : { weekday: 4, weekend: 4 };
-      
+      const dailyMaxTasks = getDailyMaxTasks();
       console.log('[v0] Using daily_max_tasks:', dailyMaxTasks);
       
       const schedulingResult = assignStartDates(
@@ -107,14 +209,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     const updatedTaskList = [...tasks, ...tasksArray];
     
     // Run full scheduling
-    const dailyMaxTasks = profile.daily_max_tasks && 
-      typeof profile.daily_max_tasks === 'object' &&
-      'weekday' in profile.daily_max_tasks &&
-      'weekend' in profile.daily_max_tasks &&
-      typeof profile.daily_max_tasks.weekday === 'number' &&
-      typeof profile.daily_max_tasks.weekend === 'number'
-        ? profile.daily_max_tasks
-        : { weekday: 4, weekend: 4 };
+    const dailyMaxTasks = getDailyMaxTasks();
         
     const schedulingResult = assignStartDates(
       updatedTaskList,
@@ -246,14 +341,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
         if (!skipAutoSchedule) {
           // Re-run scheduling to backfill the freed capacity
           console.log('[v0] Task completed - re-optimizing schedule');
-          const dailyMaxTasks = profile.daily_max_tasks && 
-            typeof profile.daily_max_tasks === 'object' &&
-            'weekday' in profile.daily_max_tasks &&
-            'weekend' in profile.daily_max_tasks &&
-            typeof profile.daily_max_tasks.weekday === 'number' &&
-            typeof profile.daily_max_tasks.weekend === 'number'
-              ? profile.daily_max_tasks
-              : { weekday: 4, weekend: 4 };
+          const dailyMaxTasks = getDailyMaxTasks();
               
           const schedulingResult = assignStartDates(
             updatedTasks,
@@ -320,14 +408,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     
     // Run full scheduling
     console.log('[v0] Re-running scheduling algorithm after edit...');
-    const dailyMaxTasks = profile.daily_max_tasks && 
-      typeof profile.daily_max_tasks === 'object' &&
-      'weekday' in profile.daily_max_tasks &&
-      'weekend' in profile.daily_max_tasks &&
-      typeof profile.daily_max_tasks.weekday === 'number' &&
-      typeof profile.daily_max_tasks.weekend === 'number'
-        ? profile.daily_max_tasks
-        : { weekday: 4, weekend: 4 };
+    const dailyMaxTasks = getDailyMaxTasks();
         
     const schedulingResult = assignStartDates(
       updatedTaskList,
@@ -406,14 +487,7 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
       
       // Re-run scheduling to backfill freed capacity
       console.log('[v0] Task deleted - re-optimizing schedule');
-      const dailyMaxTasks = profile.daily_max_tasks && 
-        typeof profile.daily_max_tasks === 'object' &&
-        'weekday' in profile.daily_max_tasks &&
-        'weekend' in profile.daily_max_tasks &&
-        typeof profile.daily_max_tasks.weekday === 'number' &&
-        typeof profile.daily_max_tasks.weekend === 'number'
-          ? profile.daily_max_tasks
-          : { weekday: 4, weekend: 4 };
+      const dailyMaxTasks = getDailyMaxTasks();
           
       const schedulingResult = assignStartDates(
         updatedTasks,
@@ -455,44 +529,9 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     }
   };
 
+  // Simply add to queue - processing happens in useEffect
   const handlePullTaskToToday = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    const todayStr = getTodayLocal();
-    
-    try {
-      // Update task's start_date and pinned_date to today
-      // pinned_date prevents the scheduling algorithm from moving this task
-      // (only respected for the current day - resets on new day)
-      const { error } = await supabase
-        .from('tasks')
-        .update({ start_date: todayStr, pinned_date: todayStr })
-        .eq('id', taskId);
-
-      if (error) throw error;
-
-      // Update local state (use functional update to get latest state)
-      setTasks(currentTasks => 
-        currentTasks.map(t => 
-          t.id === taskId ? { ...t, start_date: todayStr, pinned_date: todayStr } : t
-        )
-      );
-
-      toast({
-        title: 'Task Added',
-        description: `"${task.title}" has been added to today's focus!`,
-      });
-
-      router.refresh();
-    } catch (error) {
-      console.error('[v0] Error pulling task to today:', error);
-      toast({
-        title: 'Update Failed',
-        description: 'Could not add task to today. Please try again.',
-        variant: 'destructive',
-      });
-    }
+    setPullQueue(prev => [...prev, taskId]);
   };
 
   return (
