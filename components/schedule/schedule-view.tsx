@@ -66,7 +66,7 @@ export function ScheduleView({
 
   if (sortedDates.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center px-6 py-12 md:py-20 text-center">
+      <div className="h-full flex flex-col items-center justify-center px-6 py-12 md:py-20 text-center">
         <Calendar className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mb-4" />
         <h3 className="text-base md:text-lg font-medium mb-2">No Scheduled Tasks</h3>
         <p className="text-sm md:text-base text-muted-foreground max-w-sm text-pretty">
@@ -77,16 +77,17 @@ export function ScheduleView({
   }
 
   return (
-    <div className="space-y-3 md:space-y-4 lg:space-y-6">
-      <div className="px-3 py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Schedule</h1>
-        <p className="text-xs md:text-sm lg:text-base text-muted-foreground mt-1 md:mt-1.5 lg:mt-2">
-          Your upcoming tasks organized by date
-        </p>
-      </div>
+    <div className="h-full overflow-y-auto">
+      <div className="space-y-3 md:space-y-4 lg:space-y-6 pb-24 lg:pb-0">
+        <div className="px-3 py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Schedule</h1>
+          <p className="text-xs md:text-sm lg:text-base text-muted-foreground mt-1 md:mt-1.5 lg:mt-2">
+            Your upcoming tasks organized by date
+          </p>
+        </div>
 
-      <div className="space-y-4 md:space-y-6 lg:space-y-8">
-        {sortedDates.map((dateStr) => {
+        <div className="space-y-4 md:space-y-6 lg:space-y-8">
+          {sortedDates.map((dateStr) => {
           const dateTasks = groupedTasks.get(dateStr)!;
           
           const incompleteTasks = addPriorityScores(dateTasks.incomplete).sort(
@@ -167,6 +168,7 @@ export function ScheduleView({
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );
