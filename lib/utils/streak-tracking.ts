@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Profile } from '@/lib/types';
-import { getTodayLocal, addDaysToDateString } from '@/lib/utils/date-utils';
+import { getTodayLocal, addDaysToDateString, parseDateLocal } from '@/lib/utils/date-utils';
 
 /**
  * Validates the user's streak on page load.
@@ -81,33 +81,23 @@ export async function updateStreak(userId: string) {
 
   if (error || !profile) return;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
+  // Use local timezone date strings for consistent comparison
+  const todayStr = getTodayLocal();
+  const yesterdayStr = addDaysToDateString(todayStr, -1);
+  const lastCompletionStr = profile.last_completion_date;
 
-  const lastCompletionDate = profile.last_completion_date
-    ? new Date(profile.last_completion_date)
-    : null;
-
-  if (lastCompletionDate) {
-    lastCompletionDate.setHours(0, 0, 0, 0);
+  // If last completion was today, don't update (already counted)
+  if (lastCompletionStr === todayStr) {
+    return;
   }
 
   let newStreak = profile.current_streak;
 
-  // If last completion was today, don't update
-  if (lastCompletionDate && lastCompletionDate.getTime() === today.getTime()) {
-    return;
-  }
-
   // If last completion was yesterday, increment streak
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (lastCompletionDate && lastCompletionDate.getTime() === yesterday.getTime()) {
+  if (lastCompletionStr === yesterdayStr) {
     newStreak += 1;
-  } else if (!lastCompletionDate || lastCompletionDate.getTime() < yesterday.getTime()) {
-    // If last completion was before yesterday or never, reset to 1
+  } else {
+    // Last completion was before yesterday or never - reset to 1
     newStreak = 1;
   }
 
@@ -125,6 +115,41 @@ export async function updateStreak(userId: string) {
     .eq('id', userId);
 }
 
+/**
+ * Helper function to check if user has completed anything on a given date
+ * (either a task or a reminder with status='completed')
+ */
+async function hasCompletedAnythingOnDate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  dateStr: string
+): Promise<boolean> {
+  const nextDayStr = addDaysToDateString(dateStr, 1);
+  
+  // Check for completed tasks
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('completed', true)
+    .gte('completed_at', dateStr)
+    .lt('completed_at', nextDayStr)
+    .limit(1);
+
+  if (tasks && tasks.length > 0) return true;
+
+  // Check for completed reminders (not skipped)
+  const { data: completions } = await supabase
+    .from('reminder_completions')
+    .select('id, reminders!inner(user_id)')
+    .eq('reminders.user_id', userId)
+    .eq('completion_date', dateStr)
+    .eq('status', 'completed')
+    .limit(1);
+
+  return !!(completions && completions.length > 0);
+}
+
 export async function recalculateStreak(userId: string) {
   const supabase = await createClient();
   
@@ -137,64 +162,59 @@ export async function recalculateStreak(userId: string) {
 
   if (profileError || !profile) return;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = getTodayLocal();
+  const yesterdayStr = addDaysToDateString(todayStr, -1);
 
   // Check if there are any completed tasks today
   const { data: todayCompletedTasks, error: tasksError } = await supabase
     .from('tasks')
-    .select('id, completed_at')
+    .select('id')
     .eq('user_id', userId)
     .eq('completed', true)
     .gte('completed_at', todayStr)
-    .lt('completed_at', new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    .lt('completed_at', addDaysToDateString(todayStr, 1))
+    .limit(1);
 
   if (tasksError) {
     console.error('[v0] Error fetching today\'s completed tasks:', tasksError);
     return;
   }
 
-  // If there are completed tasks today, keep the streak as is
-  if (todayCompletedTasks && todayCompletedTasks.length > 0) {
+  // Check if there are any completed reminders today (status='completed', not 'skipped')
+  const { data: todayCompletedReminders } = await supabase
+    .from('reminder_completions')
+    .select('id, reminders!inner(user_id)')
+    .eq('reminders.user_id', userId)
+    .eq('completion_date', todayStr)
+    .eq('status', 'completed')
+    .limit(1);
+
+  // If there are completed tasks or reminders today, keep the streak as is
+  const hasCompletedToday = 
+    (todayCompletedTasks && todayCompletedTasks.length > 0) ||
+    (todayCompletedReminders && todayCompletedReminders.length > 0);
+
+  if (hasCompletedToday) {
     return;
   }
 
-  // No tasks completed today - need to check previous days
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-  // Check if there were any completed tasks yesterday
-  const { data: yesterdayCompletedTasks } = await supabase
-    .from('tasks')
-    .select('id, completed_at')
-    .eq('user_id', userId)
-    .eq('completed', true)
-    .gte('completed_at', yesterdayStr)
-    .lt('completed_at', todayStr);
-
+  // No tasks or reminders completed today - need to check previous days
   let newStreak = profile.current_streak;
   let newLastCompletionDate = profile.last_completion_date;
 
-  // If we had completed tasks yesterday, the streak needs to be decremented by 1
-  // (since we're removing today's completion which had incremented it)
-  if (yesterdayCompletedTasks && yesterdayCompletedTasks.length > 0) {
+  // Check if anything was completed yesterday
+  const hasCompletedYesterday = await hasCompletedAnythingOnDate(supabase, userId, yesterdayStr);
+
+  if (hasCompletedYesterday) {
     newLastCompletionDate = yesterdayStr;
     // Only decrement if the current last_completion_date was today
-    // (meaning today's task had incremented the streak)
-    const currentLastDate = profile.last_completion_date 
-      ? new Date(profile.last_completion_date)
-      : null;
-    if (currentLastDate) {
-      currentLastDate.setHours(0, 0, 0, 0);
-      if (currentLastDate.getTime() === today.getTime()) {
-        // Today's completion had incremented the streak, so decrement it back
-        newStreak = Math.max(0, profile.current_streak - 1);
-      }
+    // (meaning today's completion had incremented the streak)
+    if (profile.last_completion_date === todayStr) {
+      newStreak = Math.max(0, profile.current_streak - 1);
     }
   } else {
-    // No tasks completed yesterday either - need to find the last completion date
+    // No completions yesterday either - need to find the last completion date
+    // Check both tasks and reminders
     const { data: lastCompletedTask } = await supabase
       .from('tasks')
       .select('completed_at')
@@ -204,9 +224,32 @@ export async function recalculateStreak(userId: string) {
       .limit(1)
       .single();
 
-    if (lastCompletedTask && lastCompletedTask.completed_at) {
-      const lastDate = new Date(lastCompletedTask.completed_at);
-      lastDate.setHours(0, 0, 0, 0);
+    const { data: lastCompletedReminder } = await supabase
+      .from('reminder_completions')
+      .select('completion_date, reminders!inner(user_id)')
+      .eq('reminders.user_id', userId)
+      .eq('status', 'completed')
+      .order('completion_date', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Determine the most recent completion date
+    let lastCompletionDateStr: string | null = null;
+
+    if (lastCompletedTask?.completed_at) {
+      lastCompletionDateStr = lastCompletedTask.completed_at.split('T')[0];
+    }
+
+    if (lastCompletedReminder?.completion_date) {
+      if (!lastCompletionDateStr || lastCompletedReminder.completion_date > lastCompletionDateStr) {
+        lastCompletionDateStr = lastCompletedReminder.completion_date;
+      }
+    }
+
+    if (lastCompletionDateStr) {
+      // Use parseDateLocal for timezone-aware date handling
+      const today = parseDateLocal(todayStr);
+      const lastDate = parseDateLocal(lastCompletionDateStr);
       const daysDiff = Math.floor((today.getTime() - lastDate.getTime()) / (24 * 60 * 60 * 1000));
 
       if (daysDiff > 1) {
@@ -214,9 +257,9 @@ export async function recalculateStreak(userId: string) {
         newStreak = 0;
       }
       
-      newLastCompletionDate = lastCompletedTask.completed_at.split('T')[0];
+      newLastCompletionDate = lastCompletionDateStr;
     } else {
-      // No completed tasks at all
+      // No completed tasks or reminders at all
       newStreak = 0;
       newLastCompletionDate = null;
     }

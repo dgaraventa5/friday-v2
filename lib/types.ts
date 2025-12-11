@@ -63,3 +63,34 @@ export interface TaskWithScore extends Task {
   priorityScore: number;
   quadrant: EisenhowerQuadrant;
 }
+
+// Reminder types
+export interface Reminder {
+  id: string;
+  user_id: string;
+  title: string;
+  time_label: string | null; // Format: "HH:MM:SS"
+  recurrence_type: 'daily' | 'weekly' | 'monthly';
+  recurrence_interval: number;
+  recurrence_days: number[] | null; // For weekly: days of week (0-6). For monthly: day of month
+  monthly_type: 'day_of_month' | 'nth_weekday' | null;
+  monthly_week_position: number | null; // 1-4 or -1 for last
+  end_type: 'never' | 'after';
+  end_count: number | null;
+  current_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReminderCompletion {
+  id: string;
+  reminder_id: string;
+  completion_date: string; // Format: "YYYY-MM-DD"
+  status: 'completed' | 'skipped';
+  completed_at: string;
+}
+
+export interface ReminderWithStatus extends Reminder {
+  todayStatus: 'incomplete' | 'completed' | 'skipped';
+}
