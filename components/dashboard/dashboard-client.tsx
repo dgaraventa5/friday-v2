@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Task, Profile } from '@/lib/types';
+import { Task, Profile, Reminder, ReminderCompletion, ReminderWithStatus } from '@/lib/types';
 import { TodayView } from '@/components/today/today-view';
 import { ScheduleView } from '@/components/schedule/schedule-view';
 import { BottomNav } from '@/components/navigation/bottom-nav';
@@ -9,9 +9,12 @@ import { AppHeader } from '@/components/dashboard/app-header';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AddTaskForm } from '@/components/task/add-task-form';
 import { EditTaskDialog } from '@/components/task/edit-task-dialog';
+import { AddReminderModal } from '@/components/reminders/add-reminder-modal';
+import { EditReminderModal } from '@/components/reminders/edit-reminder-modal';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { assignStartDates } from '@/lib/utils/task-prioritization';
 import { generateNextRecurringInstance } from '@/lib/utils/recurring-tasks';
+import { getTodaysReminders } from '@/lib/utils/reminder-utils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { getTodayLocal } from '@/lib/utils/date-utils';
@@ -19,18 +22,31 @@ import { cn } from '@/lib/utils';
 
 interface DashboardClientProps {
   initialTasks: Task[];
+  initialReminders: Reminder[];
+  initialReminderCompletions: ReminderCompletion[];
   profile: Profile;
   userEmail?: string;
 }
 
 type NavView = 'today' | 'schedule';
 
-export function DashboardClient({ initialTasks, profile, userEmail }: DashboardClientProps) {
+export function DashboardClient({ 
+  initialTasks, 
+  initialReminders,
+  initialReminderCompletions,
+  profile, 
+  userEmail 
+}: DashboardClientProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
+  const [reminderCompletions, setReminderCompletions] = useState<ReminderCompletion[]>(initialReminderCompletions);
   const [currentView, setCurrentView] = useState<NavView>('today');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showAddReminderDialog, setShowAddReminderDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showEditReminderDialog, setShowEditReminderDialog] = useState(false);
   
   // Queue for sequential processing of pulled tasks to avoid race conditions
   const [pullQueue, setPullQueue] = useState<string[]>([]);
@@ -38,6 +54,9 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
   
   const router = useRouter();
   const { toast } = useToast();
+
+  // Compute today's reminders with status
+  const todaysReminders: ReminderWithStatus[] = getTodaysReminders(reminders, reminderCompletions);
 
   const supabase = createBrowserClient();
 
@@ -534,6 +553,290 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
     setPullQueue(prev => [...prev, taskId]);
   };
 
+  // Reminder handlers
+  const handleReminderAdd = async (reminderData: Partial<Reminder>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('reminders')
+        .insert({
+          ...reminderData,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setReminders(prev => [data, ...prev]);
+        toast({
+          title: 'Reminder Added',
+          description: `"${data.title}" has been created.`,
+        });
+      }
+
+      setShowAddReminderDialog(false);
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error adding reminder:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not add reminder. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const handleReminderComplete = async (reminderId: string) => {
+    const todayStr = getTodayLocal();
+    const existingCompletion = reminderCompletions.find(
+      c => c.reminder_id === reminderId && c.completion_date === todayStr
+    );
+
+    try {
+      if (existingCompletion && existingCompletion.status === 'completed') {
+        // Undo completion - delete the completion record
+        const { error } = await supabase
+          .from('reminder_completions')
+          .delete()
+          .eq('id', existingCompletion.id);
+
+        if (error) throw error;
+
+        setReminderCompletions(prev => prev.filter(c => c.id !== existingCompletion.id));
+        
+        // Decrement current_count for the reminder (reverse the increment from completion)
+        const reminder = reminders.find(r => r.id === reminderId);
+        if (reminder && reminder.current_count > 0) {
+          await supabase
+            .from('reminders')
+            .update({ current_count: reminder.current_count - 1 })
+            .eq('id', reminderId);
+
+          setReminders(prev => 
+            prev.map(r => r.id === reminderId ? { ...r, current_count: r.current_count - 1 } : r)
+          );
+        }
+        
+        // Recalculate streak
+        await fetch('/api/streak', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'recalculate' })
+        });
+      } else {
+        // Complete the reminder
+        if (existingCompletion) {
+          // Update existing (was skipped, now completing)
+          const { error } = await supabase
+            .from('reminder_completions')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('id', existingCompletion.id);
+
+          if (error) throw error;
+
+          setReminderCompletions(prev => 
+            prev.map(c => c.id === existingCompletion.id ? { ...c, status: 'completed' as const } : c)
+          );
+        } else {
+          // Insert new completion
+          const { data, error } = await supabase
+            .from('reminder_completions')
+            .insert({
+              reminder_id: reminderId,
+              completion_date: todayStr,
+              status: 'completed',
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            setReminderCompletions(prev => [...prev, data]);
+          }
+        }
+
+        // Update streak
+        await fetch('/api/streak', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update' })
+        });
+
+        // Increment current_count for the reminder
+        const reminder = reminders.find(r => r.id === reminderId);
+        if (reminder) {
+          await supabase
+            .from('reminders')
+            .update({ current_count: reminder.current_count + 1 })
+            .eq('id', reminderId);
+
+          setReminders(prev => 
+            prev.map(r => r.id === reminderId ? { ...r, current_count: r.current_count + 1 } : r)
+          );
+        }
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error completing reminder:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not update reminder. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReminderSkip = async (reminderId: string) => {
+    const todayStr = getTodayLocal();
+
+    try {
+      const { data, error } = await supabase
+        .from('reminder_completions')
+        .insert({
+          reminder_id: reminderId,
+          completion_date: todayStr,
+          status: 'skipped',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setReminderCompletions(prev => [...prev, data]);
+        toast({
+          title: 'Reminder Skipped',
+          description: 'This reminder has been skipped for today.',
+        });
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error skipping reminder:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not skip reminder. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReminderUndoSkip = async (reminderId: string) => {
+    const todayStr = getTodayLocal();
+    const existingCompletion = reminderCompletions.find(
+      c => c.reminder_id === reminderId && c.completion_date === todayStr && c.status === 'skipped'
+    );
+
+    if (!existingCompletion) return;
+
+    try {
+      const { error } = await supabase
+        .from('reminder_completions')
+        .delete()
+        .eq('id', existingCompletion.id);
+
+      if (error) throw error;
+
+      setReminderCompletions(prev => prev.filter(c => c.id !== existingCompletion.id));
+      toast({
+        title: 'Skip Undone',
+        description: 'This reminder is back on your list.',
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error undoing skip:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not undo skip. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReminderEdit = (reminder: ReminderWithStatus) => {
+    setEditingReminder(reminder);
+    setShowEditReminderDialog(true);
+  };
+
+  const handleReminderUpdate = async (updatedReminder: Reminder) => {
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .update({
+          title: updatedReminder.title,
+          time_label: updatedReminder.time_label,
+          recurrence_type: updatedReminder.recurrence_type,
+          recurrence_interval: updatedReminder.recurrence_interval,
+          recurrence_days: updatedReminder.recurrence_days,
+          monthly_type: updatedReminder.monthly_type,
+          monthly_week_position: updatedReminder.monthly_week_position,
+          end_type: updatedReminder.end_type,
+          end_count: updatedReminder.end_count,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', updatedReminder.id);
+
+      if (error) throw error;
+
+      setReminders(prev => 
+        prev.map(r => r.id === updatedReminder.id ? updatedReminder : r)
+      );
+
+      toast({
+        title: 'Reminder Updated',
+        description: 'Your changes have been saved.',
+      });
+
+      setShowEditReminderDialog(false);
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error updating reminder:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not update reminder. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReminderDelete = async (reminderId: string) => {
+    if (!confirm('Are you sure you want to delete this reminder?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .delete()
+        .eq('id', reminderId);
+
+      if (error) throw error;
+
+      setReminders(prev => prev.filter(r => r.id !== reminderId));
+      setReminderCompletions(prev => prev.filter(c => c.reminder_id !== reminderId));
+
+      toast({
+        title: 'Reminder Deleted',
+        description: 'The reminder has been removed.',
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error('[v0] Error deleting reminder:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not delete reminder. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <AppHeader tasks={tasks} profile={profile} userEmail={userEmail} />
@@ -544,11 +847,18 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
             <TodayView
               tasks={tasks}
               profile={profile}
+              reminders={todaysReminders}
               onTaskComplete={handleTaskComplete}
               onTaskEdit={handleTaskEdit}
               onTaskDelete={handleTaskDelete}
               onPullTaskToToday={handlePullTaskToToday}
               onOpenAddDialog={() => setShowAddDialog(true)}
+              onReminderComplete={handleReminderComplete}
+              onReminderSkip={handleReminderSkip}
+              onReminderUndoSkip={handleReminderUndoSkip}
+              onReminderEdit={handleReminderEdit}
+              onReminderDelete={handleReminderDelete}
+              onOpenAddReminderDialog={() => setShowAddReminderDialog(true)}
             />
           ) : (
             <ScheduleView
@@ -584,6 +894,19 @@ export function DashboardClient({ initialTasks, profile, userEmail }: DashboardC
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         onTaskUpdated={handleTaskUpdated}
+      />
+
+      <AddReminderModal
+        open={showAddReminderDialog}
+        onOpenChange={setShowAddReminderDialog}
+        onSave={handleReminderAdd}
+      />
+
+      <EditReminderModal
+        reminder={editingReminder}
+        open={showEditReminderDialog}
+        onOpenChange={setShowEditReminderDialog}
+        onSave={handleReminderUpdate}
       />
     </div>
   );
