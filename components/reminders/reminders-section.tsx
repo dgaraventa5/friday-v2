@@ -13,6 +13,7 @@ interface RemindersSectionProps {
   onEdit: (reminder: ReminderWithStatus) => void;
   onDelete: (reminderId: string) => void;
   onAddNew: () => void;
+  hideHeader?: boolean;
 }
 
 export function RemindersSection({
@@ -23,14 +24,62 @@ export function RemindersSection({
   onEdit,
   onDelete,
   onAddNew,
+  hideHeader = false,
 }: RemindersSectionProps) {
   const incompleteReminders = reminders.filter(r => r.todayStatus === 'incomplete');
   const completedReminders = reminders.filter(r => r.todayStatus === 'completed');
   const skippedReminders = reminders.filter(r => r.todayStatus === 'skipped');
 
+  // If header is hidden, we just return the list content without the wrapper card styling
+  if (hideHeader) {
+    return (
+      <div className="space-y-2">
+        {/* Incomplete reminders */}
+        {incompleteReminders.map((reminder) => (
+          <ReminderCard
+            key={reminder.id}
+            reminder={reminder}
+            onComplete={onComplete}
+            onSkip={onSkip}
+            onUndoSkip={onUndoSkip}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+
+        {/* Completed reminders */}
+        {completedReminders.map((reminder) => (
+          <ReminderCard
+            key={reminder.id}
+            reminder={reminder}
+            onComplete={onComplete}
+            onSkip={onSkip}
+            onUndoSkip={onUndoSkip}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+
+        {/* Skipped reminders */}
+        {skippedReminders.map((reminder) => (
+          <ReminderCard
+            key={reminder.id}
+            reminder={reminder}
+            onComplete={onComplete}
+            onSkip={onSkip}
+            onUndoSkip={onUndoSkip}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Default behavior with card styling and header
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-5">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
           Reminders
         </h2>

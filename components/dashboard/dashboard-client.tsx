@@ -19,6 +19,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { getTodayLocal } from '@/lib/utils/date-utils';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface DashboardClientProps {
   initialTasks: Task[];
@@ -32,8 +34,8 @@ type NavView = 'today' | 'schedule';
 
 export function DashboardClient({ 
   initialTasks, 
-  initialReminders,
-  initialReminderCompletions,
+  initialReminders, 
+  initialReminderCompletions, 
   profile, 
   userEmail 
 }: DashboardClientProps) {
@@ -250,7 +252,7 @@ export function DashboardClient({
             .from('tasks')
             .update({ start_date: task.start_date })
             .eq('id', task.id)
-        )
+          )
       );
       
       // Show notification about rescheduled tasks
@@ -838,11 +840,11 @@ export function DashboardClient({
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="flex h-dvh flex-col bg-background overflow-hidden">
       <AppHeader tasks={tasks} profile={profile} userEmail={userEmail} />
       
-      <main className="flex-1 overflow-y-auto pb-safe-nav">
-        <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:pb-32">
           {currentView === 'today' ? (
             <TodayView
               tasks={tasks}
@@ -908,6 +910,7 @@ export function DashboardClient({
         onOpenChange={setShowEditReminderDialog}
         onSave={handleReminderUpdate}
       />
+      
     </div>
   );
 }
