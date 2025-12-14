@@ -47,7 +47,7 @@ export function ReminderCard({
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-3 shadow-sm transition-all duration-[250ms] ease-out',
+        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 shadow-sm transition-all duration-[250ms] ease-out',
         isCompleted && 'opacity-50',
         isSkipped && 'opacity-40 bg-slate-50 dark:bg-slate-800/50'
       )}
@@ -57,14 +57,14 @@ export function ReminderCard({
           checked={isCompleted}
           disabled={isSkipped}
           onCheckedChange={handleCheckboxChange}
-          className="h-5 w-5 shrink-0 rounded-full"
+          className="h-4 w-4 shrink-0 rounded-full"
         />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3
               className={cn(
-                'text-sm font-medium leading-tight text-slate-800 dark:text-slate-100 truncate',
+                'text-xs font-medium leading-tight text-slate-800 dark:text-slate-100 truncate',
                 isCompleted && 'line-through text-slate-500',
                 isSkipped && 'text-slate-400 dark:text-slate-500'
               )}

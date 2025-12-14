@@ -78,9 +78,9 @@ export function RemindersSection({
 
   // Default behavior with card styling and header
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
           Reminders
         </h2>
         <Button
