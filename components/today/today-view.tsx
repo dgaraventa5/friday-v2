@@ -201,16 +201,13 @@ export function TodayView({
             {TasksContent}
           </div>
           
-          {/* Progress Card */}
-          {ProgressContent}
-
           {/* Reminders Section */}
           {RemindersContent}
         </div>
       </div>
 
       {/* Desktop layout (>= 1024px): Two-column with Sidebar */}
-      <div className="hidden lg:flex lg:gap-8 h-full">
+      <div className="hidden lg:flex lg:gap-8 h-full lg:pb-32">
         {/* Main column - Tasks (70%) */}
         <div className="flex-1 lg:w-[70%] h-full flex flex-col min-h-0">
           <h1 className="text-2xl font-bold mb-4 h-[2rem] flex items-center shrink-0">Today's Focus</h1>
