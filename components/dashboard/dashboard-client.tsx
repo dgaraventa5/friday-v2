@@ -858,7 +858,7 @@ export function DashboardClient({
       <AppHeader tasks={tasks} profile={profile} userEmail={userEmail} />
       
       <main className="flex-1 overflow-hidden">
-        <div className="h-full mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:pb-32">
+        <div className="h-full mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           {currentView === 'today' ? (
             <TodayView
               tasks={tasks}

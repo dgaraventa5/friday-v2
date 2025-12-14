@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { CategoryLimits, DailyMaxHours, DailyMaxTasks } from "@/lib/types";
 
 interface SettingsFormProps {
@@ -12,6 +17,8 @@ interface SettingsFormProps {
   initialDailyMaxHours: DailyMaxHours;
   initialDailyMaxTasks: DailyMaxTasks;
 }
+
+const OPTIONS = Array.from({ length: 11 }, (_, i) => i);
 
 export function SettingsForm({
   initialCategoryLimits,
@@ -44,7 +51,7 @@ export function SettingsForm({
       ...prev,
       [category]: {
         ...prev[category],
-        [type]: Math.max(0, Math.min(24, numValue)),
+        [type]: Math.max(0, Math.min(10, numValue)),
       },
     }));
   };
@@ -56,7 +63,7 @@ export function SettingsForm({
     const numValue = parseFloat(value) || 0;
     setDailyMaxHours((prev) => ({
       ...prev,
-      [type]: Math.max(0, Math.min(24, numValue)),
+      [type]: Math.max(0, Math.min(10, numValue)),
     }));
   };
 
@@ -67,7 +74,7 @@ export function SettingsForm({
     const numValue = parseInt(value) || 0;
     setDailyMaxTasks((prev) => ({
       ...prev,
-      [type]: Math.max(1, Math.min(20, numValue)),
+      [type]: Math.max(0, Math.min(10, numValue)),
     }));
   };
 
@@ -97,10 +104,8 @@ export function SettingsForm({
         text: "Settings saved successfully! Redirecting...",
       });
 
-      // Refresh the page data and navigate back to dashboard
       router.refresh();
       
-      // Navigate back to dashboard with a timestamp to force refresh
       setTimeout(() => {
         router.push(`/dashboard?updated=${Date.now()}`);
       }, 1000);
@@ -123,10 +128,10 @@ export function SettingsForm({
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {message && (
         <div
-          className={`p-4 rounded-lg border ${
+          className={`p-2 rounded-lg border text-sm ${
             message.type === "success"
               ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300"
               : "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300"
@@ -137,164 +142,159 @@ export function SettingsForm({
       )}
 
       {/* Category Limits Section */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         <div>
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
             Category Limits (hrs)
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Set maximum hours per day for each task category
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Maximum hours per day for each category
           </p>
         </div>
 
-        <div className="space-y-6">
+        {/* Header Row */}
+        <div className="grid grid-cols-3 gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div></div>
+          <div>Weekday</div>
+          <div>Weekend</div>
+        </div>
+
+        {/* Category Rows */}
+        <div className="space-y-1.5">
           {categories.map((category) => (
-            <div
-              key={category}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start"
-            >
-              <div className="font-medium text-slate-700 dark:text-slate-300 md:pt-3">
+            <div key={category} className="grid grid-cols-3 gap-2 items-center">
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 {category}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor={`${category}-weekday`}>Weekday</Label>
-                <Input
-                  id={`${category}-weekday`}
-                  type="number"
-                  min="0"
-                  max="24"
-                  step="0.5"
-                  value={categoryLimits[category].weekday}
-                  onChange={(e) =>
-                    handleCategoryLimitChange(
-                      category,
-                      "weekday",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`${category}-weekend`}>Weekend</Label>
-                <Input
-                  id={`${category}-weekend`}
-                  type="number"
-                  min="0"
-                  max="24"
-                  step="0.5"
-                  value={categoryLimits[category].weekend}
-                  onChange={(e) =>
-                    handleCategoryLimitChange(
-                      category,
-                      "weekend",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
+              <Select
+                value={String(categoryLimits[category].weekday)}
+                onValueChange={(value) =>
+                  handleCategoryLimitChange(category, "weekday", value)
+                }
+              >
+                <SelectTrigger className="w-full h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OPTIONS.map((i) => (
+                    <SelectItem key={i} value={String(i)}>{i}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(categoryLimits[category].weekend)}
+                onValueChange={(value) =>
+                  handleCategoryLimitChange(category, "weekend", value)
+                }
+              >
+                <SelectTrigger className="w-full h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OPTIONS.map((i) => (
+                    <SelectItem key={i} value={String(i)}>{i}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ))}
         </div>
       </div>
 
       {/* Daily Max Hours Section */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         <div>
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
             Daily Max Hours
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Set maximum total hours per day across all categories
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Maximum total hours per day across all categories
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-          <div className="font-medium text-slate-700 dark:text-slate-300 md:pt-3">
+        <div className="grid grid-cols-3 gap-2 items-center">
+          <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Total Limit
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="daily-weekday">Weekday</Label>
-            <Input
-              id="daily-weekday"
-              type="number"
-              min="0"
-              max="24"
-              step="0.5"
-              value={dailyMaxHours.weekday}
-              onChange={(e) =>
-                handleDailyMaxChange("weekday", e.target.value)
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="daily-weekend">Weekend</Label>
-            <Input
-              id="daily-weekend"
-              type="number"
-              min="0"
-              max="24"
-              step="0.5"
-              value={dailyMaxHours.weekend}
-              onChange={(e) =>
-                handleDailyMaxChange("weekend", e.target.value)
-              }
-            />
-          </div>
+          <Select
+            value={String(dailyMaxHours.weekday)}
+            onValueChange={(value) => handleDailyMaxChange("weekday", value)}
+          >
+            <SelectTrigger className="w-full h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPTIONS.map((i) => (
+                <SelectItem key={i} value={String(i)}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={String(dailyMaxHours.weekend)}
+            onValueChange={(value) => handleDailyMaxChange("weekend", value)}
+          >
+            <SelectTrigger className="w-full h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPTIONS.map((i) => (
+                <SelectItem key={i} value={String(i)}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* Daily Max Tasks Section */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         <div>
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
             Daily Max Tasks
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Set maximum number of tasks per day (prevents overload)
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Maximum number of tasks per day
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-          <div className="font-medium text-slate-700 dark:text-slate-300 md:pt-3">
-            Task Count Limit
+        <div className="grid grid-cols-3 gap-2 items-center">
+          <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Task Count
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="tasks-weekday">Weekday</Label>
-            <Input
-              id="tasks-weekday"
-              type="number"
-              min="1"
-              max="20"
-              step="1"
-              value={dailyMaxTasks.weekday}
-              onChange={(e) =>
-                handleDailyMaxTasksChange("weekday", e.target.value)
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tasks-weekend">Weekend</Label>
-            <Input
-              id="tasks-weekend"
-              type="number"
-              min="1"
-              max="20"
-              step="1"
-              value={dailyMaxTasks.weekend}
-              onChange={(e) =>
-                handleDailyMaxTasksChange("weekend", e.target.value)
-              }
-            />
-          </div>
+          <Select
+            value={String(dailyMaxTasks.weekday)}
+            onValueChange={(value) => handleDailyMaxTasksChange("weekday", value)}
+          >
+            <SelectTrigger className="w-full h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPTIONS.map((i) => (
+                <SelectItem key={i} value={String(i)}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={String(dailyMaxTasks.weekend)}
+            onValueChange={(value) => handleDailyMaxTasksChange("weekend", value)}
+          >
+            <SelectTrigger className="w-full h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPTIONS.map((i) => (
+                <SelectItem key={i} value={String(i)}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-700">
         <Button
           onClick={handleSave}
           disabled={isSaving}
-          className="min-w-[120px]"
+          className="min-w-[100px]"
         >
           {isSaving ? "Saving..." : "Save"}
         </Button>
@@ -302,4 +302,3 @@ export function SettingsForm({
     </div>
   );
 }
-
