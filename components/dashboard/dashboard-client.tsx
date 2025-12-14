@@ -634,32 +634,46 @@ export function DashboardClient({
         // Complete the reminder
         if (existingCompletion) {
           // Update existing (was skipped, now completing)
+          const completedAt = new Date().toISOString();
           const { error } = await supabase
             .from('reminder_completions')
-            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .update({ status: 'completed', completed_at: completedAt })
             .eq('id', existingCompletion.id);
 
           if (error) throw error;
 
           setReminderCompletions(prev => 
-            prev.map(c => c.id === existingCompletion.id ? { ...c, status: 'completed' as const } : c)
+            prev.map(c => c.id === existingCompletion.id ? { ...c, status: 'completed' as const, completed_at: completedAt } : c)
           );
         } else {
-          // Insert new completion
+          // Insert new completion (using upsert to handle race conditions)
           const { data, error } = await supabase
             .from('reminder_completions')
-            .insert({
-              reminder_id: reminderId,
-              completion_date: todayStr,
-              status: 'completed',
-            })
+            .upsert(
+              {
+                reminder_id: reminderId,
+                completion_date: todayStr,
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+              },
+              { onConflict: 'reminder_id,completion_date' }
+            )
             .select()
             .single();
 
           if (error) throw error;
 
           if (data) {
-            setReminderCompletions(prev => [...prev, data]);
+            // Update state: add if new, or update if already exists
+            setReminderCompletions(prev => {
+              const existingIndex = prev.findIndex(c => c.id === data.id);
+              if (existingIndex >= 0) {
+                // Update existing
+                return prev.map(c => c.id === data.id ? data : c);
+              }
+              // Add new
+              return [...prev, data];
+            });
           }
         }
 
