@@ -63,23 +63,23 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-3 md:p-3.5 lg:p-4 shadow-sm transition-all duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
+        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 md:p-3 lg:p-3 shadow-sm transition-all duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
         styles.border,
         task.completed && 'opacity-50'
       )}
     >
-      <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3">
+      <div className="flex items-center gap-2">
         <Checkbox
           checked={task.completed}
           onCheckedChange={() => onComplete(task.id)}
-          className="h-5 w-5 shrink-0"
+          className="h-4 w-4 shrink-0"
         />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 md:gap-3">
             <h3
               className={cn(
-                'text-sm md:text-base font-semibold leading-tight md:leading-snug text-slate-800 dark:text-slate-100',
+                'text-sm font-semibold leading-tight text-slate-800 dark:text-slate-100',
                 task.completed && 'line-through text-slate-500'
               )}
             >
@@ -88,16 +88,16 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
 
             {/* Only recurring indicator stays on left side */}
             {task.is_recurring && (
-              <div className="flex items-center gap-1 text-xs md:text-sm text-slate-500 whitespace-nowrap">
-                <Repeat className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <div className="flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap">
+                <Repeat className="h-3 w-3" />
                 <span>{task.recurring_interval}</span>
               </div>
             )}
           </div>
 
           {/* Mobile metadata - shown only on mobile */}
-          <div className="flex md:hidden items-center flex-wrap gap-2 mt-2 text-xs text-slate-500">
-            <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', styles.badge)}>
+          <div className="flex md:hidden items-center flex-wrap gap-2 mt-1.5 text-xs text-slate-500">
+            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', styles.badge)}>
               {styles.label}
             </span>
             <span className="text-base" title={task.category}>
@@ -119,22 +119,22 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
         </div>
 
         {/* Desktop metadata - shown only on tablet/desktop, right side */}
-        <div className="hidden md:flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-slate-500 shrink-0">
-          <span className={cn('text-xs px-2 py-0.5 md:py-1 rounded-full font-medium', styles.badge)}>
+        <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 shrink-0">
+          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', styles.badge)}>
             {styles.label}
           </span>
-          <span className="text-base lg:text-lg" title={task.category}>
+          <span className="text-sm" title={task.category}>
             {CATEGORY_EMOJIS[task.category]}
           </span>
           {task.estimated_hours && (
             <div className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5 lg:h-4 lg:w-4 text-slate-500" />
+              <Clock className="h-3 w-3 text-slate-500" />
               <span>{task.estimated_hours}h</span>
             </div>
           )}
           {task.due_date && (
             <div className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 lg:h-4 lg:w-4 text-slate-500" />
+              <Calendar className="h-3 w-3 text-slate-500" />
               <span>{formatDateStringForDisplay(task.due_date)}</span>
             </div>
           )}

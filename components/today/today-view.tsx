@@ -101,7 +101,7 @@ export function TodayView({
 
   // Tasks section content
   const TasksContent = (
-    <div className="space-y-2 md:space-y-3 lg:space-y-4">
+    <div className="space-y-2">
       {allComplete ? (
         <CelebrationState 
           completedCount={completedCount} 
@@ -134,8 +134,8 @@ export function TodayView({
       )}
 
       {completedTasks.length > 0 && (
-        <div className="pt-3 md:pt-4 lg:pt-6 space-y-2 md:space-y-3 lg:space-y-4">
-          <h3 className="text-xs md:text-sm lg:text-base font-medium text-muted-foreground px-1">
+        <div className="pt-3 space-y-2">
+          <h3 className="text-xs font-medium text-muted-foreground px-1">
             Completed Today
           </h3>
           {completedTasks.map((task) => (
@@ -182,9 +182,9 @@ export function TodayView({
           <h1 className="text-2xl font-bold">Today's Focus</h1>
 
           {/* Tasks Section (Top priority) */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                 Tasks
               </h2>
               {onOpenAddDialog && (
@@ -214,8 +214,8 @@ export function TodayView({
           
           {/* Main Task Container - Constrained height */}
           <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between mb-6 shrink-0">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            <div className="flex items-center justify-between mb-4 shrink-0">
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                 Tasks
               </h2>
               {onOpenAddDialog && (
@@ -243,9 +243,9 @@ export function TodayView({
               {ProgressContent}
             </div>
             <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
-              <div className="p-5 flex-1 overflow-y-auto">
-                <div className="flex items-center justify-between mb-4 shrink-0">
-                  <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            <div className="p-4 flex-1 overflow-y-auto">
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                  <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                     Reminders
                   </h2>
                   {onOpenAddReminderDialog && (
