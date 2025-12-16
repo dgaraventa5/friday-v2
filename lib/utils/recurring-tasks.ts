@@ -85,48 +85,119 @@ export function generateInitialRecurringInstances(
   baseTask: Partial<Task>,
   weeksAhead: number = 4
 ): Partial<Task>[] {
-  if (!baseTask.is_recurring || baseTask.recurring_interval !== 'weekly' || !baseTask.recurring_days || baseTask.recurring_days.length === 0) {
+  // If not a recurring task, just return as-is (non-recurring tasks are scheduled by assignStartDates)
+  if (!baseTask.is_recurring) {
     return [baseTask];
   }
 
   const instances: Partial<Task>[] = [];
-  
   const startDateStr = baseTask.due_date || formatDateLocal(new Date());
-  const endDateStr = addDaysToDateString(startDateStr, weeksAhead * 7);
-  
-  let currentDateStr = startDateStr;
   let instanceCount = 1;
 
-  console.log('[v0] Generating recurring instances from', startDateStr, 'to', endDateStr);
-  console.log('[v0] Recurring days:', baseTask.recurring_days);
+  console.log('[v0] Generating recurring instances for interval:', baseTask.recurring_interval);
+  console.log('[v0] Start date:', startDateStr);
 
-  // Generate instances for each occurrence day within the time window
-  while (currentDateStr <= endDateStr) {
-    const dayOfWeek = getDayOfWeek(currentDateStr);
-    
-    if (baseTask.recurring_days.includes(dayOfWeek)) {
-      // Check if we've reached the end count
-      if (
-        baseTask.recurring_end_type === 'after' &&
-        baseTask.recurring_end_count &&
-        instanceCount > baseTask.recurring_end_count
-      ) {
+  // Helper to check if we've reached the end count
+  const hasReachedEndCount = () => {
+    return (
+      baseTask.recurring_end_type === 'after' &&
+      baseTask.recurring_end_count &&
+      instanceCount > baseTask.recurring_end_count
+    );
+  };
+
+  // Helper to create an instance
+  const createInstance = (dateStr: string) => {
+    return {
+      ...baseTask,
+      due_date: dateStr,
+      start_date: dateStr, // Recurring tasks have start_date = due_date
+      recurring_current_count: instanceCount,
+    };
+  };
+
+  switch (baseTask.recurring_interval) {
+    case 'daily': {
+      // Generate daily instances for the look-ahead period
+      const endDateStr = addDaysToDateString(startDateStr, weeksAhead * 7);
+      let currentDateStr = startDateStr;
+
+      console.log('[v0] Generating daily instances from', startDateStr, 'to', endDateStr);
+
+      while (currentDateStr <= endDateStr) {
+        if (hasReachedEndCount()) break;
+
+        console.log('[v0] Creating daily instance on date', currentDateStr);
+        instances.push(createInstance(currentDateStr));
+        instanceCount++;
+        currentDateStr = addDaysToDateString(currentDateStr, 1);
+      }
+      break;
+    }
+
+    case 'weekly': {
+      // Weekly tasks require recurring_days to be set
+      if (!baseTask.recurring_days || baseTask.recurring_days.length === 0) {
+        // Fallback: just create single instance with start_date set
+        console.log('[v0] Weekly task without recurring_days, creating single instance');
+        instances.push(createInstance(startDateStr));
         break;
       }
 
-      console.log('[v0] Creating instance for day', dayOfWeek, 'on date', currentDateStr);
+      const endDateStr = addDaysToDateString(startDateStr, weeksAhead * 7);
+      let currentDateStr = startDateStr;
 
-      instances.push({
-        ...baseTask,
-        due_date: currentDateStr,
-        start_date: currentDateStr, // Set start_date = due_date for recurring tasks
-        recurring_current_count: instanceCount,
-      });
+      console.log('[v0] Generating weekly instances from', startDateStr, 'to', endDateStr);
+      console.log('[v0] Recurring days:', baseTask.recurring_days);
 
-      instanceCount++;
+      // Generate instances for each occurrence day within the time window
+      while (currentDateStr <= endDateStr) {
+        if (hasReachedEndCount()) break;
+
+        const dayOfWeek = getDayOfWeek(currentDateStr);
+        
+        if (baseTask.recurring_days.includes(dayOfWeek)) {
+          console.log('[v0] Creating weekly instance for day', dayOfWeek, 'on date', currentDateStr);
+          instances.push(createInstance(currentDateStr));
+          instanceCount++;
+        }
+
+        currentDateStr = addDaysToDateString(currentDateStr, 1);
+      }
+      break;
     }
 
-    currentDateStr = addDaysToDateString(currentDateStr, 1);
+    case 'monthly': {
+      // Generate monthly instances for the look-ahead period
+      // For monthly, we generate instances for several months ahead
+      const monthsAhead = Math.max(weeksAhead, 4); // At least 4 months for monthly tasks
+      let currentDate = parseDateLocal(startDateStr);
+      const originalDayOfMonth = currentDate.getDate();
+
+      console.log('[v0] Generating monthly instances, months ahead:', monthsAhead);
+      console.log('[v0] Day of month:', originalDayOfMonth);
+
+      for (let i = 0; i < monthsAhead; i++) {
+        if (hasReachedEndCount()) break;
+
+        // Handle months with fewer days (e.g., Jan 31 -> Feb 28)
+        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
+        const lastDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+        const dayToUse = Math.min(originalDayOfMonth, lastDayOfMonth);
+        targetDate.setDate(dayToUse);
+
+        const dateStr = formatDateLocal(targetDate);
+        console.log('[v0] Creating monthly instance on date', dateStr);
+        instances.push(createInstance(dateStr));
+        instanceCount++;
+      }
+      break;
+    }
+
+    default:
+      // Unknown interval - just return the base task with start_date set
+      console.log('[v0] Unknown recurring interval, creating single instance');
+      instances.push(createInstance(startDateStr));
   }
 
   console.log('[v0] Generated', instances.length, 'recurring instances');
