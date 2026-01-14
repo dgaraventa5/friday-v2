@@ -90,17 +90,6 @@ export function useReminders({
       c => c.reminder_id === reminderId && c.completion_date === todayStr
     );
 
-    // Get current user for RLS policies
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Error',
-        description: 'Not authenticated. Please log in again.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
       if (existingCompletion && existingCompletion.status === 'completed') {
         // Undo completion - delete the completion record
@@ -135,7 +124,6 @@ export function useReminders({
           const completedAt = new Date().toISOString();
           const updateResult = await remindersService.upsertCompletion({
             id: existingCompletion.id,
-            user_id: user.id,
             reminder_id: reminderId,
             completion_date: todayStr,
             status: 'completed',
@@ -150,7 +138,6 @@ export function useReminders({
         } else {
           // Insert new completion (using upsert to handle race conditions)
           const upsertResult = await remindersService.upsertCompletion({
-            user_id: user.id,
             reminder_id: reminderId,
             completion_date: todayStr,
             status: 'completed',
@@ -208,20 +195,8 @@ export function useReminders({
   const skipReminder = async (reminderId: string) => {
     const todayStr = getTodayLocal();
 
-    // Get current user for RLS policies
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Error',
-        description: 'Not authenticated. Please log in again.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
       const result = await remindersService.upsertCompletion({
-        user_id: user.id,
         reminder_id: reminderId,
         completion_date: todayStr,
         status: 'skipped',
