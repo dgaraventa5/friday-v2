@@ -4,6 +4,7 @@ import { SettingsForm } from "@/components/settings/settings-form";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { createProfileService } from "@/lib/services";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -13,15 +14,14 @@ export default async function SettingsPage() {
     redirect("/auth/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
+  const profileService = createProfileService(supabase);
+  const result = await profileService.getProfile(data.user.id);
 
-  if (!profile) {
+  if (result.error || !result.data) {
     redirect("/dashboard");
   }
+
+  const profile = result.data;
 
   return (
     <div className="min-h-screen bg-background">

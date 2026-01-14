@@ -3,13 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { validateStreak } from "@/lib/utils/streak-tracking";
 import { getTodayLocal } from "@/lib/utils/date-utils";
+import { createServices } from "@/lib/services";
 
 export const dynamic = 'force-dynamic'; // Disable caching for this page
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { updated?: string };
+  searchParams: Promise<{ updated?: string }>;
 }) {
   const supabase = await createClient();
 
@@ -17,6 +18,9 @@ export default async function DashboardPage({
   if (error || !data?.user) {
     redirect("/auth/login");
   }
+
+  // Await searchParams (Next.js 16 requirement)
+  const params = await searchParams;
 
   // Validate and fetch profile - this ensures streak is reset if user missed a day
   const profile = await validateStreak(data.user.id);
@@ -26,29 +30,25 @@ export default async function DashboardPage({
     redirect("/auth/login");
   }
 
-  const { data: tasks } = await supabase
-    .from("tasks")
-    .select("*")
-    .eq("user_id", data.user.id)
-    .order("created_at", { ascending: false });
+  // Create services using the factory
+  const services = createServices(supabase);
 
-  // Fetch reminders
-  const { data: reminders } = await supabase
-    .from("reminders")
-    .select("*")
-    .eq("user_id", data.user.id)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+  // Fetch tasks using TasksService
+  const tasksResult = await services.tasks.getTasksByUserId(data.user.id);
+  const tasks = tasksResult.data || [];
+
+  // Fetch reminders using RemindersService
+  const remindersResult = await services.reminders.getRemindersByUserId(data.user.id);
+  // Filter for active reminders only
+  const reminders = (remindersResult.data || []).filter(r => r.is_active);
 
   // Fetch today's reminder completions
   const todayStr = getTodayLocal();
-  const { data: reminderCompletions } = await supabase
-    .from("reminder_completions")
-    .select("*")
-    .eq("completion_date", todayStr);
+  const completionsResult = await services.reminders.getReminderCompletions(todayStr);
+  const reminderCompletions = completionsResult.data || [];
 
   // Log if we're loading after a settings update
-  if (searchParams.updated) {
+  if (params.updated) {
     console.log('[Dashboard] Loading after settings update, profile data:', {
       category_limits: profile?.category_limits,
       daily_max_hours: profile?.daily_max_hours,
@@ -57,11 +57,11 @@ export default async function DashboardPage({
   }
 
   return (
-    <DashboardClient 
-      initialTasks={tasks || []} 
-      initialReminders={reminders || []}
-      initialReminderCompletions={reminderCompletions || []}
-      profile={profile} 
+    <DashboardClient
+      initialTasks={tasks}
+      initialReminders={reminders}
+      initialReminderCompletions={reminderCompletions}
+      profile={profile}
       userEmail={data.user.email}
     />
   );

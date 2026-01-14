@@ -199,9 +199,9 @@ describe('Task Prioritization and Scheduling', () => {
       const highPriorityTask = result.tasks.find(t => t.title === 'High Priority');
       const lowPriorityTask = result.tasks.find(t => t.title === 'Low Priority');
       
-      // High priority should be scheduled earlier
+      // High priority should be scheduled earlier or same day
       if (highPriorityTask?.start_date && lowPriorityTask?.start_date) {
-        expect(highPriorityTask.start_date).toBeLessThanOrEqual(lowPriorityTask.start_date);
+        expect(highPriorityTask.start_date <= lowPriorityTask.start_date).toBe(true);
       }
     });
 
@@ -223,9 +223,9 @@ describe('Task Prioritization and Scheduling', () => {
       const dueSoonTask = result.tasks.find(t => t.title === 'Due Soon');
       const dueLaterTask = result.tasks.find(t => t.title === 'Due Later');
       
-      // Earlier due date should be scheduled first
+      // Earlier due date should be scheduled first or same day
       if (dueSoonTask?.start_date && dueLaterTask?.start_date) {
-        expect(dueSoonTask.start_date).toBeLessThanOrEqual(dueLaterTask.start_date);
+        expect(dueSoonTask.start_date <= dueLaterTask.start_date).toBe(true);
       }
     });
   });
@@ -253,16 +253,23 @@ describe('Task Prioritization and Scheduling', () => {
 
     test('should push oversized tasks to next available day', () => {
       const tasks: Task[] = [
-        createMockTask({ title: 'Fill Today 1', estimated_hours: 5 }),
-        createMockTask({ title: 'Fill Today 2', estimated_hours: 5 }),
-        createMockTask({ title: 'Tomorrow', estimated_hours: 1 }),
+        createMockTask({ title: 'Fill Today 1', estimated_hours: 5, category: 'Work' }),
+        createMockTask({ title: 'Fill Today 2', estimated_hours: 5, category: 'Work' }),
+        createMockTask({ title: 'Tomorrow', estimated_hours: 1, category: 'Work' }),
       ];
 
       const result = assignStartDates(tasks, mockCategoryLimits, mockDailyMaxHours, mockDailyMaxTasks);
+      const fillTask1 = result.tasks.find(t => t.title === 'Fill Today 1');
+      const fillTask2 = result.tasks.find(t => t.title === 'Fill Today 2');
       const tomorrowTask = result.tasks.find(t => t.title === 'Tomorrow');
-      
-      // Should be scheduled after today
-      expect(tomorrowTask?.start_date).not.toBe('2025-11-25');
+
+      // First two tasks should fill today (10 hours total)
+      expect(fillTask1?.start_date).toBe('2025-11-25');
+      expect(fillTask2?.start_date).toBe('2025-11-25');
+
+      // Third task should be scheduled after today (10 hours fills today, so 3rd task goes to next day)
+      expect(tomorrowTask?.start_date).toBeTruthy();
+      expect(tomorrowTask?.start_date! > '2025-11-25').toBe(true);
     });
   });
 

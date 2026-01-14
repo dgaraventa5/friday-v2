@@ -131,11 +131,12 @@ describe('Settings Flow E2E', () => {
     });
 
     test('should respect increased hour limits', () => {
-      const tasks: Task[] = Array.from({ length: 8 }, (_, i) => 
-        createMockTask({ 
-          title: `Task ${i + 1}`, 
-          category: 'Personal', 
-          estimated_hours: 1 
+      // Use different categories to avoid hitting category limits (Personal weekend limit is 4h)
+      const tasks: Task[] = Array.from({ length: 8 }, (_, i) =>
+        createMockTask({
+          title: `Task ${i + 1}`,
+          category: i < 4 ? 'Personal' : 'Home', // Mix categories to avoid category limit
+          estimated_hours: 1
         })
       );
 
@@ -149,7 +150,7 @@ describe('Settings Flow E2E', () => {
 
       const initialSundayTasks = initialResult.tasks.filter(t => t.start_date === '2025-11-24');
       const initialHours = initialSundayTasks.reduce((sum, t) => sum + t.estimated_hours, 0);
-      
+
       // Should not exceed 6h (weekend daily max)
       expect(initialHours).toBeLessThanOrEqual(6);
 
@@ -168,8 +169,8 @@ describe('Settings Flow E2E', () => {
 
       const updatedSundayTasks = updatedResult.tasks.filter(t => t.start_date === '2025-11-24');
       const updatedHours = updatedSundayTasks.reduce((sum, t) => sum + t.estimated_hours, 0);
-      
-      // Should allow more hours now
+
+      // Should allow more hours now (category limits: Personal=4h, Home=6h = 10h total)
       expect(updatedHours).toBeGreaterThan(initialHours);
       expect(updatedHours).toBeLessThanOrEqual(10);
     });

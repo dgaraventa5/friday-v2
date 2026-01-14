@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Sun, Settings } from 'lucide-react';
+import { Flame, Sun, Settings, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +15,8 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Task, Profile } from '@/lib/types';
 import { getTodaysFocusTasks } from '@/lib/utils/task-prioritization';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppHeaderProps {
   tasks: Task[];
@@ -25,10 +27,46 @@ interface AppHeaderProps {
 export function AppHeader({ tasks, profile, userEmail }: AppHeaderProps) {
   const router = useRouter();
   const supabase = createBrowserClient();
+  const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/');
+  };
+
+  const handleHardRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetch('/api/reschedule', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Tasks rescheduled',
+          description: `${data.rescheduled} task(s) rescheduled successfully.`,
+        });
+        // Refresh the page to show updated tasks
+        router.refresh();
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to reschedule tasks',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to reschedule tasks',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Calculate daily progress
@@ -59,14 +97,12 @@ export function AppHeader({ tasks, profile, userEmail }: AppHeaderProps) {
         {/* Right: Streak, Progress, Profile */}
         <div className="flex items-center gap-3 sm:gap-4">
           {/* Streak Counter */}
-          {profile.current_streak > 0 && (
-            <div className="flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-1.5 sm:px-3 sm:py-2">
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span className="text-sm font-semibold text-orange-700 dark:text-orange-400">
-                {profile.current_streak}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-1.5 sm:px-3 sm:py-2">
+            <Flame className="h-4 w-4 text-orange-500" />
+            <span className="text-sm font-semibold text-orange-700 dark:text-orange-400">
+              {profile.current_streak || 0}
+            </span>
+          </div>
 
           {/* Progress Circle - Mobile/Tablet Only */}
           <div className="relative flex items-center justify-center lg:hidden">
@@ -145,6 +181,10 @@ export function AppHeader({ tasks, profile, userEmail }: AppHeaderProps) {
               <DropdownMenuItem onClick={() => router.push('/settings')}>
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleHardRefresh} disabled={isRefreshing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Hard Refresh
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>

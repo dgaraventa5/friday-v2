@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CategoryLimits, DailyMaxHours, DailyMaxTasks } from "@/lib/types";
+import { createProfileService } from "@/lib/services";
 
 interface SettingsUpdateRequest {
   category_limits: CategoryLimits;
@@ -113,19 +114,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update profile in database
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        category_limits: body.category_limits,
-        daily_max_hours: body.daily_max_hours,
-        daily_max_tasks: body.daily_max_tasks,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id);
+    // Update profile using ProfileService
+    const profileService = createProfileService(supabase);
+    const result = await profileService.updateProfile(user.id, {
+      category_limits: body.category_limits,
+      daily_max_hours: body.daily_max_hours,
+      daily_max_tasks: body.daily_max_tasks,
+      updated_at: new Date().toISOString(),
+    });
 
-    if (updateError) {
-      console.error("Error updating profile:", updateError);
+    if (result.error) {
+      console.error("Error updating profile:", result.error);
       return NextResponse.json(
         { error: "Failed to update settings" },
         { status: 500 }

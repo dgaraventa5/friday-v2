@@ -20,6 +20,7 @@ import { Task } from '@/lib/types';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 import { useToast } from '@/hooks/use-toast';
+import { createTasksService } from '@/lib/services';
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -39,6 +40,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
   const [error, setError] = useState('');
 
   const supabase = createBrowserClient();
+  const tasksService = createTasksService(supabase);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -100,23 +102,19 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
         console.log('[v0] Updating non-recurring task start_date to:', dueDateStr);
       }
       
-      const { data, error: updateError } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', task.id)
-        .select()
-        .single();
+      const result = await tasksService.updateTask(task.id, updateData);
 
-      if (updateError) throw updateError;
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error('No task data returned');
 
-      console.log('[v0] Task updated successfully:', data);
+      console.log('[v0] Task updated successfully:', result.data);
       
       toast({
         title: 'Task updated',
         description: 'Your task has been saved successfully.',
       });
-      
-      onTaskUpdated(data);
+
+      onTaskUpdated(result.data);
       onOpenChange(false);
     } catch (err) {
       console.error('[v0] Error updating task:', err);

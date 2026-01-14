@@ -20,6 +20,7 @@ import { CalendarIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateInitialRecurringInstances } from '@/lib/utils/recurring-tasks';
 import { formatDateLocal } from '@/lib/utils/date-utils';
+import { createTasksService } from '@/lib/services/tasks-service';
 
 interface AddTaskFormProps {
   onTaskAdded: (task: Task) => void;
@@ -121,15 +122,14 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
 
       console.log('[v0] Creating', instances.length, 'task instances');
 
-      const { data, error: insertError } = await supabase
-        .from('tasks')
-        .insert(instances)
-        .select();
+      // Use TasksService instead of direct Supabase
+      const tasksService = createTasksService(supabase);
+      const result = await tasksService.createTasks(instances);
 
-      if (insertError) throw insertError;
+      if (result.error) throw result.error;
 
-      if (data && data.length > 0) {
-        data.forEach(task => onTaskAdded(task));
+      if (result.data && result.data.length > 0) {
+        result.data.forEach(task => onTaskAdded(task));
       }
     } catch (err) {
       console.error('[v0] Error adding task:', err);

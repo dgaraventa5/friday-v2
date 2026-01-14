@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Profile } from '@/lib/types';
 import { getTodayLocal, addDaysToDateString, parseDateLocal } from '@/lib/utils/date-utils';
+import { createProfileService } from '@/lib/services/profile-service';
 
 /**
  * Validates the user's streak on page load.
@@ -9,15 +10,14 @@ import { getTodayLocal, addDaysToDateString, parseDateLocal } from '@/lib/utils/
  */
 export async function validateStreak(userId: string): Promise<Profile | null> {
   const supabase = await createClient();
-  
-  // Get current profile
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const profileService = createProfileService(supabase);
 
-  if (error || !profile) return null;
+  // Get current profile using ProfileService
+  const result = await profileService.getProfile(userId);
+
+  if (result.error || !result.data) return null;
+
+  const profile = result.data;
 
   // Use local timezone date strings for consistent comparison
   const todayStr = getTodayLocal();
@@ -27,13 +27,12 @@ export async function validateStreak(userId: string): Promise<Profile | null> {
   // If no last completion date, streak should already be 0
   if (!lastCompletionStr) {
     if (profile.current_streak !== 0) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ current_streak: 0 })
-        .eq('id', userId);
-      
-      if (updateError) {
-        console.error('[validateStreak] Failed to reset streak:', updateError);
+      const updateResult = await profileService.updateStreakFields(userId, {
+        current_streak: 0,
+      });
+
+      if (updateResult.error) {
+        console.error('[validateStreak] Failed to reset streak:', updateResult.error);
         // Return original profile to reflect actual DB state
         return profile;
       }
@@ -46,20 +45,30 @@ export async function validateStreak(userId: string): Promise<Profile | null> {
   const wasToday = lastCompletionStr === todayStr;
   const wasYesterday = lastCompletionStr === yesterdayStr;
 
+  console.log('[validateStreak] Checking streak validity:', {
+    todayStr,
+    yesterdayStr,
+    lastCompletionStr,
+    currentStreak: profile.current_streak,
+    wasToday,
+    wasYesterday,
+  });
+
   // If last completion was today or yesterday, streak is still valid
   if (wasToday || wasYesterday) {
+    console.log('[validateStreak] Streak is valid - no changes');
     return profile;
   }
 
   // Last completion was more than 1 day ago - reset streak to 0
+  console.log('[validateStreak] Streak broken - resetting to 0');
   if (profile.current_streak !== 0) {
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ current_streak: 0 })
-      .eq('id', userId);
-    
-    if (updateError) {
-      console.error('[validateStreak] Failed to reset streak:', updateError);
+    const updateResult = await profileService.updateStreakFields(userId, {
+      current_streak: 0,
+    });
+
+    if (updateResult.error) {
+      console.error('[validateStreak] Failed to reset streak:', updateResult.error);
       // Return original profile to reflect actual DB state
       return profile;
     }
@@ -71,23 +80,58 @@ export async function validateStreak(userId: string): Promise<Profile | null> {
 
 export async function updateStreak(userId: string) {
   const supabase = await createClient();
-  
-  // Get current profile
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const profileService = createProfileService(supabase);
 
-  if (error || !profile) return;
+  // Get current profile using ProfileService
+  const result = await profileService.getProfile(userId);
+
+  if (result.error || !result.data) {
+    console.log('[updateStreak] Failed to get profile:', result.error);
+    return;
+  }
+
+  const profile = result.data;
 
   // Use local timezone date strings for consistent comparison
   const todayStr = getTodayLocal();
   const yesterdayStr = addDaysToDateString(todayStr, -1);
   const lastCompletionStr = profile.last_completion_date;
 
+  console.log('[updateStreak] Current state:', {
+    todayStr,
+    yesterdayStr,
+    lastCompletionStr,
+    currentStreak: profile.current_streak,
+  });
+
   // If last completion was today, don't update (already counted)
-  if (lastCompletionStr === todayStr) {
+  // UNLESS the streak is 0 (inconsistent state that needs fixing)
+  if (lastCompletionStr === todayStr && profile.current_streak > 0) {
+    console.log('[updateStreak] Already counted today - skipping');
+    return;
+  }
+
+  // Special case: last_completion_date is today but streak is 0 (inconsistent state)
+  if (lastCompletionStr === todayStr && profile.current_streak === 0) {
+    console.log('[updateStreak] Inconsistent state detected - fixing streak');
+    // Check if they had completions yesterday to determine the correct streak value
+    const hasCompletedYesterday = await hasCompletedAnythingOnDate(supabase, userId, yesterdayStr);
+
+    const newStreak = hasCompletedYesterday ? 2 : 1; // If yesterday completed, today is day 2
+    const newLongestStreak = Math.max(newStreak, profile.longest_streak);
+
+    const updateResult = await profileService.updateStreakFields(userId, {
+      current_streak: newStreak,
+      longest_streak: newLongestStreak,
+      last_completion_date: todayStr,
+    });
+
+    if (updateResult.error) {
+      console.error('[updateStreak] Failed to fix inconsistent streak:', updateResult.error);
+      return;
+    }
+
+    console.log('[updateStreak] Fixed inconsistent streak!', updateResult.data);
     return;
   }
 
@@ -96,23 +140,35 @@ export async function updateStreak(userId: string) {
   // If last completion was yesterday, increment streak
   if (lastCompletionStr === yesterdayStr) {
     newStreak += 1;
+    console.log('[updateStreak] Incrementing streak from yesterday:', newStreak);
   } else {
     // Last completion was before yesterday or never - reset to 1
     newStreak = 1;
+    console.log('[updateStreak] Starting new streak:', newStreak);
   }
 
   // Update longest streak if current exceeds it
   const newLongestStreak = Math.max(newStreak, profile.longest_streak);
 
-  // Update profile
-  await supabase
-    .from('profiles')
-    .update({
-      current_streak: newStreak,
-      longest_streak: newLongestStreak,
-      last_completion_date: todayStr,
-    })
-    .eq('id', userId);
+  console.log('[updateStreak] Updating profile with:', {
+    current_streak: newStreak,
+    longest_streak: newLongestStreak,
+    last_completion_date: todayStr,
+  });
+
+  // Update profile using ProfileService
+  const updateResult = await profileService.updateStreakFields(userId, {
+    current_streak: newStreak,
+    longest_streak: newLongestStreak,
+    last_completion_date: todayStr,
+  });
+
+  if (updateResult.error) {
+    console.error('[updateStreak] Failed to update streak:', updateResult.error);
+    return;
+  }
+
+  console.log('[updateStreak] Successfully updated streak!', updateResult.data);
 }
 
 /**
@@ -152,15 +208,14 @@ async function hasCompletedAnythingOnDate(
 
 export async function recalculateStreak(userId: string) {
   const supabase = await createClient();
-  
-  // Get current profile
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const profileService = createProfileService(supabase);
 
-  if (profileError || !profile) return;
+  // Get current profile using ProfileService
+  const result = await profileService.getProfile(userId);
+
+  if (result.error || !result.data) return;
+
+  const profile = result.data;
 
   const todayStr = getTodayLocal();
   const yesterdayStr = addDaysToDateString(todayStr, -1);
@@ -265,12 +320,9 @@ export async function recalculateStreak(userId: string) {
     }
   }
 
-  // Update profile with recalculated values
-  await supabase
-    .from('profiles')
-    .update({
-      current_streak: newStreak,
-      last_completion_date: newLastCompletionDate,
-    })
-    .eq('id', userId);
+  // Update profile with recalculated values using ProfileService
+  await profileService.updateStreakFields(userId, {
+    current_streak: newStreak,
+    last_completion_date: newLastCompletionDate,
+  });
 }
