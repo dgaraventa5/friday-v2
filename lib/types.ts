@@ -85,6 +85,7 @@ export interface Reminder {
 
 export interface ReminderCompletion {
   id: string;
+  user_id: string;
   reminder_id: string;
   completion_date: string; // Format: "YYYY-MM-DD"
   status: 'completed' | 'skipped';
