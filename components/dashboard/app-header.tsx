@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Sun, Settings, RefreshCw } from 'lucide-react';
+import { Flame, Sun, Settings, RefreshCw, Sunrise } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,9 +22,10 @@ interface AppHeaderProps {
   tasks: Task[];
   profile: Profile;
   userEmail?: string;
+  onOpenRecalibration?: () => void;
 }
 
-export function AppHeader({ tasks, profile, userEmail }: AppHeaderProps) {
+export function AppHeader({ tasks, profile, userEmail, onOpenRecalibration }: AppHeaderProps) {
   const router = useRouter();
   const supabase = createBrowserClient();
   const { toast } = useToast();
@@ -178,6 +179,12 @@ export function AppHeader({ tasks, profile, userEmail }: AppHeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {onOpenRecalibration && (
+                <DropdownMenuItem onClick={onOpenRecalibration}>
+                  <Sunrise className="h-4 w-4 mr-2" />
+                  Recalibrate
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => router.push('/settings')}>
                 <Settings className="h-4 w-4 mr-2" />
                 Settings

@@ -38,6 +38,10 @@ export interface Profile {
   daily_max_hours: DailyMaxHours;
   daily_max_tasks: DailyMaxTasks;
   onboarding_completed: boolean;
+  // Recalibration settings
+  recalibration_enabled: boolean;
+  recalibration_time: string;  // "HH:MM:SS" format from database
+  recalibration_include_tomorrow: boolean;
 }
 
 export interface CategoryLimits {
@@ -93,4 +97,39 @@ export interface ReminderCompletion {
 
 export interface ReminderWithStatus extends Reminder {
   todayStatus: 'incomplete' | 'completed' | 'skipped';
+}
+
+// Recalibration types
+export interface RecalibrationTask extends Task {
+  daysOverdue: number;           // Positive = overdue, negative = due in future, 0 = today
+  originalDueDate: string;       // For display purposes
+  pendingChanges: PendingTaskChanges | null;
+}
+
+export interface PendingTaskChanges {
+  due_date?: string;
+  importance?: 'important' | 'not-important';
+  urgency?: 'urgent' | 'not-urgent';
+  completed?: boolean;
+}
+
+export interface RecalibrationState {
+  isOpen: boolean;
+  tasks: RecalibrationTask[];
+  pendingChanges: Map<string, PendingTaskChanges>;  // taskId -> changes
+  hiddenTaskIds: Set<string>;    // Tasks removed from current session
+  reviewedTaskIds: Set<string>;  // Tasks explicitly reviewed (keep-as-is or modified)
+}
+
+export interface RecalibrationLocalStorage {
+  lastDismissedDate: string | null;  // "YYYY-MM-DD" format
+  snoozedUntil: string | null;       // ISO timestamp
+}
+
+export type DatePreset = 'tomorrow' | 'plus2' | 'plus7' | 'custom';
+
+export interface RecalibrationSettings {
+  recalibration_enabled: boolean;
+  recalibration_time: string;  // "HH:MM" format
+  recalibration_include_tomorrow: boolean;
 }

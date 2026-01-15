@@ -16,6 +16,9 @@ import { createTasksService, createRemindersService } from '@/lib/services';
 import { useTasks } from '@/hooks/use-tasks';
 import { useReminders } from '@/hooks/use-reminders';
 import { useDialogState } from '@/hooks/use-dialog-state';
+import { useRecalibration } from '@/hooks/use-recalibration';
+import { RecalibrationModal } from '@/components/recalibration/recalibration-modal';
+import { PendingTaskChanges } from '@/lib/types';
 
 interface DashboardClientProps {
   initialTasks: Task[];
@@ -99,9 +102,79 @@ export function DashboardClient({
     toast,
   });
 
+  // Use the recalibration hook for daily task review
+  const {
+    isOpen: isRecalibrationOpen,
+    setIsOpen: setRecalibrationOpen,
+    skipToday: skipRecalibrationToday,
+    snooze: snoozeRecalibration,
+    openManually: openRecalibrationManually,
+  } = useRecalibration(tasks, {
+    triggerTime: profile.recalibration_time || '17:00:00',
+    includeTomorrow: profile.recalibration_include_tomorrow ?? true,
+    enabled: profile.recalibration_enabled ?? true,
+  });
+
+  // Handle saving recalibration changes
+  const handleRecalibrationSave = async (
+    changes: Array<{ taskId: string; changes: PendingTaskChanges }>
+  ) => {
+    // Batch update tasks
+    const updates = changes.map(({ taskId, changes: taskChanges }) => ({
+      id: taskId,
+      data: {
+        ...(taskChanges.due_date && {
+          due_date: taskChanges.due_date,
+          start_date: taskChanges.due_date
+        }),
+        ...(taskChanges.importance && { importance: taskChanges.importance }),
+        ...(taskChanges.urgency && { urgency: taskChanges.urgency }),
+        updated_at: new Date().toISOString(),
+      },
+    }));
+
+    const result = await tasksService.updateTasks(updates);
+
+    if (result.error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save changes. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Trigger reschedule to update start_dates based on new priorities
+    try {
+      await fetch('/api/reschedule', { method: 'POST' });
+    } catch (error) {
+      console.error('[Recalibration] Failed to reschedule:', error);
+    }
+
+    // Refresh to get updated data
+    router.refresh();
+
+    toast({
+      title: 'Tasks Updated',
+      description: `${changes.length} task${changes.length > 1 ? 's' : ''} recalibrated successfully.`,
+    });
+  };
+
+  // Handle task completion during recalibration (immediate, not batched)
+  const handleRecalibrationTaskComplete = (taskId: string) => {
+    // Use existing toggle complete with skipAutoSchedule=true to prevent
+    // immediate rescheduling (user is still in recalibration flow)
+    toggleComplete(taskId, true);
+  };
+
   return (
     <div className="flex h-dvh flex-col bg-background overflow-hidden">
-      <AppHeader tasks={tasks} profile={profile} userEmail={userEmail} />
+      <AppHeader
+        tasks={tasks}
+        profile={profile}
+        userEmail={userEmail}
+        onOpenRecalibration={openRecalibrationManually}
+      />
       
       <main className="flex-1 overflow-hidden">
         <div className="h-full mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -157,7 +230,17 @@ export function DashboardClient({
         setShowEditReminderDialog={setShowEditReminderDialog}
         updateReminder={updateReminder}
       />
-      
+
+      <RecalibrationModal
+        tasks={tasks}
+        profile={profile}
+        isOpen={isRecalibrationOpen}
+        onOpenChange={setRecalibrationOpen}
+        onSaveChanges={handleRecalibrationSave}
+        onTaskComplete={handleRecalibrationTaskComplete}
+        onSkipToday={skipRecalibrationToday}
+        onSnooze={snoozeRecalibration}
+      />
     </div>
   );
 }
