@@ -7,6 +7,9 @@ interface SettingsUpdateRequest {
   category_limits: CategoryLimits;
   daily_max_hours: DailyMaxHours;
   daily_max_tasks: DailyMaxTasks;
+  recalibration_enabled?: boolean;
+  recalibration_time?: string;
+  recalibration_include_tomorrow?: boolean;
 }
 
 // Validate category limits
@@ -75,6 +78,14 @@ function validateDailyMaxTasks(tasks: any): tasks is DailyMaxTasks {
   return true;
 }
 
+// Validate recalibration time (HH:MM format)
+function validateRecalibrationTime(time: any): boolean {
+  if (typeof time !== "string") return false;
+  // Accept HH:MM format
+  const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  return timeRegex.test(time);
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -114,12 +125,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate recalibration time if provided
+    if (body.recalibration_time !== undefined && !validateRecalibrationTime(body.recalibration_time)) {
+      return NextResponse.json(
+        { error: "Invalid recalibration time format (expected HH:MM)" },
+        { status: 400 }
+      );
+    }
+
     // Update profile using ProfileService
     const profileService = createProfileService(supabase);
     const result = await profileService.updateProfile(user.id, {
       category_limits: body.category_limits,
       daily_max_hours: body.daily_max_hours,
       daily_max_tasks: body.daily_max_tasks,
+      ...(body.recalibration_enabled !== undefined && {
+        recalibration_enabled: body.recalibration_enabled,
+      }),
+      ...(body.recalibration_time !== undefined && {
+        recalibration_time: body.recalibration_time,
+      }),
+      ...(body.recalibration_include_tomorrow !== undefined && {
+        recalibration_include_tomorrow: body.recalibration_include_tomorrow,
+      }),
       updated_at: new Date().toISOString(),
     });
 

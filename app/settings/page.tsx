@@ -54,6 +54,9 @@ export default async function SettingsPage() {
               initialCategoryLimits={profile.category_limits}
               initialDailyMaxHours={profile.daily_max_hours}
               initialDailyMaxTasks={profile.daily_max_tasks || { weekday: 4, weekend: 4 }}
+              initialRecalibrationEnabled={profile.recalibration_enabled ?? true}
+              initialRecalibrationTime={profile.recalibration_time?.slice(0, 5) || '17:00'}
+              initialRecalibrationIncludeTomorrow={profile.recalibration_include_tomorrow ?? true}
             />
           </div>
         </div>

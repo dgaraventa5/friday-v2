@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,6 +19,9 @@ interface SettingsFormProps {
   initialCategoryLimits: CategoryLimits;
   initialDailyMaxHours: DailyMaxHours;
   initialDailyMaxTasks: DailyMaxTasks;
+  initialRecalibrationEnabled: boolean;
+  initialRecalibrationTime: string;
+  initialRecalibrationIncludeTomorrow: boolean;
 }
 
 const OPTIONS = Array.from({ length: 11 }, (_, i) => i);
@@ -24,6 +30,9 @@ export function SettingsForm({
   initialCategoryLimits,
   initialDailyMaxHours,
   initialDailyMaxTasks,
+  initialRecalibrationEnabled,
+  initialRecalibrationTime,
+  initialRecalibrationIncludeTomorrow,
 }: SettingsFormProps) {
   const router = useRouter();
   const [categoryLimits, setCategoryLimits] = useState<CategoryLimits>(
@@ -34,6 +43,15 @@ export function SettingsForm({
   );
   const [dailyMaxTasks, setDailyMaxTasks] = useState<DailyMaxTasks>(
     initialDailyMaxTasks
+  );
+  const [recalibrationEnabled, setRecalibrationEnabled] = useState(
+    initialRecalibrationEnabled
+  );
+  const [recalibrationTime, setRecalibrationTime] = useState(
+    initialRecalibrationTime
+  );
+  const [recalibrationIncludeTomorrow, setRecalibrationIncludeTomorrow] = useState(
+    initialRecalibrationIncludeTomorrow
   );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{
@@ -92,6 +110,9 @@ export function SettingsForm({
           category_limits: categoryLimits,
           daily_max_hours: dailyMaxHours,
           daily_max_tasks: dailyMaxTasks,
+          recalibration_enabled: recalibrationEnabled,
+          recalibration_time: recalibrationTime,
+          recalibration_include_tomorrow: recalibrationIncludeTomorrow,
         }),
       });
 
@@ -286,6 +307,69 @@ export function SettingsForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      {/* Recalibration Settings Section */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+            Daily Recalibration
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            End-of-day task review prompt settings
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {/* Enable toggle */}
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="recalibration-enabled"
+              className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+            >
+              Enable auto-prompt
+            </Label>
+            <Checkbox
+              id="recalibration-enabled"
+              checked={recalibrationEnabled}
+              onCheckedChange={(checked) => setRecalibrationEnabled(checked === true)}
+            />
+          </div>
+
+          {/* Time picker */}
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="recalibration-time"
+              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Trigger time
+            </Label>
+            <Input
+              id="recalibration-time"
+              type="time"
+              value={recalibrationTime}
+              onChange={(e) => setRecalibrationTime(e.target.value)}
+              className="w-32 h-8"
+              disabled={!recalibrationEnabled}
+            />
+          </div>
+
+          {/* Include tomorrow toggle */}
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="recalibration-tomorrow"
+              className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+            >
+              Include tomorrow&apos;s tasks
+            </Label>
+            <Checkbox
+              id="recalibration-tomorrow"
+              checked={recalibrationIncludeTomorrow}
+              onCheckedChange={(checked) => setRecalibrationIncludeTomorrow(checked === true)}
+              disabled={!recalibrationEnabled}
+            />
+          </div>
         </div>
       </div>
 
