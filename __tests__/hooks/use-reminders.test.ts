@@ -3,6 +3,21 @@ import { useReminders } from '@/hooks/use-reminders';
 import { Reminder, ReminderCompletion } from '@/lib/types';
 import { RemindersService } from '@/lib/services/reminders-service';
 
+// Mock server actions
+const mockCompleteReminderAction = jest.fn();
+const mockUncompleteReminderAction = jest.fn();
+const mockSkipReminderAction = jest.fn();
+const mockUndoSkipReminderAction = jest.fn();
+const mockUpdateReminderCountAction = jest.fn();
+
+jest.mock('@/lib/actions/reminder-actions', () => ({
+  completeReminderAction: (...args: unknown[]) => mockCompleteReminderAction(...args),
+  uncompleteReminderAction: (...args: unknown[]) => mockUncompleteReminderAction(...args),
+  skipReminderAction: (...args: unknown[]) => mockSkipReminderAction(...args),
+  undoSkipReminderAction: (...args: unknown[]) => mockUndoSkipReminderAction(...args),
+  updateReminderCountAction: (...args: unknown[]) => mockUpdateReminderCountAction(...args),
+}));
+
 // Mock dependencies
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -81,6 +96,13 @@ describe('useReminders', () => {
       deleteCompletion: jest.fn(),
       getReminderCompletions: jest.fn(),
     } as any;
+
+    // Reset server action mocks with default success responses
+    mockCompleteReminderAction.mockResolvedValue({ data: mockCompletion });
+    mockUncompleteReminderAction.mockResolvedValue({});
+    mockSkipReminderAction.mockResolvedValue({ data: { ...mockCompletion, status: 'skipped' } });
+    mockUndoSkipReminderAction.mockResolvedValue({});
+    mockUpdateReminderCountAction.mockResolvedValue({});
 
     (global.fetch as jest.Mock).mockClear();
   });
@@ -184,16 +206,6 @@ describe('useReminders', () => {
 
   describe('completeReminder', () => {
     it('should complete a reminder and update streak', async () => {
-      mockRemindersService.upsertCompletion.mockResolvedValue({
-        data: mockCompletion,
-        error: null,
-      });
-
-      mockRemindersService.updateReminder.mockResolvedValue({
-        data: { ...mockReminder, current_count: 1 },
-        error: null,
-      });
-
       const { result } = renderHook(() =>
         useReminders({
           initialReminders: [mockReminder],
@@ -207,11 +219,10 @@ describe('useReminders', () => {
         await result.current.completeReminder(mockReminder.id);
       });
 
-      expect(mockRemindersService.upsertCompletion).toHaveBeenCalledWith(
-        expect.objectContaining({
-          reminder_id: mockReminder.id,
-          status: 'completed',
-        })
+      // Now uses server action instead of service
+      expect(mockCompleteReminderAction).toHaveBeenCalledWith(
+        mockReminder.id,
+        '2026-01-13'
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
@@ -222,26 +233,15 @@ describe('useReminders', () => {
         })
       );
 
-      expect(mockRemindersService.updateReminder).toHaveBeenCalledWith(
+      // Uses server action for count update
+      expect(mockUpdateReminderCountAction).toHaveBeenCalledWith(
         mockReminder.id,
-        expect.objectContaining({
-          current_count: 1,
-        })
+        true
       );
     });
 
     it('should undo completion when already completed', async () => {
       const completedReminder = { ...mockReminder, current_count: 1 };
-
-      mockRemindersService.deleteCompletion.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      mockRemindersService.updateReminder.mockResolvedValue({
-        data: mockReminder,
-        error: null,
-      });
 
       const { result } = renderHook(() =>
         useReminders({
@@ -256,7 +256,8 @@ describe('useReminders', () => {
         await result.current.completeReminder(mockReminder.id);
       });
 
-      expect(mockRemindersService.deleteCompletion).toHaveBeenCalledWith(mockCompletion.id);
+      // Now uses server action instead of service
+      expect(mockUncompleteReminderAction).toHaveBeenCalledWith(mockCompletion.id);
 
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/streak',
@@ -266,23 +267,16 @@ describe('useReminders', () => {
         })
       );
 
-      expect(mockRemindersService.updateReminder).toHaveBeenCalledWith(
+      // Uses server action for count update
+      expect(mockUpdateReminderCountAction).toHaveBeenCalledWith(
         mockReminder.id,
-        expect.objectContaining({
-          current_count: 0,
-        })
+        false
       );
     });
   });
 
   describe('skipReminder', () => {
     it('should skip a reminder', async () => {
-      const skippedCompletion = { ...mockCompletion, status: 'skipped' as const };
-      mockRemindersService.upsertCompletion.mockResolvedValue({
-        data: skippedCompletion,
-        error: null,
-      });
-
       const { result } = renderHook(() =>
         useReminders({
           initialReminders: [mockReminder],
@@ -296,11 +290,10 @@ describe('useReminders', () => {
         await result.current.skipReminder(mockReminder.id);
       });
 
-      expect(mockRemindersService.upsertCompletion).toHaveBeenCalledWith(
-        expect.objectContaining({
-          reminder_id: mockReminder.id,
-          status: 'skipped',
-        })
+      // Now uses server action instead of service
+      expect(mockSkipReminderAction).toHaveBeenCalledWith(
+        mockReminder.id,
+        '2026-01-13'
       );
 
       expect(mockToastFn).toHaveBeenCalledWith(
@@ -315,11 +308,6 @@ describe('useReminders', () => {
     it('should undo a skipped reminder', async () => {
       const skippedCompletion = { ...mockCompletion, status: 'skipped' as const };
 
-      mockRemindersService.deleteCompletion.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
       const { result } = renderHook(() =>
         useReminders({
           initialReminders: [mockReminder],
@@ -333,7 +321,8 @@ describe('useReminders', () => {
         await result.current.undoSkipReminder(mockReminder.id);
       });
 
-      expect(mockRemindersService.deleteCompletion).toHaveBeenCalledWith(skippedCompletion.id);
+      // Now uses server action instead of service
+      expect(mockUndoSkipReminderAction).toHaveBeenCalledWith(skippedCompletion.id);
       expect(mockToastFn).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Skip Undone',
@@ -355,7 +344,8 @@ describe('useReminders', () => {
         await result.current.undoSkipReminder(mockReminder.id);
       });
 
-      expect(mockRemindersService.deleteCompletion).not.toHaveBeenCalled();
+      // Server action should not be called when no skipped completion exists
+      expect(mockUndoSkipReminderAction).not.toHaveBeenCalled();
     });
   });
 
@@ -473,9 +463,9 @@ describe('useReminders', () => {
 
   describe('Error Handling', () => {
     it('should handle complete reminder errors gracefully', async () => {
-      mockRemindersService.upsertCompletion.mockResolvedValue({
-        data: null,
-        error: new Error('Completion failed'),
+      // Mock server action to return an error
+      mockCompleteReminderAction.mockResolvedValue({
+        error: 'Completion failed',
       });
 
       const { result } = renderHook(() =>

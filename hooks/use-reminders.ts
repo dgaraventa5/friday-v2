@@ -5,6 +5,13 @@ import { RemindersService } from '@/lib/services/reminders-service';
 import { getTodaysReminders } from '@/lib/utils/reminder-utils';
 import { getTodayLocal } from '@/lib/utils/date-utils';
 import { createBrowserClient } from '@/lib/supabase/client';
+import {
+  completeReminderAction,
+  uncompleteReminderAction,
+  skipReminderAction,
+  undoSkipReminderAction,
+  updateReminderCountAction,
+} from '@/lib/actions/reminder-actions';
 
 interface UseRemindersParams {
   initialReminders: Reminder[];
@@ -85,17 +92,6 @@ export function useReminders({
   };
 
   const completeReminder = async (reminderId: string) => {
-    // Verify authentication first to ensure RLS policies work
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Session Expired',
-        description: 'Please refresh the page to continue.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const todayStr = getTodayLocal();
     const existingCompletion = reminderCompletions.find(
       c => c.reminder_id === reminderId && c.completion_date === todayStr
@@ -103,20 +99,19 @@ export function useReminders({
 
     try {
       if (existingCompletion && existingCompletion.status === 'completed') {
-        // Undo completion - delete the completion record
-        const deleteResult = await remindersService.deleteCompletion(existingCompletion.id);
+        // Undo completion - delete the completion record using server action
+        const result = await uncompleteReminderAction(existingCompletion.id);
 
-        if (deleteResult.error) throw deleteResult.error;
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
         setReminderCompletions(prev => prev.filter(c => c.id !== existingCompletion.id));
 
-        // Decrement current_count for the reminder (reverse the increment from completion)
+        // Decrement current_count for the reminder
         const reminder = reminders.find(r => r.id === reminderId);
         if (reminder && reminder.current_count > 0) {
-          await remindersService.updateReminder(reminderId, {
-            current_count: reminder.current_count - 1
-          });
-
+          await updateReminderCountAction(reminderId, false);
           setReminders(prev =>
             prev.map(r => r.id === reminderId ? { ...r, current_count: r.current_count - 1 } : r)
           );
@@ -129,47 +124,21 @@ export function useReminders({
           body: JSON.stringify({ action: 'recalculate' })
         });
       } else {
-        // Complete the reminder
-        if (existingCompletion) {
-          // Update existing (was skipped, now completing)
-          const completedAt = new Date().toISOString();
-          const updateResult = await remindersService.upsertCompletion({
-            id: existingCompletion.id,
-            reminder_id: reminderId,
-            completion_date: todayStr,
-            status: 'completed',
-            completed_at: completedAt
-          });
+        // Complete the reminder using server action
+        const result = await completeReminderAction(reminderId, todayStr);
 
-          if (updateResult.error) throw updateResult.error;
-          if (!updateResult.data) {
-            throw new Error('Failed to update completion - no data returned');
-          }
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
-          setReminderCompletions(prev =>
-            prev.map(c => c.id === existingCompletion.id ? { ...c, status: 'completed' as const, completed_at: completedAt } : c)
-          );
-        } else {
-          // Insert new completion (using upsert to handle race conditions)
-          const upsertResult = await remindersService.upsertCompletion({
-            reminder_id: reminderId,
-            completion_date: todayStr,
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-          });
-
-          if (upsertResult.error) throw upsertResult.error;
-          if (!upsertResult.data) {
-            throw new Error('Failed to save completion - no data returned');
-          }
-
-          const data = upsertResult.data;
+        if (result.data) {
+          const data = result.data;
           // Update state: add if new, or update if already exists
           setReminderCompletions(prev => {
-            const existingIndex = prev.findIndex(c => c.id === data.id);
+            const existingIndex = prev.findIndex(c => c.reminder_id === reminderId && c.completion_date === todayStr);
             if (existingIndex >= 0) {
               // Update existing
-              return prev.map(c => c.id === data.id ? data : c);
+              return prev.map((c, i) => i === existingIndex ? data : c);
             }
             // Add new
             return [...prev, data];
@@ -186,83 +155,55 @@ export function useReminders({
         // Increment current_count for the reminder
         const reminder = reminders.find(r => r.id === reminderId);
         if (reminder) {
-          await remindersService.updateReminder(reminderId, {
-            current_count: reminder.current_count + 1
-          });
-
+          await updateReminderCountAction(reminderId, true);
           setReminders(prev =>
             prev.map(r => r.id === reminderId ? { ...r, current_count: r.current_count + 1 } : r)
           );
         }
       }
 
-      router.refresh();
+      // revalidatePath in server action handles refresh
     } catch (error) {
       console.error('[v0] Error completing reminder:', error);
       toast({
         title: 'Error',
-        description: 'Could not update reminder. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not update reminder. Please try again.',
         variant: 'destructive',
       });
     }
   };
 
   const skipReminder = async (reminderId: string) => {
-    // Verify authentication first to ensure RLS policies work
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Session Expired',
-        description: 'Please refresh the page to continue.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const todayStr = getTodayLocal();
 
     try {
-      const result = await remindersService.upsertCompletion({
-        reminder_id: reminderId,
-        completion_date: todayStr,
-        status: 'skipped',
-      });
+      const result = await skipReminderAction(reminderId, todayStr);
 
-      if (result.error) throw result.error;
-      if (!result.data) {
-        throw new Error('Failed to skip reminder - no data returned');
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      const data = result.data;
-      setReminderCompletions(prev => [...prev, data]);
-      toast({
-        title: 'Reminder Skipped',
-        description: 'This reminder has been skipped for today.',
-      });
+      if (result.data) {
+        const data = result.data;
+        setReminderCompletions(prev => [...prev, data]);
+        toast({
+          title: 'Reminder Skipped',
+          description: 'This reminder has been skipped for today.',
+        });
+      }
 
-      router.refresh();
+      // revalidatePath in server action handles refresh
     } catch (error) {
       console.error('[v0] Error skipping reminder:', error);
       toast({
         title: 'Error',
-        description: 'Could not skip reminder. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not skip reminder. Please try again.',
         variant: 'destructive',
       });
     }
   };
 
   const undoSkipReminder = async (reminderId: string) => {
-    // Verify authentication first to ensure RLS policies work
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Session Expired',
-        description: 'Please refresh the page to continue.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const todayStr = getTodayLocal();
     const existingCompletion = reminderCompletions.find(
       c => c.reminder_id === reminderId && c.completion_date === todayStr && c.status === 'skipped'
@@ -271,9 +212,11 @@ export function useReminders({
     if (!existingCompletion) return;
 
     try {
-      const result = await remindersService.deleteCompletion(existingCompletion.id);
+      const result = await undoSkipReminderAction(existingCompletion.id);
 
-      if (result.error) throw result.error;
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       setReminderCompletions(prev => prev.filter(c => c.id !== existingCompletion.id));
       toast({
@@ -281,12 +224,12 @@ export function useReminders({
         description: 'This reminder is back on your list.',
       });
 
-      router.refresh();
+      // revalidatePath in server action handles refresh
     } catch (error) {
       console.error('[v0] Error undoing skip:', error);
       toast({
         title: 'Error',
-        description: 'Could not undo skip. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not undo skip. Please try again.',
         variant: 'destructive',
       });
     }
