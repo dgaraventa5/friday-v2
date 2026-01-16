@@ -7,6 +7,23 @@ export function getTodayLocal(): string {
 }
 
 /**
+ * Get today's date as YYYY-MM-DD string for a specific timezone
+ * This is critical for server-side code to calculate the correct "today"
+ * for users in different timezones.
+ */
+export function getTodayForTimezone(timezone: string): string {
+  const now = new Date();
+  // Using 'en-CA' locale because it outputs dates in YYYY-MM-DD format
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  return formatter.format(now);
+}
+
+/**
  * Format a Date object as YYYY-MM-DD string in local timezone
  */
 export function formatDateLocal(date: Date): string {

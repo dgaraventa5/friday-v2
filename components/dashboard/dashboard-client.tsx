@@ -102,6 +102,38 @@ export function DashboardClient({
     toast,
   });
 
+  // Sync user's timezone to profile if not already set
+  // This ensures server-side date calculations match the user's local timezone
+  useEffect(() => {
+    const syncTimezone = async () => {
+      // Only sync if timezone is not set
+      if (profile.timezone) return;
+
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log('[DashboardClient] Syncing timezone:', browserTimezone);
+
+      try {
+        const response = await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timezone: browserTimezone }),
+        });
+
+        if (!response.ok) {
+          console.error('[DashboardClient] Failed to sync timezone');
+          return;
+        }
+
+        // Refresh to get updated profile with timezone
+        router.refresh();
+      } catch (error) {
+        console.error('[DashboardClient] Error syncing timezone:', error);
+      }
+    };
+
+    syncTimezone();
+  }, [profile.timezone, router]);
+
   // Handler to persist recalibration dismissal to database (cross-device)
   const handleDismissRecalibration = async () => {
     try {

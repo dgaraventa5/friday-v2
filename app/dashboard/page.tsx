@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { validateStreak } from "@/lib/utils/streak-tracking";
-import { getTodayLocal } from "@/lib/utils/date-utils";
+import { getTodayForTimezone } from "@/lib/utils/date-utils";
 import { createServices } from "@/lib/services";
 
 export const dynamic = 'force-dynamic'; // Disable caching for this page
@@ -42,12 +42,15 @@ export default async function DashboardPage({
   // Filter for active reminders only
   const reminders = (remindersResult.data || []).filter(r => r.is_active);
 
-  // Fetch today's reminder completions
-  const todayStr = getTodayLocal();
+  // Fetch today's reminder completions using user's timezone
+  // Default to America/Los_Angeles if not set (PST/PDT)
+  const userTimezone = profile?.timezone || 'America/Los_Angeles';
+  const todayStr = getTodayForTimezone(userTimezone);
   const completionsResult = await services.reminders.getReminderCompletions(todayStr);
   const reminderCompletions = completionsResult.data || [];
 
   // Debug logging
+  console.log('[Dashboard] User timezone:', userTimezone);
   console.log('[Dashboard] Fetching completions for:', todayStr);
   console.log('[Dashboard] User ID:', data.user.id);
   console.log('[Dashboard] Completions found:', reminderCompletions.length, reminderCompletions);

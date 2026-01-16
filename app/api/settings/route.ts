@@ -86,6 +86,71 @@ function validateRecalibrationTime(time: any): boolean {
   return timeRegex.test(time);
 }
 
+// PATCH - Partial updates (e.g., timezone)
+export async function PATCH(request: Request) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+
+    // Build update object with only provided fields
+    const updates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    // Handle timezone update
+    if (body.timezone !== undefined) {
+      if (typeof body.timezone !== "string" || body.timezone.length === 0) {
+        return NextResponse.json(
+          { error: "Invalid timezone" },
+          { status: 400 }
+        );
+      }
+      updates.timezone = body.timezone;
+    }
+
+    // If no valid updates, return early
+    if (Object.keys(updates).length === 1) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
+
+    // Update profile
+    const profileService = createProfileService(supabase);
+    const result = await profileService.updateProfile(user.id, updates);
+
+    if (result.error) {
+      console.error("Error updating profile:", result.error);
+      return NextResponse.json(
+        { error: "Failed to update settings" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Settings updated successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error in settings PATCH:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Full settings update
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();

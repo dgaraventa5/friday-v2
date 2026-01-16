@@ -43,6 +43,7 @@ export interface Profile {
   recalibration_time: string;  // "HH:MM:SS" format from database
   recalibration_include_tomorrow: boolean;
   recalibration_last_dismissed_date: string | null;  // "YYYY-MM-DD" format, synced across devices
+  timezone: string | null;  // User's timezone (e.g., "America/Los_Angeles")
 }
 
 export interface CategoryLimits {
