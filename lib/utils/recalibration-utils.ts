@@ -24,7 +24,9 @@ export function getTasksForRecalibration(
   const today = getTodayLocal();
   const tomorrow = addDaysToDateString(today, 1);
 
-  const incompleteTasks = tasks.filter(t => !t.completed && t.due_date);
+  // Only include tasks that have both due_date and start_date (consistent with Schedule view)
+  // Tasks without start_date are orphaned/never scheduled and shouldn't appear
+  const incompleteTasks = tasks.filter(t => !t.completed && t.due_date && t.start_date);
 
   const overdue: RecalibrationTask[] = [];
   const dueToday: RecalibrationTask[] = [];
