@@ -7,20 +7,13 @@ import { createServices } from "@/lib/services";
 
 export const dynamic = 'force-dynamic'; // Disable caching for this page
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ updated?: string }>;
-}) {
+export default async function DashboardPage() {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
     redirect("/auth/login");
   }
-
-  // Await searchParams (Next.js 16 requirement)
-  const params = await searchParams;
 
   // Validate and fetch profile - this ensures streak is reset if user missed a day
   const profile = await validateStreak(data.user.id);
@@ -48,21 +41,6 @@ export default async function DashboardPage({
   const todayStr = getTodayForTimezone(userTimezone);
   const completionsResult = await services.reminders.getReminderCompletions(todayStr);
   const reminderCompletions = completionsResult.data || [];
-
-  // Debug logging
-  console.log('[Dashboard] User timezone:', userTimezone);
-  console.log('[Dashboard] Fetching completions for:', todayStr);
-  console.log('[Dashboard] User ID:', data.user.id);
-  console.log('[Dashboard] Completions found:', reminderCompletions.length, reminderCompletions);
-
-  // Log if we're loading after a settings update
-  if (params.updated) {
-    console.log('[Dashboard] Loading after settings update, profile data:', {
-      category_limits: profile?.category_limits,
-      daily_max_hours: profile?.daily_max_hours,
-      daily_max_tasks: profile?.daily_max_tasks,
-    });
-  }
 
   return (
     <DashboardClient
