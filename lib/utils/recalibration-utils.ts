@@ -71,11 +71,17 @@ export function parseTriggerHour(timeString: string): number {
 
 /**
  * Check if recalibration modal should be shown
+ * @param tasks - User's tasks to check
+ * @param triggerHour - Hour of day to trigger (default 17 = 5 PM)
+ * @param lastDismissedDate - Date from profile (cross-device), "YYYY-MM-DD" format or null
+ * @param snoozedUntil - Snooze timestamp from localStorage (device-specific), ISO format or null
+ * @param isEnabled - Whether recalibration feature is enabled
  */
 export function shouldShowRecalibration(
   tasks: Task[],
   triggerHour: number = 17,
-  localState: RecalibrationLocalStorage | null,
+  lastDismissedDate: string | null,
+  snoozedUntil: string | null,
   isEnabled: boolean = true
 ): boolean {
   // Check if feature is enabled
@@ -92,14 +98,14 @@ export function shouldShowRecalibration(
     return false;
   }
 
-  // Check if dismissed today
-  if (localState?.lastDismissedDate === today) {
+  // Check if dismissed today (from profile - cross-device)
+  if (lastDismissedDate === today) {
     return false;
   }
 
-  // Check if snoozed
-  if (localState?.snoozedUntil) {
-    const snoozeEnd = new Date(localState.snoozedUntil);
+  // Check if snoozed (from localStorage - device-specific)
+  if (snoozedUntil) {
+    const snoozeEnd = new Date(snoozedUntil);
     if (now < snoozeEnd) {
       return false;
     }

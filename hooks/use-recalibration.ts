@@ -1,30 +1,33 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Task, RecalibrationTask, PendingTaskChanges, RecalibrationLocalStorage } from '@/lib/types';
+import { Task, RecalibrationTask, PendingTaskChanges } from '@/lib/types';
 import {
   getTasksForRecalibration,
   shouldShowRecalibration,
   getSnoozeEndTime,
   parseTriggerHour,
 } from '@/lib/utils/recalibration-utils';
-import { getTodayLocal } from '@/lib/utils/date-utils';
 
-const STORAGE_KEY = 'friday_recalibration_state';
+// localStorage key for device-specific snooze state only
+const SNOOZE_STORAGE_KEY = 'friday_recalibration_snooze';
 
-function getLocalState(): RecalibrationLocalStorage | null {
+function getSnoozedUntil(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
+    return localStorage.getItem(SNOOZE_STORAGE_KEY);
   } catch {
     return null;
   }
 }
 
-function setLocalState(state: RecalibrationLocalStorage): void {
+function setSnoozedUntil(timestamp: string | null): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (timestamp) {
+      localStorage.setItem(SNOOZE_STORAGE_KEY, timestamp);
+    } else {
+      localStorage.removeItem(SNOOZE_STORAGE_KEY);
+    }
   } catch {
     // Ignore localStorage errors
   }
@@ -34,6 +37,8 @@ interface UseRecalibrationOptions {
   triggerTime?: string;  // "HH:MM:SS" format
   includeTomorrow?: boolean;
   enabled?: boolean;
+  lastDismissedDate?: string | null;  // From profile (cross-device)
+  onDismiss?: () => Promise<void>;    // Callback to persist dismissal to DB
 }
 
 interface UseRecalibrationReturn {
@@ -68,6 +73,8 @@ export function useRecalibration(
     triggerTime = '17:00:00',
     includeTomorrow = true,
     enabled = true,
+    lastDismissedDate = null,
+    onDismiss,
   } = options;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -116,14 +123,14 @@ export function useRecalibration(
   useEffect(() => {
     if (hasCheckedTrigger || !enabled) return;
 
-    const localState = getLocalState();
-    if (shouldShowRecalibration(tasks, triggerHour, localState, enabled)) {
+    const snoozedUntil = getSnoozedUntil();
+    if (shouldShowRecalibration(tasks, triggerHour, lastDismissedDate, snoozedUntil, enabled)) {
       // Delay slightly to not interrupt page load
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
     }
     setHasCheckedTrigger(true);
-  }, [tasks, triggerHour, hasCheckedTrigger, enabled]);
+  }, [tasks, triggerHour, hasCheckedTrigger, enabled, lastDismissedDate]);
 
   // Update pending changes for a task (also marks it as reviewed)
   const updateTaskChanges = useCallback((taskId: string, changes: Partial<PendingTaskChanges>) => {
@@ -152,23 +159,26 @@ export function useRecalibration(
     setReviewedTaskIds(new Set());
   }, []);
 
-  // Skip for today
-  const skipToday = useCallback(() => {
-    setLocalState({
-      lastDismissedDate: getTodayLocal(),
-      snoozedUntil: null,
-    });
+  // Skip for today - persists to database for cross-device sync
+  const skipToday = useCallback(async () => {
+    // Clear any existing snooze
+    setSnoozedUntil(null);
     setIsOpen(false);
     resetState();
-  }, [resetState]);
 
-  // Snooze for 1 hour
+    // Persist dismissal to database (cross-device)
+    if (onDismiss) {
+      try {
+        await onDismiss();
+      } catch (error) {
+        console.error('[Recalibration] Failed to persist dismissal:', error);
+      }
+    }
+  }, [resetState, onDismiss]);
+
+  // Snooze for 1 hour (device-specific, stays in localStorage)
   const snooze = useCallback(() => {
-    const localState = getLocalState();
-    setLocalState({
-      lastDismissedDate: localState?.lastDismissedDate || null,
-      snoozedUntil: getSnoozeEndTime(),
-    });
+    setSnoozedUntil(getSnoozeEndTime());
     setIsOpen(false);
   }, []);
 

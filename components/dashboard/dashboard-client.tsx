@@ -102,6 +102,21 @@ export function DashboardClient({
     toast,
   });
 
+  // Handler to persist recalibration dismissal to database (cross-device)
+  const handleDismissRecalibration = async () => {
+    try {
+      const response = await fetch('/api/recalibration/dismiss', { method: 'POST' });
+      if (!response.ok) {
+        throw new Error('Failed to dismiss recalibration');
+      }
+      // Refresh to get updated profile with new dismissed date
+      router.refresh();
+    } catch (error) {
+      console.error('[Recalibration] Failed to dismiss:', error);
+      throw error;
+    }
+  };
+
   // Use the recalibration hook for daily task review
   const {
     isOpen: isRecalibrationOpen,
@@ -113,6 +128,8 @@ export function DashboardClient({
     triggerTime: profile.recalibration_time || '17:00:00',
     includeTomorrow: profile.recalibration_include_tomorrow ?? true,
     enabled: profile.recalibration_enabled ?? true,
+    lastDismissedDate: profile.recalibration_last_dismissed_date ?? null,
+    onDismiss: handleDismissRecalibration,
   });
 
   // Handle saving recalibration changes
