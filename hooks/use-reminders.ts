@@ -85,6 +85,17 @@ export function useReminders({
   };
 
   const completeReminder = async (reminderId: string) => {
+    // Verify authentication first to ensure RLS policies work
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: 'Session Expired',
+        description: 'Please refresh the page to continue.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const todayStr = getTodayLocal();
     const existingCompletion = reminderCompletions.find(
       c => c.reminder_id === reminderId && c.completion_date === todayStr
@@ -131,6 +142,9 @@ export function useReminders({
           });
 
           if (updateResult.error) throw updateResult.error;
+          if (!updateResult.data) {
+            throw new Error('Failed to update completion - no data returned');
+          }
 
           setReminderCompletions(prev =>
             prev.map(c => c.id === existingCompletion.id ? { ...c, status: 'completed' as const, completed_at: completedAt } : c)
@@ -145,20 +159,21 @@ export function useReminders({
           });
 
           if (upsertResult.error) throw upsertResult.error;
-
-          if (upsertResult.data) {
-            const data = upsertResult.data;
-            // Update state: add if new, or update if already exists
-            setReminderCompletions(prev => {
-              const existingIndex = prev.findIndex(c => c.id === data.id);
-              if (existingIndex >= 0) {
-                // Update existing
-                return prev.map(c => c.id === data.id ? data : c);
-              }
-              // Add new
-              return [...prev, data];
-            });
+          if (!upsertResult.data) {
+            throw new Error('Failed to save completion - no data returned');
           }
+
+          const data = upsertResult.data;
+          // Update state: add if new, or update if already exists
+          setReminderCompletions(prev => {
+            const existingIndex = prev.findIndex(c => c.id === data.id);
+            if (existingIndex >= 0) {
+              // Update existing
+              return prev.map(c => c.id === data.id ? data : c);
+            }
+            // Add new
+            return [...prev, data];
+          });
         }
 
         // Update streak
@@ -193,6 +208,17 @@ export function useReminders({
   };
 
   const skipReminder = async (reminderId: string) => {
+    // Verify authentication first to ensure RLS policies work
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: 'Session Expired',
+        description: 'Please refresh the page to continue.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const todayStr = getTodayLocal();
 
     try {
@@ -203,15 +229,16 @@ export function useReminders({
       });
 
       if (result.error) throw result.error;
-
-      if (result.data) {
-        const data = result.data;
-        setReminderCompletions(prev => [...prev, data]);
-        toast({
-          title: 'Reminder Skipped',
-          description: 'This reminder has been skipped for today.',
-        });
+      if (!result.data) {
+        throw new Error('Failed to skip reminder - no data returned');
       }
+
+      const data = result.data;
+      setReminderCompletions(prev => [...prev, data]);
+      toast({
+        title: 'Reminder Skipped',
+        description: 'This reminder has been skipped for today.',
+      });
 
       router.refresh();
     } catch (error) {
@@ -225,6 +252,17 @@ export function useReminders({
   };
 
   const undoSkipReminder = async (reminderId: string) => {
+    // Verify authentication first to ensure RLS policies work
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: 'Session Expired',
+        description: 'Please refresh the page to continue.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const todayStr = getTodayLocal();
     const existingCompletion = reminderCompletions.find(
       c => c.reminder_id === reminderId && c.completion_date === todayStr && c.status === 'skipped'

@@ -21,6 +21,12 @@ jest.mock('@/lib/supabase/client', () => ({
   })),
 }));
 
+// Mock date-utils to return a consistent date for testing
+jest.mock('@/lib/utils/date-utils', () => ({
+  ...jest.requireActual('@/lib/utils/date-utils'),
+  getTodayLocal: jest.fn(() => '2026-01-13'),
+}));
+
 // Mock fetch for streak API
 global.fetch = jest.fn(() =>
   Promise.resolve({
