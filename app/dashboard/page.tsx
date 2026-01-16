@@ -47,6 +47,11 @@ export default async function DashboardPage({
   const completionsResult = await services.reminders.getReminderCompletions(todayStr);
   const reminderCompletions = completionsResult.data || [];
 
+  // Debug logging
+  console.log('[Dashboard] Fetching completions for:', todayStr);
+  console.log('[Dashboard] User ID:', data.user.id);
+  console.log('[Dashboard] Completions found:', reminderCompletions.length, reminderCompletions);
+
   // Log if we're loading after a settings update
   if (params.updated) {
     console.log('[Dashboard] Loading after settings update, profile data:', {

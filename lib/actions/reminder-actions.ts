@@ -17,11 +17,16 @@ export async function completeReminderAction(
   reminderId: string,
   completionDate: string
 ): Promise<ActionResult<ReminderCompletion>> {
+  console.log('[Server Action] completeReminderAction called:', { reminderId, completionDate });
+
   const supabase = await createClient();
 
   // Verify auth
   const { data: { user }, error: authError } = await supabase.auth.getUser();
+  console.log('[Server Action] Auth check:', { userId: user?.id, authError: authError?.message });
+
   if (authError || !user) {
+    console.error('[Server Action] Auth failed:', authError);
     return { error: 'Not authenticated. Please refresh the page.' };
   }
 
@@ -39,15 +44,19 @@ export async function completeReminderAction(
     .select()
     .single();
 
+  console.log('[Server Action] Upsert result:', { data, error: error?.message });
+
   if (error) {
     console.error('[Server Action] completeReminderAction error:', error);
     return { error: error.message };
   }
 
   if (!data) {
+    console.error('[Server Action] No data returned from upsert');
     return { error: 'Failed to save completion - no data returned' };
   }
 
+  console.log('[Server Action] Success! Completion saved:', data);
   revalidatePath('/dashboard');
   return { data: data as ReminderCompletion };
 }
