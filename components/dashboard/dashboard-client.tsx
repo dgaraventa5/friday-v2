@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Task, Profile, Reminder, ReminderCompletion, ReminderWithStatus } from '@/lib/types';
+import { Task, Profile, Reminder, ReminderCompletion, ReminderWithStatus, CalendarEventWithCalendar, ConnectedCalendar } from '@/lib/types';
 import { TodayView } from '@/components/today/today-view';
 import { ScheduleView } from '@/components/schedule/schedule-view';
 import { BottomNav } from '@/components/navigation/bottom-nav';
@@ -15,6 +15,7 @@ import { Plus } from 'lucide-react';
 import { createTasksService, createRemindersService } from '@/lib/services';
 import { useTasks } from '@/hooks/use-tasks';
 import { useReminders } from '@/hooks/use-reminders';
+import { useCalendar } from '@/hooks/use-calendar';
 import { useDialogState } from '@/hooks/use-dialog-state';
 import { useRecalibration } from '@/hooks/use-recalibration';
 import { RecalibrationModal } from '@/components/recalibration/recalibration-modal';
@@ -24,16 +25,20 @@ interface DashboardClientProps {
   initialTasks: Task[];
   initialReminders: Reminder[];
   initialReminderCompletions: ReminderCompletion[];
+  initialCalendarEvents?: CalendarEventWithCalendar[];
+  initialCalendarConnections?: ConnectedCalendar[];
   profile: Profile;
   userEmail?: string;
 }
 
 type NavView = 'today' | 'schedule';
 
-export function DashboardClient({ 
-  initialTasks, 
-  initialReminders, 
-  initialReminderCompletions, 
+export function DashboardClient({
+  initialTasks,
+  initialReminders,
+  initialReminderCompletions,
+  initialCalendarEvents = [],
+  initialCalendarConnections = [],
   profile,
   userEmail
 }: DashboardClientProps) {
@@ -100,6 +105,24 @@ export function DashboardClient({
     initialReminderCompletions,
     remindersService,
     toast,
+  });
+
+  // Use the calendar hook for calendar events
+  const {
+    events: calendarEvents,
+    connections: calendarConnections,
+    lastSyncedAt: calendarLastSyncedAt,
+    isLoading: calendarIsLoading,
+    refresh: refreshCalendar,
+  } = useCalendar({
+    events: initialCalendarEvents,
+    connections: initialCalendarConnections,
+    lastSyncedAt: initialCalendarConnections.reduce((latest, conn) => {
+      if (!conn.last_synced_at) return latest;
+      if (!latest) return conn.last_synced_at;
+      return conn.last_synced_at > latest ? conn.last_synced_at : latest;
+    }, null as string | null),
+    syncError: null,
   });
 
   // Sync user's timezone to profile if not already set
@@ -232,6 +255,11 @@ export function DashboardClient({
               tasks={tasks}
               profile={profile}
               reminders={todaysReminders}
+              calendarEvents={calendarEvents}
+              calendarConnections={calendarConnections}
+              calendarLastSyncedAt={calendarLastSyncedAt}
+              calendarIsLoading={calendarIsLoading}
+              onCalendarRefresh={refreshCalendar}
               onTaskComplete={toggleComplete}
               onTaskEdit={editTask}
               onTaskDelete={deleteTask}

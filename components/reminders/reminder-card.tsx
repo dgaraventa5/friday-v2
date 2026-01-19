@@ -4,7 +4,7 @@ import { ReminderWithStatus } from '@/lib/types';
 import { formatTimeLabel, getRecurrenceLabel } from '@/lib/utils/reminder-utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Repeat, Clock } from 'lucide-react';
+import { MoreVertical, Repeat, Clock, Calendar } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ export function ReminderCard({
   const isCompleted = reminder.todayStatus === 'completed';
   const isSkipped = reminder.todayStatus === 'skipped';
   const timeDisplay = formatTimeLabel(reminder.time_label);
+  const isCalendarSourced = reminder.source === 'calendar';
 
   const handleCheckboxChange = () => {
     if (isCompleted) {
@@ -79,15 +80,22 @@ export function ReminderCard({
                 Skipped
               </span>
             )}
+            {isCalendarSourced && !isSkipped && (
+              <div className="flex items-center gap-1 text-blue-500">
+                <Calendar className="h-3 w-3" />
+              </div>
+            )}
             {timeDisplay && !isSkipped && (
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span>{timeDisplay}</span>
               </div>
             )}
-            <div className="flex items-center gap-1 text-slate-400">
-              <Repeat className="h-3 w-3" />
-            </div>
+            {!isCalendarSourced && (
+              <div className="flex items-center gap-1 text-slate-400">
+                <Repeat className="h-3 w-3" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -102,9 +110,11 @@ export function ReminderCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(reminder)}>
-              Edit
-            </DropdownMenuItem>
+            {!isCalendarSourced && (
+              <DropdownMenuItem onClick={() => onEdit(reminder)}>
+                Edit
+              </DropdownMenuItem>
+            )}
             {isSkipped ? (
               <DropdownMenuItem onClick={() => onUndoSkip(reminder.id)}>
                 Undo Skip
@@ -114,12 +124,19 @@ export function ReminderCard({
                 Skip Today
               </DropdownMenuItem>
             ) : null}
-            <DropdownMenuItem
-              onClick={() => onDelete(reminder.id)}
-              className="text-destructive"
-            >
-              Delete
-            </DropdownMenuItem>
+            {!isCalendarSourced && (
+              <DropdownMenuItem
+                onClick={() => onDelete(reminder.id)}
+                className="text-destructive"
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
+            {isCalendarSourced && (
+              <DropdownMenuItem disabled className="text-xs text-slate-400">
+                Synced from calendar
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

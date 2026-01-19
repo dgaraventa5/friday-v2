@@ -87,6 +87,9 @@ export interface Reminder {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Calendar source fields
+  source: ReminderSource;
+  source_event_id: string | null;
 }
 
 export interface ReminderCompletion {
@@ -134,4 +137,61 @@ export interface RecalibrationSettings {
   recalibration_enabled: boolean;
   recalibration_time: string;  // "HH:MM" format
   recalibration_include_tomorrow: boolean;
+}
+
+// Calendar integration types
+export type CalendarSlot = 'personal' | 'work';
+export type CalendarConnectionType = 'google' | 'ical_url';
+export type EventStatus = 'busy' | 'free' | 'tentative';
+export type ReminderSource = 'user' | 'calendar';
+
+export interface ConnectedCalendar {
+  id: string;
+  user_id: string;
+  slot: CalendarSlot;
+  connection_type: CalendarConnectionType;
+  name: string;
+  color: string;
+  // Google OAuth fields
+  google_account_id: string | null;
+  google_account_email: string | null;
+  google_calendar_id: string | null;
+  google_access_token: string | null;
+  google_refresh_token: string | null;
+  google_token_expiry: string | null;
+  // iCal URL fields
+  ical_url: string | null;
+  // Sync status
+  last_synced_at: string | null;
+  sync_error: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  calendar_id: string;
+  external_id: string;
+  title: string;
+  description: string | null;
+  start_time: string; // ISO timestamp
+  end_time: string; // ISO timestamp
+  is_all_day: boolean;
+  status: EventStatus;
+  location: string | null;
+  event_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarEventWithCalendar extends CalendarEvent {
+  calendar: Pick<ConnectedCalendar, 'id' | 'name' | 'color' | 'slot'>;
+}
+
+export interface TodayCalendarData {
+  events: CalendarEventWithCalendar[];
+  connections: ConnectedCalendar[];
+  lastSyncedAt: string | null;
+  syncError: string | null;
 }

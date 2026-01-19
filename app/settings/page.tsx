@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SettingsForm } from "@/components/settings/settings-form";
+import { CalendarSettings } from "@/components/settings/calendar-settings";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { createProfileService } from "@/lib/services";
+import { createProfileService, createCalendarService } from "@/lib/services";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -23,6 +24,11 @@ export default async function SettingsPage() {
 
   const profile = result.data;
 
+  // Fetch calendar connections
+  const calendarService = createCalendarService(supabase);
+  const calendarResult = await calendarService.getConnectionsByUserId(data.user.id);
+  const calendarConnections = calendarResult.data || [];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -39,7 +45,7 @@ export default async function SettingsPage() {
                 Settings
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Task scheduling preferences
+                Task scheduling & calendar preferences
               </p>
             </div>
           </div>
@@ -48,7 +54,8 @@ export default async function SettingsPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-3">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {/* Task Settings */}
           <div className="bg-card rounded-lg border border-border shadow-sm p-4">
             <SettingsForm
               initialCategoryLimits={profile.category_limits}
@@ -58,6 +65,11 @@ export default async function SettingsPage() {
               initialRecalibrationTime={profile.recalibration_time?.slice(0, 5) || '17:00'}
               initialRecalibrationIncludeTomorrow={profile.recalibration_include_tomorrow ?? true}
             />
+          </div>
+
+          {/* Calendar Settings */}
+          <div className="bg-card rounded-lg border border-border shadow-sm p-4">
+            <CalendarSettings initialConnections={calendarConnections} />
           </div>
         </div>
       </main>

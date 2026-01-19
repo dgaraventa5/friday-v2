@@ -9,6 +9,8 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { TasksService } from './tasks-service';
 import { RemindersService } from './reminders-service';
 import { ProfileService } from './profile-service';
+import { CalendarService } from './calendar-service';
+import { CalendarEventsService } from './calendar-events-service';
 
 /**
  * Interface defining all available services
@@ -17,6 +19,8 @@ export interface Services {
   tasks: TasksService;
   reminders: RemindersService;
   profile: ProfileService;
+  calendar: CalendarService;
+  calendarEvents: CalendarEventsService;
 }
 
 /**
@@ -40,6 +44,8 @@ export function createServices(supabase: SupabaseClient): Services {
     tasks: new TasksService(supabase),
     reminders: new RemindersService(supabase),
     profile: new ProfileService(supabase),
+    calendar: new CalendarService(supabase),
+    calendarEvents: new CalendarEventsService(supabase),
   };
 }
 
@@ -47,16 +53,22 @@ export function createServices(supabase: SupabaseClient): Services {
 export { TasksService } from './tasks-service';
 export { RemindersService } from './reminders-service';
 export { ProfileService } from './profile-service';
+export { CalendarService } from './calendar-service';
+export { CalendarEventsService } from './calendar-events-service';
 
 // Re-export factory functions for individual services
 export { createTasksService } from './tasks-service';
 export { createRemindersService } from './reminders-service';
 export { createProfileService } from './profile-service';
+export { createCalendarService } from './calendar-service';
+export { createCalendarEventsService } from './calendar-events-service';
 
 // Re-export service interfaces for type checking
 export type { ITasksService } from './tasks-service';
 export type { IRemindersService } from './reminders-service';
 export type { IProfileService } from './profile-service';
+export type { ICalendarService } from './calendar-service';
+export type { ICalendarEventsService } from './calendar-events-service';
 
 // Re-export common types
 export type { ServiceResult, PaginationOptions, SortOptions } from './types';

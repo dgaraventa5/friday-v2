@@ -1,12 +1,13 @@
 'use client';
 
-import { Task, Profile, ReminderWithStatus } from '@/lib/types';
+import { Task, Profile, ReminderWithStatus, CalendarEventWithCalendar, ConnectedCalendar } from '@/lib/types';
 import { getTodaysFocusTasks, addPriorityScores } from '@/lib/utils/task-prioritization';
 import { TaskCard } from './task-card';
 import { CelebrationState } from './celebration-state';
 import { WelcomeMessage } from './welcome-message';
 import { AddTaskGhost } from './add-task-ghost';
 import { RemindersSection } from '@/components/reminders/reminders-section';
+import { CalendarSection } from '@/components/calendar/calendar-section';
 import { ProgressCard } from '@/components/today/progress-card';
 import { getTodayLocal } from '@/lib/utils/date-utils';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +18,11 @@ interface TodayViewProps {
   tasks: Task[];
   profile: Profile;
   reminders: ReminderWithStatus[];
+  calendarEvents?: CalendarEventWithCalendar[];
+  calendarConnections?: ConnectedCalendar[];
+  calendarLastSyncedAt?: string | null;
+  calendarIsLoading?: boolean;
+  onCalendarRefresh?: () => void;
   onTaskComplete: (taskId: string, skipAutoSchedule?: boolean) => void;
   onTaskEdit: (task: Task) => void;
   onTaskDelete: (taskId: string) => void;
@@ -32,12 +38,17 @@ interface TodayViewProps {
 
 const BASELINE_TASKS = 4;
 
-export function TodayView({ 
-  tasks, 
-  profile, 
+export function TodayView({
+  tasks,
+  profile,
   reminders,
-  onTaskComplete, 
-  onTaskEdit, 
+  calendarEvents = [],
+  calendarConnections = [],
+  calendarLastSyncedAt,
+  calendarIsLoading = false,
+  onCalendarRefresh,
+  onTaskComplete,
+  onTaskEdit,
   onTaskDelete,
   onPullTaskToToday,
   onOpenAddDialog,
@@ -164,12 +175,23 @@ export function TodayView({
       onAddNew={onOpenAddReminderDialog}
     />
   );
-  
+
+  // Calendar section content
+  const CalendarContent = (
+    <CalendarSection
+      events={calendarEvents}
+      connections={calendarConnections}
+      lastSyncedAt={calendarLastSyncedAt ?? null}
+      isLoading={calendarIsLoading}
+      onRefresh={onCalendarRefresh}
+    />
+  );
+
   // Progress card content
   const ProgressContent = (
-    <ProgressCard 
-      completedCount={completedCount} 
-      totalCount={totalCount} 
+    <ProgressCard
+      completedCount={completedCount}
+      totalCount={totalCount}
     />
   );
 
@@ -200,18 +222,23 @@ export function TodayView({
             </div>
             {TasksContent}
           </div>
-          
+
           {/* Reminders Section */}
           {RemindersContent}
+
+          {/* Calendar Section */}
+          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-4">
+            {CalendarContent}
+          </div>
         </div>
       </div>
 
-      {/* Desktop layout (>= 1024px): Two-column with Sidebar */}
-      <div className="hidden lg:flex lg:gap-8 h-full lg:pb-32">
-        {/* Main column - Tasks (70%) */}
-        <div className="flex-1 lg:w-[70%] h-full flex flex-col min-h-0">
+      {/* Desktop layout (>= 1024px): Three-column layout */}
+      <div className="hidden lg:flex lg:gap-6 h-full lg:pb-32">
+        {/* Main column - Tasks (50%) */}
+        <div className="flex-1 lg:w-[50%] h-full flex flex-col min-h-0">
           <h1 className="text-2xl font-bold mb-4 h-[2rem] flex items-center shrink-0">Today's Focus</h1>
-          
+
           {/* Main Task Container - Constrained height */}
           <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -229,22 +256,31 @@ export function TodayView({
                 </Button>
               )}
             </div>
-            
+
             <div className="flex-1 overflow-y-auto pr-2 -mr-2">
               {TasksContent}
             </div>
           </div>
         </div>
 
-        {/* Sidebar - Progress & Reminders (30%) */}
-        <div className="lg:w-[30%] lg:min-w-[280px] lg:max-w-[360px] flex flex-col pt-[3rem] h-full min-h-0">
+        {/* Center column - Calendar (25%) */}
+        <div className="lg:w-[25%] lg:min-w-[240px] lg:max-w-[320px] flex flex-col pt-[3rem] h-full min-h-0">
+          <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
+            <div className="p-4 flex-1 overflow-y-auto">
+              {CalendarContent}
+            </div>
+          </div>
+        </div>
+
+        {/* Right column - Progress & Reminders (25%) */}
+        <div className="lg:w-[25%] lg:min-w-[240px] lg:max-w-[320px] flex flex-col pt-[3rem] h-full min-h-0">
           <div className="flex flex-col gap-6 h-full min-h-0">
             <div className="shrink-0">
               {ProgressContent}
             </div>
             <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
-            <div className="p-4 flex-1 overflow-y-auto">
-              <div className="flex items-center justify-between mb-3 shrink-0">
+              <div className="p-4 flex-1 overflow-y-auto">
+                <div className="flex items-center justify-between mb-3 shrink-0">
                   <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                     Reminders
                   </h2>

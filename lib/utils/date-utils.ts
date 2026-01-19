@@ -83,3 +83,72 @@ export function formatDateStringForDisplay(dateStr: string, options?: Intl.DateT
   const date = parseDateLocal(dateStr);
   return date.toLocaleDateString(undefined, options);
 }
+
+/**
+ * Get the start and end of a day in a specific timezone as ISO UTC strings.
+ * This is needed for querying TIMESTAMPTZ columns with timezone awareness.
+ *
+ * Example: For "2026-01-17" in "America/Los_Angeles" (UTC-8):
+ * - start: "2026-01-17T08:00:00.000Z" (midnight PST = 8 AM UTC)
+ * - end: "2026-01-18T07:59:59.999Z" (11:59:59 PM PST = 7:59 AM next day UTC)
+ */
+export function getDayBoundsUTC(dateStr: string, timezone: string): { start: string; end: string } {
+  // Parse the date string
+  const [year, month, day] = dateStr.split('-').map(Number);
+
+  // Create a date string that represents midnight in the target timezone
+  // We use Intl.DateTimeFormat to find the UTC offset for this timezone
+  const testDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0)); // noon UTC as a safe starting point
+
+  // Get parts in the target timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  // Calculate the offset by finding when midnight occurs in the target timezone
+  // We do this by creating dates and checking what they look like in the target TZ
+
+  // Start with a guess: midnight on the given date in UTC
+  let startGuess = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+
+  // Check what date/time this appears as in the target timezone
+  const parts = formatter.formatToParts(startGuess);
+  const partsObj: Record<string, string> = {};
+  for (const part of parts) {
+    partsObj[part.type] = part.value;
+  }
+
+  // Calculate the timezone offset in milliseconds
+  // If startGuess (midnight UTC) shows as a different date/time in target TZ,
+  // we need to adjust
+  const localHour = parseInt(partsObj.hour || '0');
+  const localDay = parseInt(partsObj.day || '0');
+
+  // Adjust to find actual midnight in target timezone
+  let offsetHours = 0;
+  if (localDay > day || (localDay === 1 && day > 20)) {
+    // We're ahead - timezone is positive (east of UTC)
+    offsetHours = localHour;
+  } else if (localDay < day || (localDay > 20 && day === 1)) {
+    // We're behind - timezone is negative (west of UTC)
+    offsetHours = localHour - 24;
+  } else {
+    offsetHours = localHour;
+  }
+
+  // Calculate actual midnight and end of day in target timezone as UTC
+  const midnightUTC = new Date(Date.UTC(year, month - 1, day, -offsetHours, 0, 0, 0));
+  const endOfDayUTC = new Date(Date.UTC(year, month - 1, day, -offsetHours + 23, 59, 59, 999));
+
+  return {
+    start: midnightUTC.toISOString(),
+    end: endOfDayUTC.toISOString(),
+  };
+}

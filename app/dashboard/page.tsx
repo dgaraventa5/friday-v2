@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { validateStreak } from "@/lib/utils/streak-tracking";
-import { getTodayForTimezone } from "@/lib/utils/date-utils";
+import { getTodayForTimezone, getDayBoundsUTC } from "@/lib/utils/date-utils";
 import { createServices } from "@/lib/services";
 
 export const dynamic = 'force-dynamic'; // Disable caching for this page
@@ -42,11 +42,26 @@ export default async function DashboardPage() {
   const completionsResult = await services.reminders.getReminderCompletions(todayStr);
   const reminderCompletions = completionsResult.data || [];
 
+  // Fetch calendar connections and today's events
+  const calendarConnectionsResult = await services.calendar.getConnectionsByUserId(data.user.id);
+  const calendarConnections = calendarConnectionsResult.data || [];
+
+  // Get UTC bounds for "today" in the user's timezone
+  const { start: todayStartUTC, end: todayEndUTC } = getDayBoundsUTC(todayStr, userTimezone);
+  const calendarEventsResult = await services.calendarEvents.getTodayEventsForUser(
+    data.user.id,
+    todayStartUTC,
+    todayEndUTC
+  );
+  const calendarEvents = calendarEventsResult.data || [];
+
   return (
     <DashboardClient
       initialTasks={tasks}
       initialReminders={reminders}
       initialReminderCompletions={reminderCompletions}
+      initialCalendarEvents={calendarEvents}
+      initialCalendarConnections={calendarConnections}
       profile={profile}
       userEmail={data.user.email}
     />
