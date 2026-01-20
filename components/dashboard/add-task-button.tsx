@@ -11,7 +11,7 @@ export function AddTaskButton() {
   return (
     <>
       <Button onClick={() => setIsOpen(true)} size="lg">
-        <Plus className="h-5 w-5 mr-2" />
+        <Plus className="h-5 w-5 mr-2" aria-hidden="true" />
         Add Task
       </Button>
       <AddTaskDialog open={isOpen} onOpenChange={setIsOpen} />

@@ -48,7 +48,7 @@ export function ReminderCard({
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 shadow-sm transition-all duration-[250ms] ease-out',
+        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 shadow-sm transition-opacity duration-[250ms] ease-out',
         isCompleted && 'opacity-50',
         isSkipped && 'opacity-40 bg-slate-50 dark:bg-slate-800/50'
       )}
@@ -82,18 +82,18 @@ export function ReminderCard({
             )}
             {isCalendarSourced && !isSkipped && (
               <div className="flex items-center gap-1 text-blue-500">
-                <Calendar className="h-3 w-3" />
+                <Calendar className="h-3 w-3" aria-hidden="true" />
               </div>
             )}
             {timeDisplay && !isSkipped && (
               <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <Clock className="h-3 w-3" aria-hidden="true" />
                 <span>{timeDisplay}</span>
               </div>
             )}
             {!isCalendarSourced && (
               <div className="flex items-center gap-1 text-slate-400">
-                <Repeat className="h-3 w-3" />
+                <Repeat className="h-3 w-3" aria-hidden="true" />
               </div>
             )}
           </div>
@@ -105,8 +105,9 @@ export function ReminderCard({
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0"
+              aria-label="Reminder options"
             >
-              <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

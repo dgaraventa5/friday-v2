@@ -105,7 +105,7 @@ export function RecalibrationModal({
       <DialogContent className="dialog-sheet max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sunrise className="h-5 w-5 text-amber-500" />
+            <Sunrise className="h-5 w-5 text-amber-500" aria-hidden="true" />
             Daily Recalibration
           </DialogTitle>
           <DialogDescription>
@@ -223,9 +223,9 @@ export function RecalibrationModal({
 
           <button
             onClick={onSnooze}
-            className="w-full text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1"
+            className="w-full text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 rounded-md p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Clock className="h-3 w-3" />
+            <Clock className="h-3 w-3" aria-hidden="true" />
             Remind me in 1 hour
           </button>
         </div>

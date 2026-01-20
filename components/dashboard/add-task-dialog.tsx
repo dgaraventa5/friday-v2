@@ -86,7 +86,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder="What needs to be done?…"
               required
             />
           </div>
@@ -97,7 +97,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add more details..."
+              placeholder="Add more details…"
               rows={3}
             />
           </div>

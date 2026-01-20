@@ -91,7 +91,7 @@ export function AppHeader({ tasks, profile, userEmail, onOpenRecalibration }: Ap
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left: Friday Logo */}
         <div className="flex items-center gap-2">
-          <Sun className="h-6 w-6 text-yellow-500" fill="currentColor" />
+          <Sun className="h-6 w-6 text-yellow-500" fill="currentColor" aria-hidden="true" />
           <span className="text-xl font-semibold lowercase">friday</span>
         </div>
 
@@ -99,7 +99,7 @@ export function AppHeader({ tasks, profile, userEmail, onOpenRecalibration }: Ap
         <div className="flex items-center gap-3 sm:gap-4">
           {/* Streak Counter */}
           <div className="flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-1.5 sm:px-3 sm:py-2">
-            <Flame className="h-4 w-4 text-orange-500" />
+            <Flame className="h-4 w-4 text-orange-500" aria-hidden="true" />
             <span className="text-sm font-semibold text-orange-700 dark:text-orange-400">
               {profile.current_streak || 0}
             </span>
@@ -159,7 +159,7 @@ export function AppHeader({ tasks, profile, userEmail, onOpenRecalibration }: Ap
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="User menu">
                 <Avatar className="h-10 w-10">
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {initials}
@@ -181,16 +181,16 @@ export function AppHeader({ tasks, profile, userEmail, onOpenRecalibration }: Ap
               <DropdownMenuSeparator />
               {onOpenRecalibration && (
                 <DropdownMenuItem onClick={onOpenRecalibration}>
-                  <Sunrise className="h-4 w-4 mr-2" />
+                  <Sunrise className="h-4 w-4 mr-2" aria-hidden="true" />
                   Recalibrate
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="h-4 w-4 mr-2" aria-hidden="true" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleHardRefresh} disabled={isRefreshing}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
                 Hard Refresh
               </DropdownMenuItem>
               <DropdownMenuSeparator />

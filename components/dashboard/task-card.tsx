@@ -67,7 +67,7 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
     <>
       <Card
         className={cn(
-          "p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition-all duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5",
+          "p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition-[box-shadow,transform] duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5",
           priorityColor,
           task.completed && "opacity-50"
         )}
@@ -122,8 +122,8 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700">
-                    <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700" aria-label="Task options">
+                    <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

@@ -172,7 +172,7 @@ export function AddReminderModal({ open, onOpenChange, onSave }: AddReminderModa
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Take medication"
+              placeholder="e.g., Take medication…"
               className="text-base"
             />
           </div>
@@ -339,24 +339,26 @@ export function AddReminderModal({ open, onOpenChange, onSave }: AddReminderModa
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="never"
+                  id="reminder-never"
+                  name="reminder-end"
                   checked={endType === 'never'}
                   onChange={() => setEndType('never')}
-                  className="cursor-pointer"
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
                 />
-                <Label htmlFor="never" className="cursor-pointer font-normal">
+                <Label htmlFor="reminder-never" className="cursor-pointer font-normal">
                   Never
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="after"
+                  id="reminder-after"
+                  name="reminder-end"
                   checked={endType === 'after'}
                   onChange={() => setEndType('after')}
-                  className="cursor-pointer"
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
                 />
-                <Label htmlFor="after" className="cursor-pointer font-normal">
+                <Label htmlFor="reminder-after" className="cursor-pointer font-normal">
                   After
                 </Label>
                 {endType === 'after' && (

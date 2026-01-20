@@ -193,7 +193,7 @@ export function SettingsForm({
                   handleCategoryLimitChange(category, "weekday", value)
                 }
               >
-                <SelectTrigger className="w-full h-8">
+                <SelectTrigger className="w-full h-8" aria-label={`${category} weekday hours`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -208,7 +208,7 @@ export function SettingsForm({
                   handleCategoryLimitChange(category, "weekend", value)
                 }
               >
-                <SelectTrigger className="w-full h-8">
+                <SelectTrigger className="w-full h-8" aria-label={`${category} weekend hours`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -150,7 +150,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
               id="edit-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder="What needs to be done?…"
             />
           </div>
 
@@ -180,7 +180,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
                     !dueDate && 'text-slate-400'
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
                   {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
                 </Button>
               </PopoverTrigger>

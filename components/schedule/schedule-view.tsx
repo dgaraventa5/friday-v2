@@ -67,7 +67,7 @@ export function ScheduleView({
   if (sortedDates.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center px-6 py-12 md:py-20 text-center">
-        <Calendar className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mb-4" />
+        <Calendar className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mb-4" aria-hidden="true" />
         <h3 className="text-base md:text-lg font-medium mb-2">No Scheduled Tasks</h3>
         <p className="text-sm md:text-base text-muted-foreground max-w-sm text-pretty">
           Add tasks and they'll be automatically scheduled based on priority and capacity.

@@ -68,7 +68,7 @@ export function HeroSection() {
           <div className="max-w-2xl">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-8">
-              <Sun className="w-14 h-14 text-yellow-500" strokeWidth={2} />
+              <Sun className="w-14 h-14 text-yellow-500" strokeWidth={2} aria-hidden="true" />
               <span className="text-5xl font-bold text-slate-800 dark:text-slate-100">friday</span>
             </div>
 
@@ -86,7 +86,7 @@ export function HeroSection() {
               <Link href="/auth/sign-up">
                 <Button size="lg" className="w-full sm:w-auto px-8 h-12 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium">
                   Start Focusing
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Button>
               </Link>
               <Button 
@@ -100,7 +100,7 @@ export function HeroSection() {
             </div>
 
             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2 className="h-4 w-4 text-green-500" aria-hidden="true" />
               <span>No credit card required • Free forever</span>
             </div>
           </div>
@@ -142,7 +142,7 @@ export function HeroSection() {
                 <div className="flex items-center justify-center my-6">
                   <div className="h-px bg-linear-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent w-full" />
                   <div className="absolute bg-yellow-500 text-slate-900 rounded-full p-2">
-                    <ArrowRight className="h-4 w-4 rotate-90" />
+                    <ArrowRight className="h-4 w-4 rotate-90" aria-hidden="true" />
                   </div>
                 </div>
               )}

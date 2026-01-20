@@ -153,7 +153,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs to be done?"
+          placeholder="What needs to be done?…"
           className="text-base"
         />
       </div>
@@ -184,7 +184,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
                 !dueDate && 'text-muted-foreground'
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
               {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
             </Button>
           </PopoverTrigger>
@@ -258,9 +258,9 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
       <button
         type="button"
         onClick={() => setShowMoreOptions(!showMoreOptions)}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md p-1 -m-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <ChevronDown className={cn('h-4 w-4 transition-transform', showMoreOptions && 'rotate-180')} />
+        <ChevronDown className={cn('h-4 w-4 transition-transform', showMoreOptions && 'rotate-180')} aria-hidden="true" />
         More options
       </button>
 
@@ -320,9 +320,10 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
                     <input
                       type="radio"
                       id="never"
+                      name="recurring-end"
                       checked={recurringEndType === 'never'}
                       onChange={() => setRecurringEndType('never')}
-                      className="cursor-pointer"
+                      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
                     />
                     <Label htmlFor="never" className="cursor-pointer">
                       Never
@@ -332,9 +333,10 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
                     <input
                       type="radio"
                       id="after"
+                      name="recurring-end"
                       checked={recurringEndType === 'after'}
                       onChange={() => setRecurringEndType('after')}
-                      className="cursor-pointer"
+                      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
                     />
                     <Label htmlFor="after" className="cursor-pointer">
                       After

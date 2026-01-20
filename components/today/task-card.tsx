@@ -63,7 +63,7 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 md:p-3 lg:p-3 shadow-sm transition-all duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
+        'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 md:p-3 lg:p-3 shadow-sm transition-[box-shadow,transform] duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
         styles.border,
         task.completed && 'opacity-50'
       )}
@@ -89,7 +89,7 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
             {/* Only recurring indicator stays on left side */}
             {task.is_recurring && (
               <div className="flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap">
-                <Repeat className="h-3 w-3" />
+                <Repeat className="h-3 w-3" aria-hidden="true" />
                 <span>{task.recurring_interval}</span>
               </div>
             )}
@@ -105,13 +105,13 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
             </span>
             {task.estimated_hours && (
               <div className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-slate-500" />
+                <Clock className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                 <span>{task.estimated_hours}h</span>
               </div>
             )}
             {task.due_date && (
               <div className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                <Calendar className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                 <span>{formatDateStringForDisplay(task.due_date)}</span>
               </div>
             )}
@@ -128,13 +128,13 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
           </span>
           {task.estimated_hours && (
             <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3 text-slate-500" />
+              <Clock className="h-3 w-3 text-slate-500" aria-hidden="true" />
               <span>{task.estimated_hours}h</span>
             </div>
           )}
           {task.due_date && (
             <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3 text-slate-500" />
+              <Calendar className="h-3 w-3 text-slate-500" aria-hidden="true" />
               <span>{formatDateStringForDisplay(task.due_date)}</span>
             </div>
           )}
@@ -143,8 +143,8 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
         {/* Menu - now outside of the flex-1 container */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0">
-              <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0" aria-label="Task options">
+              <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

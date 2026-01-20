@@ -72,12 +72,15 @@ export function AuthForm() {
       <form onSubmit={handleMagicLink} className="flex flex-col gap-4">
         <Input
           id="email"
+          name="email"
           type="email"
+          autoComplete="email"
           placeholder="name@yourcompany.com"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="h-12 px-4 text-base rounded-xl border-2"
+          spellCheck={false}
           style={{
             backgroundColor: "#FFFFFF",
             borderColor: "#E5E7EB",
@@ -125,7 +128,7 @@ export function AuthForm() {
             color: "#1F2937",
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M19.6 10.227c0-.709-.064-1.39-.182-2.045H10v3.868h5.382a4.6 4.6 0 01-1.996 3.018v2.51h3.232c1.891-1.742 2.982-4.305 2.982-7.35z"
               fill="#4285F4"
@@ -150,15 +153,11 @@ export function AuthForm() {
       {/* Legal footer */}
       <p className="text-xs text-center leading-relaxed mt-2" style={{ color: "#9CA3AF" }}>
         By continuing, you agree to Friday&apos;s{" "}
-        <a href="#" className="underline" style={{ color: "#6B7280" }}>
+        <a href="/terms" className="underline" style={{ color: "#6B7280" }}>
           Terms of Service
         </a>{" "}
         and{" "}
-        <a href="#" className="underline" style={{ color: "#6B7280" }}>
-          Privacy Policy
-        </a>
-        , and acknowledge their{" "}
-        <a href="#" className="underline" style={{ color: "#6B7280" }}>
+        <a href="/privacy" className="underline" style={{ color: "#6B7280" }}>
           Privacy Policy
         </a>
         .

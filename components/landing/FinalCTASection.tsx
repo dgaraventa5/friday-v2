@@ -42,10 +42,12 @@ export function FinalCTASection() {
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <div className="flex-1">
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" aria-hidden="true" />
                   <Input
                     type="email"
-                    placeholder="Enter your email"
+                    name="email"
+                    autoComplete="email"
+                    placeholder="Enter your email…"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
@@ -55,19 +57,20 @@ export function FinalCTASection() {
                       !isValidEmail ? 'border-red-500' : ''
                     }`}
                     required
+                    spellCheck={false}
                   />
                 </div>
                 {!isValidEmail && (
                   <p className="text-xs text-red-700 mt-1 text-left">Please enter a valid email address</p>
                 )}
               </div>
-              <Button 
+              <Button
                 type="submit"
-                size="lg" 
+                size="lg"
                 className="bg-slate-900 text-white hover:bg-slate-800 h-12 px-8 whitespace-nowrap font-medium"
               >
                 Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Button>
             </div>
           </form>
@@ -80,12 +83,12 @@ export function FinalCTASection() {
               <div className="flex-1 h-px bg-slate-800/30" />
             </div>
             <Link href="/auth/sign-up">
-              <Button 
+              <Button
                 size="lg"
                 variant="outline"
                 className="bg-white/90 border-slate-300 text-slate-900 hover:bg-white h-12 px-8 font-medium"
               >
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -111,17 +114,17 @@ export function FinalCTASection() {
           {/* Trust signals */}
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-800">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               <span>No credit card required</span>
             </div>
-            <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-700" />
+            <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-700" aria-hidden="true" />
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               <span>Free forever</span>
             </div>
-            <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-700" />
+            <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-700" aria-hidden="true" />
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               <span>Takes 60 seconds</span>
             </div>
           </div>

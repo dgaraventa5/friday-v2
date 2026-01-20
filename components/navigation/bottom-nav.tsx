@@ -19,38 +19,38 @@ export function BottomNav({ currentView, onViewChange, onAddTask }: BottomNavPro
         <button
           onClick={() => onViewChange('today')}
           className={cn(
-            'flex flex-col items-center justify-center gap-1 transition-colors',
+            'flex flex-col items-center justify-center gap-1 transition-colors rounded-md p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             currentView === 'today'
               ? 'text-blue-600 dark:text-blue-500'
               : 'text-muted-foreground hover:text-foreground'
           )}
           aria-pressed={currentView === 'today'}
         >
-          <List className="h-6 w-6" />
+          <List className="h-6 w-6" aria-hidden="true" />
           <span className="text-xs font-medium">Today</span>
         </button>
 
         {/* Floating Add Button */}
         <button
           onClick={onAddTask}
-          className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl hover:scale-105 active:scale-95"
+          className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-[transform,background-color,box-shadow] hover:bg-blue-700 hover:shadow-xl hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label="Add task"
         >
-          <Plus className="h-7 w-7" strokeWidth={2.5} />
+          <Plus className="h-7 w-7" strokeWidth={2.5} aria-hidden="true" />
         </button>
 
         {/* Schedule Button */}
         <button
           onClick={() => onViewChange('schedule')}
           className={cn(
-            'flex flex-col items-center justify-center gap-1 transition-colors',
+            'flex flex-col items-center justify-center gap-1 transition-colors rounded-md p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             currentView === 'schedule'
               ? 'text-blue-600 dark:text-blue-500'
               : 'text-muted-foreground hover:text-foreground'
           )}
           aria-pressed={currentView === 'schedule'}
         >
-          <Calendar className="h-6 w-6" />
+          <Calendar className="h-6 w-6" aria-hidden="true" />
           <span className="text-xs font-medium">Schedule</span>
         </button>
       </div>

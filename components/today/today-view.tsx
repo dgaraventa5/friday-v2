@@ -215,8 +215,9 @@ export function TodayView({
                   size="sm"
                   onClick={onOpenAddDialog}
                   className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  aria-label="Add task"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-5 w-5" aria-hidden="true" />
                 </Button>
               )}
             </div>
@@ -251,8 +252,9 @@ export function TodayView({
                   size="sm"
                   onClick={onOpenAddDialog}
                   className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  aria-label="Add task"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-5 w-5" aria-hidden="true" />
                 </Button>
               )}
             </div>
@@ -290,8 +292,9 @@ export function TodayView({
                       size="sm"
                       onClick={onOpenAddReminderDialog}
                       className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      aria-label="Add reminder"
                     >
-                      <Plus className="h-5 w-5" />
+                      <Plus className="h-5 w-5" aria-hidden="true" />
                     </Button>
                   )}
                 </div>

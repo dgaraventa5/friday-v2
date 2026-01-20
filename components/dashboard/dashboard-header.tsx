@@ -56,12 +56,12 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               size="sm"
               onClick={() => setShowGuide(true)}
             >
-              <Info className="h-4 w-4 mr-2" />
+              <Info className="h-4 w-4 mr-2" aria-hidden="true" />
               Productivity Guide
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="User menu">
                   <Avatar>
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
@@ -78,7 +78,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push('/settings')}>
-                  <Settings className="h-4 w-4 mr-2" />
+                  <Settings className="h-4 w-4 mr-2" aria-hidden="true" />
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
