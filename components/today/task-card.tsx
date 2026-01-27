@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
+  isFirst?: boolean;
   onComplete: (taskId: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
@@ -56,7 +57,7 @@ const CATEGORY_EMOJIS = {
   Personal: '⭐',
 };
 
-export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, isFirst, onComplete, onEdit, onDelete }: TaskCardProps) {
   const quadrant = getEisenhowerQuadrant(task);
   const styles = QUADRANT_STYLES[quadrant];
 
@@ -65,7 +66,8 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) 
       className={cn(
         'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 md:p-3 lg:p-3 shadow-sm transition-[box-shadow,transform] duration-[250ms] ease-out hover:shadow-md hover:-translate-y-0.5',
         styles.border,
-        task.completed && 'opacity-50'
+        task.completed && 'opacity-50',
+        isFirst && !task.completed && 'task-highlight'
       )}
     >
       <div className="flex items-center gap-2">

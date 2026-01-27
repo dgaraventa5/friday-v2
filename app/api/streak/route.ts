@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updateStreak, recalculateStreak } from '@/lib/utils/streak-tracking';
+import { verifyOrigin } from '@/lib/utils/security';
 
 export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();

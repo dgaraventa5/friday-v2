@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createCalendarService } from '@/lib/services/calendar-service';
 import { syncCalendar, syncAllUserCalendars } from '@/lib/utils/calendar-sync';
 import { CalendarSlot } from '@/lib/types';
+import { verifyOrigin } from '@/lib/utils/security';
 
 /**
  * POST /api/calendar/sync
@@ -10,6 +11,10 @@ import { CalendarSlot } from '@/lib/types';
  * Optional: specify slot to sync only that calendar
  */
 export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

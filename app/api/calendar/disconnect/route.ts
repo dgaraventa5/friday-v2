@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createCalendarService } from '@/lib/services/calendar-service';
 import { CalendarSlot } from '@/lib/types';
+import { verifyOrigin } from '@/lib/utils/security';
 
 /**
  * DELETE /api/calendar/disconnect
  * Disconnect a calendar from a slot
  */
 export async function DELETE(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createProfileService } from "@/lib/services";
 import { getTodayLocal } from "@/lib/utils/date-utils";
+import { verifyOrigin } from "@/lib/utils/security";
 
 /**
  * POST /api/recalibration/dismiss
  * Marks the recalibration modal as dismissed for today (cross-device)
  */
-export async function POST() {
+export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const {

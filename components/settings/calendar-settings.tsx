@@ -31,16 +31,16 @@ export function CalendarSettings({ initialConnections }: CalendarSettingsProps) 
   const [icalModalSlot, setIcalModalSlot] = useState<CalendarSlot | null>(null);
   const [googleSelectData, setGoogleSelectData] = useState<{
     slot: CalendarSlot;
-    tokens: string;
-    calendars: string;
+    sessionId: string;
+    calendars: Array<{ id: string; summary: string; primary?: boolean }>;
+    accountEmail: string;
   } | null>(null);
 
-  // Handle Google OAuth callback
+  // Handle Google OAuth callback - fetch session data from secure server-side storage
   useEffect(() => {
     const isGoogleCallback = searchParams.get('google_callback') === 'true';
     const slot = searchParams.get('slot') as CalendarSlot;
-    const tokens = searchParams.get('tokens');
-    const calendars = searchParams.get('calendars');
+    const oauthSession = searchParams.get('oauth_session');
     const error = searchParams.get('error');
 
     if (error) {
@@ -50,8 +50,25 @@ export function CalendarSettings({ initialConnections }: CalendarSettingsProps) 
       return;
     }
 
-    if (isGoogleCallback && slot && tokens && calendars) {
-      setGoogleSelectData({ slot, tokens, calendars });
+    if (isGoogleCallback && slot && oauthSession) {
+      // Fetch session data from secure server-side storage
+      fetch(`/api/calendar/google/session?session_id=${oauthSession}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setMessage({ type: 'error', text: data.error });
+          } else {
+            setGoogleSelectData({
+              slot: data.slot,
+              sessionId: oauthSession,
+              calendars: data.calendars,
+              accountEmail: data.googleAccountEmail,
+            });
+          }
+        })
+        .catch(() => {
+          setMessage({ type: 'error', text: 'Failed to retrieve OAuth session' });
+        });
       // Clear URL params
       router.replace('/settings', { scroll: false });
     }
@@ -121,17 +138,14 @@ export function CalendarSettings({ initialConnections }: CalendarSettingsProps) 
     if (!googleSelectData) return;
 
     try {
-      const tokens = JSON.parse(Buffer.from(googleSelectData.tokens, 'base64').toString());
-
       const response = await fetch('/api/calendar/google/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          slot: googleSelectData.slot,
+          sessionId: googleSelectData.sessionId,
           calendarId,
           calendarName,
           color,
-          tokens,
         }),
       });
 
@@ -290,8 +304,8 @@ export function CalendarSettings({ initialConnections }: CalendarSettingsProps) 
           open={true}
           onOpenChange={(open) => !open && setGoogleSelectData(null)}
           slot={googleSelectData.slot}
-          calendars={JSON.parse(Buffer.from(googleSelectData.calendars, 'base64').toString())}
-          accountEmail={JSON.parse(Buffer.from(googleSelectData.tokens, 'base64').toString()).google_account_email}
+          calendars={googleSelectData.calendars}
+          accountEmail={googleSelectData.accountEmail}
           onSelect={handleGoogleCalendarSelect}
         />
       )}

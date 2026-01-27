@@ -5,6 +5,7 @@ import { validateICalUrl } from '@/lib/utils/ical-parser';
 import { syncCalendar } from '@/lib/utils/calendar-sync';
 import { CalendarSlot } from '@/lib/types';
 import { getDefaultSlotColor } from '@/lib/utils/calendar-utils';
+import { verifyOrigin } from '@/lib/utils/security';
 
 interface ConnectRequest {
   slot: CalendarSlot;
@@ -18,6 +19,10 @@ interface ConnectRequest {
  * Connect an iCal URL calendar
  */
 export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

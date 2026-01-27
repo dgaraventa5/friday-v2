@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CategoryLimits, DailyMaxHours, DailyMaxTasks } from "@/lib/types";
 import { createProfileService } from "@/lib/services";
+import { verifyOrigin } from "@/lib/utils/security";
 
 interface SettingsUpdateRequest {
   category_limits: CategoryLimits;
@@ -88,6 +89,10 @@ function validateRecalibrationTime(time: any): boolean {
 
 // PATCH - Partial updates (e.g., timezone)
 export async function PATCH(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const {
@@ -152,6 +157,10 @@ export async function PATCH(request: Request) {
 
 // POST - Full settings update
 export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const {

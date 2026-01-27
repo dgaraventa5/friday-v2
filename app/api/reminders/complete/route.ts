@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { verifyOrigin } from '@/lib/utils/security';
 
 /**
  * POST /api/reminders/complete
  * Complete or uncomplete a reminder
  */
 export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const body = await request.json();
     const { reminderId, completionDate, action } = body;
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('[API] /api/reminders/complete:', { action, reminderId, completionDate, userId: user.id });
+    // Log action for debugging (omit userId in production)
 
     if (action === 'complete') {
       // Upsert completion
@@ -48,7 +53,7 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('[API] Complete error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to complete reminder' }, { status: 500 });
       }
 
       // Update reminder count
@@ -81,7 +86,7 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('[API] Uncomplete error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to uncomplete reminder' }, { status: 500 });
       }
 
       // Decrement reminder count
@@ -116,7 +121,7 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('[API] Skip error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to skip reminder' }, { status: 500 });
       }
 
       revalidatePath('/dashboard');
@@ -135,7 +140,7 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('[API] Unskip error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to unskip reminder' }, { status: 500 });
       }
 
       revalidatePath('/dashboard');

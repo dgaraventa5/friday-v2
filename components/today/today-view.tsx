@@ -1,14 +1,17 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Task, Profile, ReminderWithStatus, CalendarEventWithCalendar, ConnectedCalendar } from '@/lib/types';
 import { getTodaysFocusTasks, addPriorityScores } from '@/lib/utils/task-prioritization';
+import { getWeeklyCompletionTrend, calculateRemainingMinutes } from '@/lib/utils/stats-utils';
 import { TaskCard } from './task-card';
 import { CelebrationState } from './celebration-state';
 import { WelcomeMessage } from './welcome-message';
 import { AddTaskGhost } from './add-task-ghost';
+import { ProgressHero } from './progress-hero';
+import { ProgressDock } from './progress-dock';
 import { RemindersSection } from '@/components/reminders/reminders-section';
 import { CalendarSection } from '@/components/calendar/calendar-section';
-import { ProgressCard } from '@/components/today/progress-card';
 import { getTodayLocal } from '@/lib/utils/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -64,10 +67,14 @@ export function TodayView({
   const focusTasks = getTodaysFocusTasks(tasks);
   const incompleteTasks = focusTasks.filter(t => !t.completed);
   const completedTasks = focusTasks.filter(t => t.completed);
-  
+
   const completedCount = completedTasks.length;
   const totalCount = focusTasks.length;
   const allComplete = incompleteTasks.length === 0 && completedTasks.length > 0;
+
+  // Calculate stats for progress components
+  const weeklyTrend = useMemo(() => getWeeklyCompletionTrend(tasks), [tasks]);
+  const remainingMinutes = useMemo(() => calculateRemainingMinutes(tasks), [tasks]);
 
   const handleTaskComplete = (taskId: string) => {
     // Always skip auto-schedule to prevent immediate backfill,
@@ -79,12 +86,12 @@ export function TodayView({
     // Auto-pull the next highest priority task from backlog
     const todayStr = getTodayLocal();
     const availableTasks = tasks.filter(
-      t => !t.completed && 
-           !t.is_recurring && 
-           t.start_date && 
+      t => !t.completed &&
+           !t.is_recurring &&
+           t.start_date &&
            t.start_date > todayStr
     );
-    
+
     if (availableTasks.length === 0) {
       toast({
         title: 'No Tasks Available',
@@ -92,11 +99,11 @@ export function TodayView({
       });
       return;
     }
-    
+
     // Score and sort by priority
     const scoredTasks = addPriorityScores(availableTasks);
     scoredTasks.sort((a, b) => b.priorityScore - a.priorityScore);
-    
+
     // Pull the highest priority task
     const nextTask = scoredTasks[0];
     if (onPullTaskToToday) {
@@ -114,8 +121,8 @@ export function TodayView({
   const TasksContent = (
     <div className="space-y-2">
       {allComplete ? (
-        <CelebrationState 
-          completedCount={completedCount} 
+        <CelebrationState
+          completedCount={completedCount}
           baselineCount={BASELINE_TASKS}
         />
       ) : (
@@ -127,10 +134,11 @@ export function TodayView({
             </div>
           )}
 
-          {incompleteTasks.map((task) => (
+          {incompleteTasks.map((task, index) => (
             <TaskCard
               key={task.id}
               task={task}
+              isFirst={index === 0}
               onComplete={handleTaskComplete}
               onEdit={onTaskEdit}
               onDelete={onTaskDelete}
@@ -163,19 +171,6 @@ export function TodayView({
     </div>
   );
 
-  // Reminders section content
-  const RemindersContent = (
-    <RemindersSection
-      reminders={reminders}
-      onComplete={onReminderComplete}
-      onSkip={onReminderSkip}
-      onUndoSkip={onReminderUndoSkip}
-      onEdit={onReminderEdit}
-      onDelete={onReminderDelete}
-      onAddNew={onOpenAddReminderDialog}
-    />
-  );
-
   // Calendar section content
   const CalendarContent = (
     <CalendarSection
@@ -187,27 +182,55 @@ export function TodayView({
     />
   );
 
-  // Progress card content
-  const ProgressContent = (
-    <ProgressCard
-      completedCount={completedCount}
-      totalCount={totalCount}
-    />
+  // Reminders section content for desktop
+  const RemindersContent = (
+    <div className="space-y-2">
+      {reminders.length === 0 ? (
+        <div className="text-center py-6 text-muted-foreground">
+          <p className="text-sm">No reminders for today</p>
+          <Button
+            variant="link"
+            size="sm"
+            onClick={onOpenAddReminderDialog}
+            className="mt-1 text-xs"
+          >
+            Add a reminder
+          </Button>
+        </div>
+      ) : (
+        <RemindersSection
+          reminders={reminders}
+          onComplete={onReminderComplete}
+          onSkip={onReminderSkip}
+          onUndoSkip={onReminderUndoSkip}
+          onEdit={onReminderEdit}
+          onDelete={onReminderDelete}
+          onAddNew={onOpenAddReminderDialog}
+          hideHeader={true}
+        />
+      )}
+    </div>
   );
 
   return (
     <>
       {/* Mobile/Tablet layout (< 1024px): Stacked vertical layout */}
       <div className="lg:hidden h-full overflow-y-auto">
-        <div className="flex flex-col space-y-6 pb-24">
-          {/* Main Header */}
-          <h1 className="text-2xl font-bold">Today's Focus</h1>
+        <div className="flex flex-col space-y-5 pb-24">
+          {/* Progress Hero */}
+          <ProgressHero
+            completedCount={completedCount}
+            totalCount={totalCount}
+            streak={profile.current_streak}
+            weeklyTrend={weeklyTrend}
+            remainingMinutes={remainingMinutes}
+          />
 
-          {/* Tasks Section (Top priority) */}
+          {/* Tasks Section */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                Tasks
+                Today's Focus
               </h2>
               {onOpenAddDialog && (
                 <Button
@@ -224,67 +247,77 @@ export function TodayView({
             {TasksContent}
           </div>
 
-          {/* Reminders Section */}
-          {RemindersContent}
-
           {/* Calendar Section */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 sm:p-4">
             {CalendarContent}
           </div>
+
+          {/* Reminders Section */}
+          <RemindersSection
+            reminders={reminders}
+            onComplete={onReminderComplete}
+            onSkip={onReminderSkip}
+            onUndoSkip={onReminderUndoSkip}
+            onEdit={onReminderEdit}
+            onDelete={onReminderDelete}
+            onAddNew={onOpenAddReminderDialog}
+          />
         </div>
       </div>
 
-      {/* Desktop layout (>= 1024px): Three-column layout */}
-      <div className="hidden lg:flex lg:gap-6 h-full lg:pb-32">
-        {/* Main column - Tasks (50%) */}
-        <div className="flex-1 lg:w-[50%] h-full flex flex-col min-h-0">
-          <h1 className="text-2xl font-bold mb-4 h-[2rem] flex items-center shrink-0">Today's Focus</h1>
+      {/* Desktop layout (>= 1024px): 60/40 split */}
+      <div className="hidden lg:block pb-32">
+        {/* Two-column layout: 60/40 split */}
+        <div className="flex gap-6">
+          {/* Left column - Progress + Tasks (60%) */}
+          <div className="w-[60%] space-y-5">
+            {/* Progress Module */}
+            <ProgressDock
+              completedCount={completedCount}
+              totalCount={totalCount}
+              streak={profile.current_streak}
+              weeklyTrend={weeklyTrend}
+              remainingMinutes={remainingMinutes}
+            />
 
-          {/* Main Task Container - Constrained height */}
-          <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between mb-4 shrink-0">
-              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                Tasks
-              </h2>
-              {onOpenAddDialog && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onOpenAddDialog}
-                  className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  aria-label="Add task"
-                >
-                  <Plus className="h-5 w-5" aria-hidden="true" />
-                </Button>
-              )}
-            </div>
+            {/* Tasks */}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Today's Focus
+                </h2>
+                {onOpenAddDialog && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onOpenAddDialog}
+                    className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    aria-label="Add task"
+                  >
+                    <Plus className="h-5 w-5" aria-hidden="true" />
+                  </Button>
+                )}
+              </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 -mr-2">
               {TasksContent}
             </div>
           </div>
-        </div>
 
-        {/* Center column - Calendar (25%) */}
-        <div className="lg:w-[25%] lg:min-w-[240px] lg:max-w-[320px] flex flex-col pt-[3rem] h-full min-h-0">
-          <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
-            <div className="p-4 flex-1 overflow-y-auto">
-              {CalendarContent}
+          {/* Right column - Calendar + Reminders (40%) */}
+          <div className="w-[40%] flex flex-col gap-5">
+            {/* Calendar */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+              <div className="p-4">
+                {CalendarContent}
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Right column - Progress & Reminders (25%) */}
-        <div className="lg:w-[25%] lg:min-w-[240px] lg:max-w-[320px] flex flex-col pt-[3rem] h-full min-h-0">
-          <div className="flex flex-col gap-6 h-full min-h-0">
-            <div className="shrink-0">
-              {ProgressContent}
-            </div>
-            <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50 flex flex-col overflow-hidden">
-              <div className="p-4 flex-1 overflow-y-auto">
-                <div className="flex items-center justify-between mb-3 shrink-0">
+            {/* Reminders */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
                   <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                    Reminders
+                    Daily Reminders
                   </h2>
                   {onOpenAddReminderDialog && (
                     <Button
@@ -298,33 +331,7 @@ export function TodayView({
                     </Button>
                   )}
                 </div>
-                {/* Reminders content - extracted from RemindersSection component for direct control over scrolling */}
-                <div className="space-y-2">
-                  {reminders.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <p className="text-sm">No reminders for today</p>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={onOpenAddReminderDialog}
-                        className="mt-1 text-xs"
-                      >
-                        Add a reminder
-                      </Button>
-                    </div>
-                  ) : (
-                    <RemindersSection
-                      reminders={reminders}
-                      onComplete={onReminderComplete}
-                      onSkip={onReminderSkip}
-                      onUndoSkip={onReminderUndoSkip}
-                      onEdit={onReminderEdit}
-                      onDelete={onReminderDelete}
-                      onAddNew={onOpenAddReminderDialog}
-                      hideHeader={true} // Add prop to hide internal header
-                    />
-                  )}
-                </div>
+                {RemindersContent}
               </div>
             </div>
           </div>

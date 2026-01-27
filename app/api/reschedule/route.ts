@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { assignStartDates } from '@/lib/utils/task-prioritization';
+import { verifyOrigin } from '@/lib/utils/security';
 import { NextResponse } from 'next/server';
 
-export async function POST() {
+export async function POST(request: Request) {
+  // Verify origin to prevent CSRF
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
 
@@ -34,7 +39,8 @@ export async function POST() {
       .order('created_at', { ascending: true });
 
     if (tasksError) {
-      return NextResponse.json({ error: tasksError.message }, { status: 500 });
+      console.error('[reschedule] Error fetching tasks:', tasksError);
+      return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
     }
 
     if (!tasks) {
@@ -68,7 +74,6 @@ export async function POST() {
       console.error('[reschedule] Update errors:', errors);
       return NextResponse.json({
         error: 'Some tasks failed to update',
-        details: errors.map(e => e.error?.message),
       }, { status: 500 });
     }
 

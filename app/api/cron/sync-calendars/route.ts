@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { timingSafeEqual } from 'crypto';
 import { syncAllActiveCalendars } from '@/lib/utils/calendar-sync';
 
 function getSupabaseAdmin() {
@@ -7,6 +8,21 @@ function getSupabaseAdmin() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+/**
+ * Timing-safe comparison of two strings
+ * Prevents timing attacks on secret comparison
+ */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  try {
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -18,6 +34,7 @@ export async function GET(request: Request) {
   try {
     // Verify cron secret
     const authHeader = request.headers.get('authorization');
+    const xCronSecret = request.headers.get('x-cron-secret');
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret) {
@@ -26,9 +43,11 @@ export async function GET(request: Request) {
     }
 
     // Accept both Bearer token and x-cron-secret header (Vercel cron)
+    // Use timing-safe comparison to prevent timing attacks
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
     const isAuthorized =
-      authHeader === `Bearer ${cronSecret}` ||
-      request.headers.get('x-cron-secret') === cronSecret;
+      safeCompare(bearerToken, cronSecret) ||
+      (xCronSecret !== null && safeCompare(xCronSecret, cronSecret));
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
