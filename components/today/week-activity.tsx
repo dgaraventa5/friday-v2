@@ -14,15 +14,33 @@ interface WeekActivityProps {
   data: number[];           // 7 numbers, oldest to newest (ending with today)
   highlightToday?: boolean; // Highlight the last bar (default: true)
   showLabels?: boolean;     // Show M T W T F S S (default: true)
+  size?: 'default' | 'large'; // Size variant for different contexts
   className?: string;
 }
+
+const sizeConfig = {
+  default: {
+    barWidth: 6,
+    barGap: 3,
+    containerHeight: 24,
+    labelText: 8,
+  },
+  large: {
+    barWidth: 8,
+    barGap: 4,
+    containerHeight: 32,
+    labelText: 10,
+  },
+};
 
 export function WeekActivity({
   data,
   highlightToday = true,
   showLabels = true,
+  size = 'default',
   className,
 }: WeekActivityProps) {
+  const config = sizeConfig[size];
   const dayLabels = useMemo(() => getWeekDayLabels(), []);
 
   // Normalize data to 7 items
@@ -55,8 +73,8 @@ export function WeekActivity({
       <div className={cn('flex flex-col items-center gap-1', className)}>
         {/* Bars */}
         <div
-          className="flex items-end gap-[3px]"
-          style={{ height: '24px' }}
+          className="flex items-end"
+          style={{ height: `${config.containerHeight}px`, gap: `${config.barGap}px` }}
           role="img"
           aria-label={`Weekly activity: ${normalizedData.map((v, i) => `${getDayName(i)}: ${v} tasks`).join(', ')}`}
         >
@@ -70,12 +88,13 @@ export function WeekActivity({
                 <TooltipTrigger asChild>
                   <div
                     className={cn(
-                      'w-[6px] rounded-sm transition-all duration-300 cursor-default',
+                      'rounded-sm transition-all duration-300 cursor-default',
                       highlightToday && isToday
                         ? 'bg-blue-500'
                         : 'bg-slate-300 dark:bg-slate-600'
                     )}
                     style={{
+                      width: `${config.barWidth}px`,
                       height: `${Math.max(heightPercent, minHeight)}%`,
                       minHeight: `${minHeight}px`,
                     }}
@@ -91,18 +110,22 @@ export function WeekActivity({
 
         {/* Day labels */}
         {showLabels && (
-          <div className="flex gap-[3px]">
+          <div className="flex" style={{ gap: `${config.barGap}px` }}>
             {dayLabels.map((label, index) => {
               const isToday = index === 6;
               return (
                 <span
                   key={index}
                   className={cn(
-                    'w-[6px] text-center text-[8px] leading-none',
+                    'text-center leading-none',
                     highlightToday && isToday
                       ? 'text-blue-500 font-medium'
                       : 'text-muted-foreground'
                   )}
+                  style={{
+                    width: `${config.barWidth}px`,
+                    fontSize: `${config.labelText}px`,
+                  }}
                 >
                   {label}
                 </span>

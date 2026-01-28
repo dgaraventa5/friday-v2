@@ -242,7 +242,6 @@ export function DashboardClient({
   return (
     <div className="flex h-dvh flex-col bg-background overflow-hidden">
       <AppHeader
-        tasks={tasks}
         profile={profile}
         userEmail={userEmail}
         onOpenRecalibration={openRecalibrationManually}

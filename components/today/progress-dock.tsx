@@ -50,12 +50,12 @@ export function ProgressDock({
   return (
     <div
       className={cn(
-        'rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50',
+        'rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50',
         className
       )}
     >
-      <div className="flex items-center gap-4">
-        {/* Progress Circle */}
+      <div className="flex items-center justify-between">
+        {/* LEFT - Progress Circle */}
         <div className="relative flex items-center justify-center shrink-0">
           <svg className="h-16 w-16 -rotate-90 transform" viewBox="0 0 80 80">
             <circle
@@ -90,26 +90,26 @@ export function ProgressDock({
           </div>
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+        {/* CENTER - Text */}
+        <div className="text-center shrink-0">
+          <p className="text-base font-medium text-slate-800 dark:text-slate-200">
             {motivationalText}
           </p>
           {timeText && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {timeText}
             </p>
           )}
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-4">
+        {/* RIGHT - Streak + Weekly Activity */}
+        <div className="flex items-center gap-5 shrink-0">
           {/* Streak */}
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-1">
               <Flame
                 className={cn(
-                  'h-4 w-4',
+                  'h-5 w-5',
                   streak > 0
                     ? 'text-orange-500'
                     : 'text-slate-400 dark:text-slate-600'
@@ -117,7 +117,7 @@ export function ProgressDock({
               />
               <span
                 className={cn(
-                  'text-base font-semibold',
+                  'text-lg font-semibold',
                   streak > 0
                     ? 'text-slate-900 dark:text-slate-100'
                     : 'text-slate-400 dark:text-slate-500'
@@ -126,11 +126,14 @@ export function ProgressDock({
                 {streak}
               </span>
             </div>
-            <span className="text-[10px] text-muted-foreground">streak</span>
+            <span className="text-xs text-muted-foreground">streak</span>
           </div>
 
+          {/* Divider */}
+          <div className="h-10 w-px bg-slate-200 dark:bg-slate-700" />
+
           {/* Weekly Activity */}
-          <WeekActivity data={weeklyTrend} />
+          <WeekActivity data={weeklyTrend} size="large" />
         </div>
       </div>
     </div>

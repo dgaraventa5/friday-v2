@@ -49,14 +49,14 @@ export function ProgressHero({
   return (
     <div
       className={cn(
-        'progress-hero-gradient rounded-xl border border-slate-200 p-4 shadow-elevated dark:border-slate-700',
+        'progress-hero-gradient rounded-xl border border-slate-200 p-4 sm:p-5 shadow-elevated dark:border-slate-700',
         className
       )}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
         {/* Progress Circle */}
         <div className="relative flex items-center justify-center shrink-0">
-          <svg className="h-20 w-20 -rotate-90 transform" viewBox="0 0 88 88">
+          <svg className="h-16 w-16 sm:h-24 sm:w-24 -rotate-90 transform" viewBox="0 0 88 88">
             {/* Background circle */}
             <circle
               cx="44"
@@ -88,53 +88,48 @@ export function ProgressHero({
           </svg>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            <span className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
               {completedCount}/{totalCount}
             </span>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex-1 min-w-0">
-          {/* Top row: Streak and Sparkline */}
-          <div className="flex items-center gap-3 mb-2">
-            {/* Streak */}
-            <div className="flex items-center gap-1">
-              <Flame
-                className={cn(
-                  'h-4 w-4',
-                  streak > 0
-                    ? 'text-orange-500'
-                    : 'text-slate-400 dark:text-slate-600'
-                )}
-              />
-              <span
-                className={cn(
-                  'text-sm font-semibold',
-                  streak > 0
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : 'text-slate-500 dark:text-slate-400'
-                )}
-              >
-                {streak}
-              </span>
-            </div>
-
-            {/* Weekly Activity */}
-            <WeekActivity data={weeklyTrend} />
-          </div>
-
-          {/* Motivational text */}
+        {/* Motivational text and time */}
+        <div className="shrink-0 text-center">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {motivationalText}
           </p>
-
-          {/* Time estimate */}
           {timeText && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-1">
               {timeText}
             </p>
           )}
+        </div>
+
+        {/* Streak and Weekly Activity */}
+        <div className="flex items-center justify-center gap-3 shrink-0">
+          <div className="flex items-center gap-1">
+            <Flame
+              className={cn(
+                'h-5 w-5',
+                streak > 0
+                  ? 'text-orange-500'
+                  : 'text-slate-400 dark:text-slate-600'
+              )}
+            />
+            <span
+              className={cn(
+                'text-base font-semibold',
+                streak > 0
+                  ? 'text-orange-600 dark:text-orange-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              )}
+            >
+              {streak}
+            </span>
+          </div>
+
+          <WeekActivity data={weeklyTrend} />
         </div>
       </div>
     </div>
