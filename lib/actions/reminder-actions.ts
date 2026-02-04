@@ -38,6 +38,7 @@ export async function completeReminderAction(
       completion_date: completionDate,
       status: 'completed',
       completed_at: new Date().toISOString(),
+      user_id: user.id,
     }, {
       onConflict: 'reminder_id,completion_date',
     })
@@ -110,6 +111,7 @@ export async function skipReminderAction(
       reminder_id: reminderId,
       completion_date: completionDate,
       status: 'skipped',
+      user_id: user.id,
     }, {
       onConflict: 'reminder_id,completion_date',
     })
