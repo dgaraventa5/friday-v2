@@ -201,87 +201,22 @@ export interface TodayCalendarData {
 // Onboarding Types
 // ============================================
 
-export type OnboardingStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped';
+export type OnboardingStatus = 'in_progress' | 'completed' | 'skipped';
 
-export type OnboardingStep =
-  | 'welcome'
-  | 'signup'
-  | 'personalize'
-  | 'first_task_title'
-  | 'first_task_due_date'
-  | 'first_task_importance'
-  | 'first_task_urgency'
-  | 'matrix_reveal'
-  | 'dashboard';
-
-export type PersonalizationOption =
-  | 'work_organization'
-  | 'stop_procrastinating'
-  | 'better_prioritization'
-  | 'adhd_focus';
-
-export interface ChecklistItemStatus {
-  id: string;
-  completed: boolean;
-  completed_at?: string;
-}
+export type OnboardingStep = 'welcome' | 'task_input' | 'classify' | 'reveal' | 'done';
 
 export interface OnboardingProgress {
   id: string;
   user_id: string;
   status: OnboardingStatus;
   current_step: OnboardingStep;
-  personalization_responses: PersonalizationOption[];
-  checklist_items: ChecklistItemStatus[];
-  prompts_shown: string[];
-  started_at: string | null;
+  wizard_task_title: string | null;
+  wizard_due_date: string | null;
+  wizard_due_date_preset: string | null;
+  wizard_importance: 'important' | 'not-important' | null;
+  wizard_urgency: 'urgent' | 'not-urgent' | null;
+  started_at: string;
   completed_at: string | null;
-  skipped_at: string | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface TaskWizardState {
-  title: string;
-  dueDate: string | null;
-  dueDatePreset: 'today' | 'tomorrow' | 'this_week' | 'someday' | 'custom' | null;
-  importance: 'important' | 'not-important' | null;
-  urgency: 'urgent' | 'not-urgent' | null;
-}
-
-export interface OnboardingChecklistItem {
-  id: string;
-  label: string;
-  description?: string;
-  estimatedTime?: string;
-  preCompleted?: boolean;
-  ctaLabel?: string;
-  ctaRoute?: string;
-  contextTrigger?: string;
-}
-
-export interface PersonalizationOptionConfig {
-  id: PersonalizationOption;
-  emoji: string;
-  label: string;
-  description?: string;
-}
-
-export interface ContextualPromptConfig {
-  id: string;
-  scheduledDay?: number;
-  actionTrigger?: 'create_reminder' | 'connect_calendar';
-  type: 'modal' | 'inline' | 'system_task';
-  title: string;
-  description: string;
-  ctaLabel?: string;
-  ctaAction?: string;
-}
-
-export interface QuadrantExplanation {
-  name: string;
-  color: string;
-  headline: string;
-  description: string;
-  emoji: string;
 }
