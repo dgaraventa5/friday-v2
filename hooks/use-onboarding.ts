@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { OnboardingProgress, OnboardingStep } from '@/lib/types';
+import { formatDateLocal } from '@/lib/utils/date-utils';
 
 const STEP_ROUTES: Record<OnboardingStep, string> = {
   welcome: '/onboarding/welcome',
@@ -97,8 +98,8 @@ export function useOnboarding() {
     return data;
   }, [progress, supabase]);
 
-  // Create the actual task from wizard state and complete onboarding
-  const createTaskAndComplete = useCallback(async () => {
+  // Create the task from wizard state (does NOT mark onboarding complete)
+  const createTask = useCallback(async () => {
     if (!progress) return;
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -128,16 +129,26 @@ export function useOnboarding() {
       console.error('Failed to create task:', taskError);
       throw taskError;
     }
+  }, [progress, supabase]);
 
-    // Mark onboarding as complete
+  // Mark onboarding as complete (call after user clicks the CTA)
+  const completeOnboarding = useCallback(async () => {
     await advanceToStep('done');
-  }, [progress, supabase, advanceToStep]);
+  }, [advanceToStep]);
+
+  // Combined function (kept for convenience, but reveal page uses split versions)
+  const createTaskAndComplete = useCallback(async () => {
+    await createTask();
+    await completeOnboarding();
+  }, [createTask, completeOnboarding]);
 
   return {
     progress,
     isLoading,
     isComplete: progress?.status === 'completed',
     advanceToStep,
+    createTask,
+    completeOnboarding,
     createTaskAndComplete,
     navigateToCurrentStep,
   };
@@ -149,23 +160,19 @@ function calculateDueDate(preset: string): string {
 
   switch (preset) {
     case 'today':
-      return formatDate(today);
+      return formatDateLocal(today);
     case 'tomorrow': {
       const d = new Date(today);
       d.setDate(d.getDate() + 1);
-      return formatDate(d);
+      return formatDateLocal(d);
     }
     case 'this_week': {
       const d = new Date(today);
       const daysUntilFriday = (5 - d.getDay() + 7) % 7 || 7;
       d.setDate(d.getDate() + daysUntilFriday);
-      return formatDate(d);
+      return formatDateLocal(d);
     }
     default:
-      return formatDate(today);
+      return formatDateLocal(today);
   }
-}
-
-function formatDate(d: Date): string {
-  return d.toISOString().split('T')[0]; // YYYY-MM-DD
 }

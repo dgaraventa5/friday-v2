@@ -110,7 +110,7 @@ export default function OnboardingTaskPage() {
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
       {/* Progress bar */}
-      <div className="h-1 bg-slate-100 dark:bg-slate-800">
+      <div className="h-1 bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow={33} aria-valuemin={0} aria-valuemax={100} aria-label="Onboarding progress">
         <div className="h-full bg-yellow-500 transition-all duration-500 ease-out" style={{ width: '33%' }} />
       </div>
 

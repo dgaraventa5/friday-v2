@@ -14,21 +14,15 @@ const fadeUp = {
 };
 
 export default function OnboardingWelcomePage() {
-  const { progress, isLoading, advanceToStep } = useOnboarding();
+  const { progress, isLoading, advanceToStep, navigateToCurrentStep } = useOnboarding();
   const router = useRouter();
 
   // If user is resuming and already past welcome, redirect to their current step
   useEffect(() => {
     if (!isLoading && progress && progress.current_step !== 'welcome') {
-      const routes: Record<string, string> = {
-        task_input: '/onboarding/task',
-        classify: '/onboarding/classify',
-        reveal: '/onboarding/reveal',
-        done: '/dashboard',
-      };
-      router.push(routes[progress.current_step] || '/onboarding/welcome');
+      navigateToCurrentStep(progress.current_step);
     }
-  }, [isLoading, progress, router]);
+  }, [isLoading, progress, navigateToCurrentStep]);
 
   if (isLoading) return null;
 

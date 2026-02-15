@@ -48,7 +48,7 @@ function getQuadrant(importance: string, urgency: string): Quadrant {
 }
 
 export default function OnboardingRevealPage() {
-  const { progress, isLoading, createTaskAndComplete } = useOnboarding();
+  const { progress, isLoading, createTask, completeOnboarding } = useOnboarding();
   const router = useRouter();
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
@@ -73,7 +73,7 @@ export default function OnboardingRevealPage() {
   useEffect(() => {
     if (!isLoading && progress && progress.wizard_importance && progress.wizard_urgency && !taskCreatedRef.current) {
       taskCreatedRef.current = true;
-      createTaskAndComplete().catch((err) => {
+      createTask().catch((err) => {
         console.error('Task creation failed:', err);
         setTaskError(true);
         taskCreatedRef.current = false; // Allow retry
@@ -84,7 +84,7 @@ export default function OnboardingRevealPage() {
         });
       });
     }
-  }, [isLoading, progress, createTaskAndComplete, toast]);
+  }, [isLoading, progress, createTask, toast]);
 
   // Animation sequence (skip if prefers-reduced-motion)
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function OnboardingRevealPage() {
   const handleRetry = useCallback(async () => {
     setTaskError(false);
     try {
-      await createTaskAndComplete();
+      await createTask();
     } catch {
       setTaskError(true);
       toast({
@@ -121,7 +121,7 @@ export default function OnboardingRevealPage() {
         variant: 'destructive',
       });
     }
-  }, [createTaskAndComplete, toast]);
+  }, [createTask, toast]);
 
   if (isLoading) return null;
   if (!progress?.wizard_importance || !progress?.wizard_urgency) return null;
@@ -139,7 +139,7 @@ export default function OnboardingRevealPage() {
       transition={{ duration: 0.3 }}
     >
       {/* Progress bar */}
-      <div className="h-1 bg-slate-100 dark:bg-slate-800">
+      <div className="h-1 bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow={100} aria-valuemin={0} aria-valuemax={100} aria-label="Onboarding progress">
         <div className="h-full bg-yellow-500 transition-all duration-500 ease-out" style={{ width: '100%' }} />
       </div>
 
@@ -249,7 +249,10 @@ export default function OnboardingRevealPage() {
           <Button
             size="lg"
             className="w-full"
-            onClick={() => router.push('/dashboard')}
+            onClick={async () => {
+              await completeOnboarding();
+              router.push('/dashboard');
+            }}
           >
             {ONBOARDING_COPY.reveal.cta}
           </Button>
