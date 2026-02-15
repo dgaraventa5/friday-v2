@@ -23,6 +23,50 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
+  // Check onboarding status — redirect new users to onboarding
+  const { data: onboardingData } = await supabase
+    .from('onboarding_progress')
+    .select('status, current_step')
+    .eq('user_id', data.user.id)
+    .single();
+
+  if (!onboardingData) {
+    // No onboarding record — check if existing user or new user
+    const { count } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', data.user.id);
+
+    if (count === 0) {
+      // New user with no tasks → send to onboarding
+      redirect('/onboarding/welcome');
+    } else {
+      // Existing user with tasks → auto-create completed record
+      await supabase
+        .from('onboarding_progress')
+        .insert({
+          user_id: data.user.id,
+          status: 'completed',
+          current_step: 'done',
+          completed_at: new Date().toISOString(),
+        });
+    }
+  } else if (onboardingData.status === 'in_progress') {
+    // Resume onboarding at current step
+    const stepRoutes: Record<string, string> = {
+      welcome: '/onboarding/welcome',
+      task_input: '/onboarding/task',
+      classify: '/onboarding/classify',
+      reveal: '/onboarding/reveal',
+      done: '/dashboard',
+    };
+    const route = stepRoutes[onboardingData.current_step];
+    if (route && route !== '/dashboard') {
+      redirect(route);
+    }
+  }
+  // If status === 'completed' or 'skipped', fall through to render dashboard
+
   // Create services using the factory
   const services = createServices(supabase);
 
