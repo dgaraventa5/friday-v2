@@ -318,8 +318,7 @@ export function ScheduleView({
       const isTomorrow = dateStr === tomorrowStr;
 
       const taskDate = parseDateLocal(dateStr);
-      const todayDate = new Date();
-      todayDate.setHours(0, 0, 0, 0);
+      const todayDate = parseDateLocal(todayStr);
       const isPast = taskDate < todayDate && !isToday;
 
       // Build human-readable label

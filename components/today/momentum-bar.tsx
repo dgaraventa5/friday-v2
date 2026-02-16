@@ -31,7 +31,7 @@ export function MomentumBar({
     <div className={cn('px-4 py-3 sm:px-6', className)}>
       {/* Top row: motivational text + streak + count */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-stone-600 dark:text-slate-400">
+        <span className="text-sm font-medium text-stone-600 dark:text-slate-400" style={{ fontFamily: 'var(--font-display)' }}>
           {motivationalText}
         </span>
         <div className="flex items-center gap-3">

@@ -87,7 +87,7 @@ export function AppHeader({ profile, userEmail, onOpenRecalibration, currentView
         {/* Left: Friday Logo */}
         <div className="flex items-center gap-2">
           <Sun className="h-6 w-6 text-yellow-500" fill="currentColor" aria-hidden="true" />
-          <span className="text-xl font-semibold lowercase">friday</span>
+          <span className="text-xl font-semibold lowercase" style={{ fontFamily: 'var(--font-display)' }}>friday</span>
         </div>
 
         {/* Center: Pill Toggle */}
