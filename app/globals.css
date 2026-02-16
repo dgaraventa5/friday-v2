@@ -575,4 +575,48 @@
   .animate-progress-pulse {
     animation: progress-pulse 2s ease-in-out infinite;
   }
+
+  /* Landing Page - Hero entrance animation */
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Landing Page - 3D hover tilt for cards */
+  .hover-tilt {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hover-tilt:hover {
+    transform: perspective(800px) rotateY(-2deg) rotateX(1deg) scale(1.02);
+    box-shadow: 0 20px 40px -12px rgba(180, 140, 80, 0.1);
+  }
+
+  /* Landing Page - CTA button hover */
+  .cta-hover {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .cta-hover:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.15);
+  }
+
+  .cta-hover:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: none;
+    transition-duration: 100ms;
+  }
 }

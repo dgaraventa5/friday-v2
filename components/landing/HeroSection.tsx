@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -64,28 +64,32 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative overflow-hidden pt-20 pb-24 md:pt-32 md:pb-40">
+    <section className="relative overflow-hidden pt-12 pb-24 md:pt-20 md:pb-40">
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left column — Content */}
           <div className="max-w-xl">
-            <h1 className="text-5xl md:text-7xl font-bold leading-[1.08] tracking-tight mb-6 text-slate-900">
-              Every day, just{" "}
-              <span className="text-yellow-600">4&nbsp;things</span> that
-              matter.
+            <h1 className="animate-fade-up text-5xl md:text-7xl font-bold leading-[1.08] tracking-tight mb-6 text-slate-900">
+              The to-do list that{" "}
+              <span className="text-yellow-600">thinks&nbsp;for&nbsp;you.</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-600 leading-relaxed mb-10 max-w-[540px]">
-              Friday uses the Eisenhower Matrix to cut through your overwhelming
-              to-do list and surface the tasks that actually move your life
-              forward.
+            <p
+              className="animate-fade-up text-lg md:text-xl text-slate-600 leading-relaxed mb-10 max-w-[540px]"
+              style={{ animationDelay: "150ms" }}
+            >
+              Add your tasks. Friday&apos;s prioritization engine surfaces what
+              matters most each day, so nothing important slips through.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div
+              className="animate-fade-up flex flex-col sm:flex-row gap-4 mb-6"
+              style={{ animationDelay: "300ms" }}
+            >
               <Link href="/auth/sign-up">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto px-8 h-12 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium"
+                  className="cta-hover w-full sm:w-auto px-8 h-12 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium"
                 >
                   Start Focusing
                   <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
@@ -101,14 +105,13 @@ export function HeroSection() {
               </Button>
             </div>
 
-            <p className="flex items-center gap-2 text-sm text-slate-400">
-              <CheckCircle2 className="h-4 w-4 text-green-500" aria-hidden="true" />
-              Free forever. No credit card required.
-            </p>
           </div>
 
           {/* Right column — Looping animation */}
-          <div className="relative">
+          <div
+            className="animate-fade-up relative"
+            style={{ animationDelay: "500ms" }}
+          >
             <div className="bg-white rounded-3xl shadow-xl shadow-amber-900/[0.04] p-6 md:p-8 relative z-10 overflow-hidden">
               {/* Both layers stacked in same grid cell */}
               <div className="grid [&>div]:col-start-1 [&>div]:row-start-1">

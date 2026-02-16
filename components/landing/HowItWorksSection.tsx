@@ -1,7 +1,9 @@
+import { FadeIn } from "./FadeIn";
+
 /* ----- Act 1 Visual: Add Task Form ----- */
 function AddTaskVisual() {
   return (
-    <div className="bg-white rounded-2xl shadow-lg shadow-amber-900/[0.04] p-6 border border-slate-100 max-w-sm mx-auto">
+    <div className="hover-tilt bg-white rounded-2xl shadow-lg shadow-amber-900/[0.04] p-6 border border-slate-100 max-w-sm mx-auto">
       <div className="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider">
         New Task
       </div>
@@ -38,7 +40,7 @@ function AddTaskVisual() {
 /* ----- Act 2 Visual: Eisenhower Matrix ----- */
 function MatrixVisual() {
   return (
-    <div className="max-w-sm mx-auto">
+    <div className="hover-tilt max-w-sm mx-auto">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-red-50/80 border border-red-100 rounded-2xl p-5">
           <div className="text-xs font-bold text-red-600 mb-1">CRITICAL</div>
@@ -134,7 +136,7 @@ function TodaysFocusVisual() {
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg shadow-amber-900/[0.04] p-6 border border-slate-100 max-w-sm mx-auto">
+    <div className="hover-tilt bg-white rounded-2xl shadow-lg shadow-amber-900/[0.04] p-6 border border-slate-100 max-w-sm mx-auto">
       <div className="flex items-center justify-between mb-5">
         <span className="font-semibold text-slate-800">
           Today&apos;s Focus
@@ -187,9 +189,9 @@ const acts = [
   },
   {
     step: "03",
-    title: "Focus on just 4 things today",
+    title: "Wake up knowing what to do",
     description:
-      "Every morning, Friday shows you exactly 4 tasks. Not 12. Not 30. Just the 4 that will make the biggest impact today. Complete them, and tomorrow\u2019s 4 are ready. With recurring tasks, streak tracking, and category balance built in.",
+      "Every morning, your most important tasks are waiting \u2014 prioritized by urgency, deadlines, and impact. No scanning, no overthinking. Just open Friday and start. With recurring tasks, streak tracking, and category balance built in.",
     Visual: TodaysFocusVisual,
     reverse: false,
   },
@@ -199,58 +201,51 @@ export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="py-24 md:py-36 bg-white">
       <div className="container mx-auto px-6">
-        <div className="max-w-2xl mx-auto text-center mb-20 md:mb-28">
-          <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 mb-4">
-            How Friday works
-          </h2>
-          <p className="text-lg text-slate-500">
-            Three steps. No learning curve.
-          </p>
-        </div>
+        <FadeIn>
+          <div className="max-w-2xl mx-auto text-center mb-20 md:mb-28">
+            <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 mb-4">
+              How Friday works
+            </h2>
+            <p className="text-lg text-slate-500">
+              Three steps. No learning curve.
+            </p>
+          </div>
+        </FadeIn>
 
         <div className="space-y-24 md:space-y-32 max-w-5xl mx-auto">
-          {acts.map((act) => (
-            <div
-              key={act.step}
-              className={`grid lg:grid-cols-2 gap-12 lg:gap-20 items-center ${
-                act.reverse ? "lg:grid-flow-dense" : ""
-              }`}
-            >
-              {/* Text */}
-              <div className={act.reverse ? "lg:col-start-2" : ""}>
-                <div className="text-sm font-semibold text-yellow-600 mb-3 tracking-wide">
-                  STEP {act.step}
-                </div>
-                <h3 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-4">
-                  {act.title}
-                </h3>
-                <p className="text-lg text-slate-500 leading-relaxed max-w-lg">
-                  {act.description}
-                </p>
-              </div>
-
-              {/* Visual */}
+          {acts.map((act, index) => (
+            <FadeIn key={act.step} delay={index * 100}>
               <div
-                className={
-                  act.reverse ? "lg:col-start-1 lg:row-start-1" : ""
-                }
+                className={`grid lg:grid-cols-2 gap-12 lg:gap-20 items-center ${
+                  act.reverse ? "lg:grid-flow-dense" : ""
+                }`}
               >
-                <act.Visual />
+                {/* Text */}
+                <div className={act.reverse ? "lg:col-start-2" : ""}>
+                  <div className="text-sm font-semibold text-yellow-600 mb-3 tracking-wide">
+                    STEP {act.step}
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-4">
+                    {act.title}
+                  </h3>
+                  <p className="text-lg text-slate-500 leading-relaxed max-w-lg">
+                    {act.description}
+                  </p>
+                </div>
+
+                {/* Visual */}
+                <div
+                  className={
+                    act.reverse ? "lg:col-start-1 lg:row-start-1" : ""
+                  }
+                >
+                  <act.Visual />
+                </div>
               </div>
-            </div>
+            </FadeIn>
           ))}
         </div>
 
-        {/* Eisenhower quote */}
-        <blockquote className="max-w-xl mx-auto mt-24 md:mt-32 text-center">
-          <p className="text-lg italic text-slate-400 leading-relaxed">
-            &ldquo;What is important is seldom urgent, and what is urgent is
-            seldom important.&rdquo;
-          </p>
-          <footer className="mt-3 text-sm text-slate-300">
-            &mdash; Dwight D. Eisenhower
-          </footer>
-        </blockquote>
       </div>
     </section>
   );

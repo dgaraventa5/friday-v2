@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { ProblemSection } from "@/components/landing/ProblemSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { TrustSignalSection } from "@/components/landing/TrustSignalSection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
@@ -30,7 +29,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/auth/sign-up">
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium">
+              <Button className="cta-hover bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium">
                 Get Started
               </Button>
             </Link>
@@ -41,11 +40,25 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1">
         <HeroSection />
-        <ProblemSection />
+
+        {/* Gradient divider: Hero → HowItWorks */}
+        <div
+          className="h-px mx-auto max-w-3xl bg-gradient-to-r from-transparent via-amber-200/60 to-transparent"
+          aria-hidden="true"
+        />
+
         <HowItWorksSection />
         <TrustSignalSection />
         <FinalCTASection />
       </main>
+
+      {/* Subtle noise/grain texture overlay */}
+      <svg className="pointer-events-none fixed inset-0 z-[100] h-full w-full opacity-[0.03]" aria-hidden="true">
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain)" />
+      </svg>
 
       {/* Footer */}
       <footer className="border-t border-amber-100 py-12">
