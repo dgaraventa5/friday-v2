@@ -352,3 +352,128 @@ export function groupTasksByDate(tasks: Task[]): Map<string, Task[]> {
   
   return grouped;
 }
+
+// ─────────────────────────────────────────────────────────────
+// Score Breakdown & Priority Reason utilities
+// ─────────────────────────────────────────────────────────────
+
+export interface ScoreBreakdown {
+  base: number;       // Eisenhower quadrant (40-100)
+  deadline: number;   // Due date pressure (0-200+)
+  duration: number;   // Duration pressure (0-120+)
+  age: number;        // Age factor (0-10)
+  total: number;      // Sum of all components
+}
+
+/**
+ * Get a breakdown of all scoring components for a task.
+ * Uses the same logic as calculatePriorityScore but returns each factor separately.
+ */
+export function getScoreBreakdown(task: Task): ScoreBreakdown {
+  const quadrant = getEisenhowerQuadrant(task);
+  const base = QUADRANT_SCORES[quadrant];
+  const deadline = calculateDueDateScore(task);
+  const duration = calculateDurationPressure(task);
+
+  // Age factor — same logic as calculatePriorityScore
+  const todayStr = getTodayLocal();
+  const today = parseDateLocal(todayStr);
+  const createdDate = new Date(task.created_at);
+  createdDate.setHours(0, 0, 0, 0);
+  const daysOld = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+  const age = Math.min(daysOld * 1, 10);
+
+  return {
+    base,
+    deadline,
+    duration,
+    age,
+    total: base + deadline + duration + age,
+  };
+}
+
+/**
+ * Get a human-readable one-line reason explaining why a task is ranked where it is.
+ *
+ * Priority of reasons (first match wins):
+ * 1. Completed
+ * 2. Overdue by X day(s)
+ * 3. Due today
+ * 4. Due tomorrow (with duration note if >= 4h)
+ * 5. Due in X days (within 3 days, with duration note if >= 4h)
+ * 6. Due in X days (within 7 days)
+ * 7. Quadrant-based label
+ * 8. Aging X days (age >= 3)
+ * 9. Default: "Scheduled today"
+ */
+export function getPriorityReason(task: Task): string {
+  // 1. Completed
+  if (task.completed) {
+    return 'Completed';
+  }
+
+  // Check deadline-related reasons
+  if (task.due_date) {
+    const todayStr = getTodayLocal();
+    const today = parseDateLocal(todayStr);
+    const dueDate = parseDateLocal(task.due_date);
+    const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    // 2. Overdue
+    if (daysUntilDue < 0) {
+      const daysOverdue = Math.abs(daysUntilDue);
+      return `Overdue by ${daysOverdue} day${daysOverdue === 1 ? '' : 's'}`;
+    }
+
+    // 3. Due today
+    if (daysUntilDue === 0) {
+      return 'Due today';
+    }
+
+    // 4. Due tomorrow
+    if (daysUntilDue === 1) {
+      if (task.estimated_hours >= 4) {
+        return `${task.estimated_hours}h task, due tomorrow`;
+      }
+      return 'Due tomorrow';
+    }
+
+    // 5. Due within 3 days (2-3 days out)
+    if (daysUntilDue <= 3) {
+      if (task.estimated_hours >= 4) {
+        return `${task.estimated_hours}h task, due in ${daysUntilDue} days`;
+      }
+      return `Due in ${daysUntilDue} days`;
+    }
+
+    // 6. Due within 7 days
+    if (daysUntilDue <= 7) {
+      return `Due in ${daysUntilDue} days`;
+    }
+  }
+
+  // 7. Quadrant-based reason
+  const quadrant = getEisenhowerQuadrant(task);
+  if (quadrant === 'urgent-important') {
+    return 'Urgent + Important';
+  }
+  if (quadrant === 'not-urgent-important') {
+    return 'High impact';
+  }
+  if (quadrant === 'urgent-not-important') {
+    return 'Urgent';
+  }
+
+  // 8. Age >= 3 days
+  const todayStr = getTodayLocal();
+  const today = parseDateLocal(todayStr);
+  const createdDate = new Date(task.created_at);
+  createdDate.setHours(0, 0, 0, 0);
+  const daysOld = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (daysOld >= 3) {
+    return `Aging ${daysOld} days`;
+  }
+
+  // 9. Default
+  return 'Scheduled today';
+}
