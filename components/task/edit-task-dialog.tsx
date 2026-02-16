@@ -21,6 +21,7 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateLocal, parseDateLocal } from '@/lib/utils/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { createTasksService } from '@/lib/services';
+import { EisenhowerPicker } from '@/components/task/eisenhower-picker';
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -137,121 +138,96 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
           <DialogTitle>Edit Task</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
+            <div className="p-2.5 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
               {error}
             </div>
           )}
 
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="edit-title">Task Name</Label>
             <Input
               id="edit-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What needs to be done?…"
+              className="text-base"
             />
           </div>
 
-          <div>
-            <Label htmlFor="edit-category">Category</Label>
-            <Select value={category} onValueChange={(value: any) => setCategory(value)}>
-              <SelectTrigger id="edit-category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Work">Work</SelectItem>
-                <SelectItem value="Home">Home</SelectItem>
-                <SelectItem value="Health">Health</SelectItem>
-                <SelectItem value="Personal">Personal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-category">Category</Label>
+              <Select value={category} onValueChange={(value: any) => setCategory(value)}>
+                <SelectTrigger id="edit-category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Work">Work</SelectItem>
+                  <SelectItem value="Home">Home</SelectItem>
+                  <SelectItem value="Health">Health</SelectItem>
+                  <SelectItem value="Personal">Personal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <Label>Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !dueDate && 'text-slate-400'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div>
-            <Label htmlFor="edit-hours">Estimated Hours</Label>
-            <Input
-              id="edit-hours"
-              type="number"
-              step="0.5"
-              min="0.5"
-              value={estimatedHours}
-              onChange={(e) => setEstimatedHours(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <Label className="mb-3">Importance</Label>
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant={importance === 'important' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setImportance('important')}
-              >
-                Important
-              </Button>
-              <Button
-                type="button"
-                variant={importance === 'not-important' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setImportance('not-important')}
-              >
-                Not Important
-              </Button>
+            <div className="space-y-1.5">
+              <Label>Due Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !dueDate && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">
+                      {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
-          <div>
-            <Label className="mb-3">Urgency</Label>
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant={urgency === 'urgent' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setUrgency('urgent')}
-              >
-                Urgent
-              </Button>
-              <Button
-                type="button"
-                variant={urgency === 'not-urgent' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setUrgency('not-urgent')}
-              >
-                Not Urgent
-              </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-hours">Est. Hours</Label>
+              <Input
+                id="edit-hours"
+                type="number"
+                step="0.5"
+                min="0.5"
+                value={estimatedHours}
+                onChange={(e) => setEstimatedHours(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Priority</Label>
+              <EisenhowerPicker
+                importance={importance}
+                urgency={urgency}
+                onChange={(imp, urg) => {
+                  setImportance(imp);
+                  setUrgency(urg);
+                }}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end pt-6">
+          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end pt-3">
             <Button
               type="button"
               variant="outline"
