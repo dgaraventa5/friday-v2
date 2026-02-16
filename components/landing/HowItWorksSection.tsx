@@ -1,77 +1,256 @@
-import { Plus, Sparkles, Target, PartyPopper } from "lucide-react";
+/* ----- Act 1 Visual: Add Task Form ----- */
+function AddTaskVisual() {
+  return (
+    <div className="bg-white rounded-2xl shadow-lg shadow-amber-900/[0.04] p-6 border border-slate-100 max-w-sm mx-auto">
+      <div className="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider">
+        New Task
+      </div>
+      <div className="space-y-3.5">
+        <div className="h-11 bg-slate-50 rounded-xl border border-slate-100 flex items-center px-4">
+          <span className="text-sm text-slate-700">Prepare investor pitch</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-11 bg-blue-50/80 rounded-xl border border-blue-100 flex items-center justify-center">
+            <span className="text-sm text-blue-700 font-medium">Work</span>
+          </div>
+          <div className="h-11 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center">
+            <span className="text-sm text-slate-500">Due tomorrow</span>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1 h-11 bg-red-50/80 rounded-xl border border-red-100 flex items-center justify-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-400" />
+            <span className="text-sm text-red-700 font-medium">Important</span>
+          </div>
+          <div className="flex-1 h-11 bg-amber-50/80 rounded-xl border border-amber-100 flex items-center justify-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <span className="text-sm text-amber-700 font-medium">Urgent</span>
+          </div>
+        </div>
+        <div className="h-11 bg-yellow-400 rounded-xl flex items-center justify-center">
+          <span className="text-sm font-semibold text-slate-900">Add Task</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-const steps = [
+/* ----- Act 2 Visual: Eisenhower Matrix ----- */
+function MatrixVisual() {
+  return (
+    <div className="max-w-sm mx-auto">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-red-50/80 border border-red-100 rounded-2xl p-5">
+          <div className="text-xs font-bold text-red-600 mb-1">CRITICAL</div>
+          <div className="text-[11px] text-red-400 mb-3">
+            Urgent + Important
+          </div>
+          <div className="space-y-1.5">
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-600">
+              Fix prod bug
+            </div>
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-600">
+              Client deadline
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-blue-50/80 border border-blue-100 rounded-2xl p-5">
+          <div className="text-xs font-bold text-blue-600 mb-1">PLAN</div>
+          <div className="text-[11px] text-blue-400 mb-3">
+            Important, Not Urgent
+          </div>
+          <div className="space-y-1.5">
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-600">
+              Q2 strategy
+            </div>
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-600">
+              Learn new skill
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-amber-50/80 border border-amber-100 rounded-2xl p-5">
+          <div className="text-xs font-bold text-amber-600 mb-1">DELEGATE</div>
+          <div className="text-[11px] text-amber-400 mb-3">
+            Urgent, Not Important
+          </div>
+          <div className="space-y-1.5">
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-600">
+              Meeting request
+            </div>
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-600">
+              Email replies
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
+          <div className="text-xs font-bold text-slate-400 mb-1">ELIMINATE</div>
+          <div className="text-[11px] text-slate-300 mb-3">Neither</div>
+          <div className="space-y-1.5">
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-400">
+              Busy work
+            </div>
+            <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-400">
+              Time wasters
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 text-center">
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100">
+          &rarr; Your top 4, surfaced automatically
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ----- Act 3 Visual: Today's Focus ----- */
+function TodaysFocusVisual() {
+  const tasks = [
+    {
+      name: "Prepare investor pitch",
+      category: "Work",
+      categoryClasses: "bg-blue-50 text-blue-600",
+    },
+    {
+      name: "Fix signup flow bug",
+      category: "Work",
+      categoryClasses: "bg-blue-50 text-blue-600",
+    },
+    {
+      name: "Call Dr. Martinez",
+      category: "Health",
+      categoryClasses: "bg-rose-50 text-rose-600",
+    },
+    {
+      name: "Review lease agreement",
+      category: "Personal",
+      categoryClasses: "bg-purple-50 text-purple-600",
+    },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg shadow-amber-900/[0.04] p-6 border border-slate-100 max-w-sm mx-auto">
+      <div className="flex items-center justify-between mb-5">
+        <span className="font-semibold text-slate-800">
+          Today&apos;s Focus
+        </span>
+        <div className="flex items-center gap-1.5 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100">
+          <span className="text-sm leading-none">&#x1F525;</span>
+          <span className="text-xs font-bold text-orange-600">7</span>
+        </div>
+      </div>
+      <div className="space-y-2.5">
+        {tasks.map((task, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 p-3 bg-amber-50/50 border-l-[3px] border-yellow-400 rounded-xl"
+          >
+            <div className="w-4 h-4 rounded border-2 border-yellow-500 shrink-0" />
+            <span className="flex-1 text-sm font-medium text-slate-700 min-w-0 truncate">
+              {task.name}
+            </span>
+            <span
+              className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${task.categoryClasses}`}
+            >
+              {task.category}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ----- Section ----- */
+
+const acts = [
   {
-    number: 1,
-    icon: Plus,
-    title: "Add your tasks",
-    description: "Quick input: name, category, importance, urgency",
-    color: "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
+    step: "01",
+    title: "Dump everything in",
+    description:
+      "Add tasks with a name, category, and two simple toggles: important and urgent. No complex project management, no tags, no multi-step workflows. If it\u2019s on your mind, get it into Friday in seconds.",
+    Visual: AddTaskVisual,
+    reverse: false,
   },
   {
-    number: 2,
-    icon: Sparkles,
-    title: "Friday prioritizes automatically",
-    description: "Using the Eisenhower Matrix algorithm",
-    color: "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400"
+    step: "02",
+    title: "Friday finds what matters",
+    description:
+      "Behind the scenes, Friday uses the Eisenhower Matrix \u2014 the same framework used by presidents and CEOs for decades \u2014 to score every task by importance, urgency, and deadline pressure. It automatically schedules your day so the right things get done first.",
+    Visual: MatrixVisual,
+    reverse: true,
   },
   {
-    number: 3,
-    icon: Target,
-    title: "See your top 4 tasks",
-    description: "Your daily focus, automatically selected",
-    color: "bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
+    step: "03",
+    title: "Focus on just 4 things today",
+    description:
+      "Every morning, Friday shows you exactly 4 tasks. Not 12. Not 30. Just the 4 that will make the biggest impact today. Complete them, and tomorrow\u2019s 4 are ready. With recurring tasks, streak tracking, and category balance built in.",
+    Visual: TodaysFocusVisual,
+    reverse: false,
   },
-  {
-    number: 4,
-    icon: PartyPopper,
-    title: "Complete and celebrate",
-    description: "Check off tasks and see what's next",
-    color: "bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400"
-  }
 ];
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-16 md:py-24 bg-white dark:bg-slate-800">
+    <section id="how-it-works" className="py-24 md:py-36 bg-white">
       <div className="container mx-auto px-6">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-800 dark:text-slate-100">
-            How it works
+        <div className="max-w-2xl mx-auto text-center mb-20 md:mb-28">
+          <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 mb-4">
+            How Friday works
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
-            From task overload to focused productivity in 4 simple steps
+          <p className="text-lg text-slate-500">
+            Three steps. No learning curve.
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-            {steps.map((step) => {
-              const Icon = step.icon;
-              
-              return (
-                <div key={step.number} className="relative">
-                  <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md card-hover h-full">
-                    {/* Step number badge */}
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${step.color}`}>
-                        {step.number}
-                      </div>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${step.color}`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                    </div>
-
-                    <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-100">{step.title}</h3>
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
+        <div className="space-y-24 md:space-y-32 max-w-5xl mx-auto">
+          {acts.map((act) => (
+            <div
+              key={act.step}
+              className={`grid lg:grid-cols-2 gap-12 lg:gap-20 items-center ${
+                act.reverse ? "lg:grid-flow-dense" : ""
+              }`}
+            >
+              {/* Text */}
+              <div className={act.reverse ? "lg:col-start-2" : ""}>
+                <div className="text-sm font-semibold text-yellow-600 mb-3 tracking-wide">
+                  STEP {act.step}
                 </div>
-              );
-            })}
-          </div>
+                <h3 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-4">
+                  {act.title}
+                </h3>
+                <p className="text-lg text-slate-500 leading-relaxed max-w-lg">
+                  {act.description}
+                </p>
+              </div>
+
+              {/* Visual */}
+              <div
+                className={
+                  act.reverse ? "lg:col-start-1 lg:row-start-1" : ""
+                }
+              >
+                <act.Visual />
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* Eisenhower quote */}
+        <blockquote className="max-w-xl mx-auto mt-24 md:mt-32 text-center">
+          <p className="text-lg italic text-slate-400 leading-relaxed">
+            &ldquo;What is important is seldom urgent, and what is urgent is
+            seldom important.&rdquo;
+          </p>
+          <footer className="mt-3 text-sm text-slate-300">
+            &mdash; Dwight D. Eisenhower
+          </footer>
+        </blockquote>
       </div>
     </section>
   );
