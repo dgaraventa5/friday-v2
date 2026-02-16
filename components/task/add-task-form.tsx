@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { generateInitialRecurringInstances } from '@/lib/utils/recurring-tasks';
 import { formatDateLocal } from '@/lib/utils/date-utils';
 import { createTasksService } from '@/lib/services/tasks-service';
+import { EisenhowerPicker } from '@/components/task/eisenhower-picker';
 
 interface AddTaskFormProps {
   onTaskAdded: (task: Task) => void;
@@ -140,14 +141,14 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
+        <div className="p-2.5 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
           {error}
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="title">Task Name</Label>
         <Input
           id="title"
@@ -158,100 +159,74 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Select value={category} onValueChange={(value: any) => setCategory(value)}>
-          <SelectTrigger id="category">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Work">Work</SelectItem>
-            <SelectItem value="Home">Home</SelectItem>
-            <SelectItem value="Health">Health</SelectItem>
-            <SelectItem value="Personal">Personal</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="category">Category</Label>
+          <Select value={category} onValueChange={(value: any) => setCategory(value)}>
+            <SelectTrigger id="category">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Work">Work</SelectItem>
+              <SelectItem value="Home">Home</SelectItem>
+              <SelectItem value="Health">Health</SelectItem>
+              <SelectItem value="Personal">Personal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="space-y-2">
-        <Label>Due Date</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'w-full justify-start text-left font-normal',
-                !dueDate && 'text-muted-foreground'
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-              {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dueDate}
-              onSelect={setDueDate}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="hours">Estimated Hours</Label>
-        <Input
-          id="hours"
-          type="number"
-          step="0.5"
-          min="0.5"
-          value={estimatedHours}
-          onChange={(e) => setEstimatedHours(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-3">
-        <Label>Importance</Label>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant={importance === 'important' ? 'default' : 'outline'}
-            className="flex-1"
-            onClick={() => setImportance('important')}
-          >
-            Important
-          </Button>
-          <Button
-            type="button"
-            variant={importance === 'not-important' ? 'default' : 'outline'}
-            className="flex-1"
-            onClick={() => setImportance('not-important')}
-          >
-            Not Important
-          </Button>
+        <div className="space-y-1.5">
+          <Label>Due Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  'w-full justify-start text-left font-normal',
+                  !dueDate && 'text-muted-foreground'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  {dueDate ? dueDate.toLocaleDateString() : 'Pick a date'}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dueDate}
+                onSelect={setDueDate}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <Label>Urgency</Label>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant={urgency === 'urgent' ? 'default' : 'outline'}
-            className="flex-1"
-            onClick={() => setUrgency('urgent')}
-          >
-            Urgent
-          </Button>
-          <Button
-            type="button"
-            variant={urgency === 'not-urgent' ? 'default' : 'outline'}
-            className="flex-1"
-            onClick={() => setUrgency('not-urgent')}
-          >
-            Not Urgent
-          </Button>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="hours">Est. Hours</Label>
+          <Input
+            id="hours"
+            type="number"
+            step="0.5"
+            min="0.5"
+            value={estimatedHours}
+            onChange={(e) => setEstimatedHours(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Priority</Label>
+          <EisenhowerPicker
+            importance={importance}
+            urgency={urgency}
+            onChange={(imp, urg) => {
+              setImportance(imp);
+              setUrgency(urg);
+            }}
+          />
         </div>
       </div>
 
@@ -265,21 +240,21 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
       </button>
 
       {showMoreOptions && (
-        <div className="space-y-4 pt-2 border-t">
+        <div className="space-y-3 pt-2 border-t">
           <div className="flex items-center gap-2">
             <Checkbox
               id="recurring"
               checked={isRecurring}
               onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
             />
-            <Label htmlFor="recurring" className="cursor-pointer">
+            <Label htmlFor="recurring" className="cursor-pointer mb-0">
               Make this a recurring task
             </Label>
           </div>
 
           {isRecurring && (
-            <div className="space-y-4 pl-6">
-              <div className="space-y-2">
+            <div className="space-y-3 pl-6">
+              <div className="space-y-1.5">
                 <Label htmlFor="interval">Repeat</Label>
                 <Select value={recurringInterval} onValueChange={(value: any) => setRecurringInterval(value)}>
                   <SelectTrigger id="interval">
@@ -294,16 +269,16 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
               </div>
 
               {recurringInterval === 'weekly' && (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label>Repeat on</Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     {DAYS_OF_WEEK.map((day) => (
                       <Button
                         key={day.value}
                         type="button"
                         variant={recurringDays.includes(day.value) ? 'default' : 'outline'}
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 px-0"
                         onClick={() => handleDayToggle(day.value)}
                       >
                         {day.label}
@@ -361,7 +336,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
         </div>
       )}
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-3 pt-3">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancel
         </Button>
