@@ -29,7 +29,6 @@ interface TodayViewProps {
   onTaskDelete: (taskId: string) => void;
   onPullTaskToToday?: (taskId: string) => void;
   onOpenAddDialog?: () => void;
-  onQuickAdd?: (title: string) => void;
   onReminderComplete: (reminderId: string) => void;
   onReminderSkip: (reminderId: string) => void;
   onReminderUndoSkip: (reminderId: string) => void;
@@ -54,7 +53,6 @@ export function TodayView({
   onTaskDelete,
   onPullTaskToToday,
   onOpenAddDialog,
-  onQuickAdd,
   onReminderComplete,
   onReminderSkip,
   onReminderUndoSkip,
@@ -76,12 +74,6 @@ export function TodayView({
     // Always skip auto-schedule to prevent immediate backfill,
     // allowing the user to decide when to pull the next task
     onTaskComplete(taskId, true);
-  };
-
-  const handleQuickAdd = (title: string) => {
-    if (onQuickAdd) {
-      onQuickAdd(title);
-    }
   };
 
   const handleOpenFullForm = () => {
@@ -156,7 +148,6 @@ export function TodayView({
 
           {/* Inline Quick Add */}
           <InlineQuickAdd
-            onQuickAdd={handleQuickAdd}
             onOpenFullForm={handleOpenFullForm}
           />
 

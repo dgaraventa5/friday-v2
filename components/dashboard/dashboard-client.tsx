@@ -236,23 +236,6 @@ export function DashboardClient({
     toggleComplete(taskId, true);
   };
 
-  // Quick-add a task with minimal defaults (from inline quick-add input)
-  const handleQuickAdd = async (title: string) => {
-    await addTask({
-      title,
-      description: '',
-      importance: 'not-important',
-      urgency: 'not-urgent',
-      category: 'Personal',
-      estimated_hours: 1,
-      due_date: null,
-      is_recurring: false,
-      recurring_interval: null,
-      recurring_days: null,
-      recurring_end_type: null,
-      recurring_end_count: null,
-    });
-  };
 
   return (
     <div className="flex h-dvh flex-col bg-background">
@@ -287,7 +270,6 @@ export function DashboardClient({
               onReminderEdit={editReminder}
               onReminderDelete={deleteReminder}
               onOpenAddReminderDialog={openAddReminderDialog}
-              onQuickAdd={handleQuickAdd}
             />
           ) : (
             <ScheduleView
