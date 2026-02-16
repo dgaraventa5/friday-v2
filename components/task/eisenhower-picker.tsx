@@ -16,7 +16,7 @@ const QUADRANTS = [
     label: 'Critical',
     sublabel: 'Do First',
     selected: 'bg-red-100 border-red-400 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400',
-    unselected: 'border-red-200 text-red-600/60 hover:border-red-300 hover:bg-red-50 dark:border-red-800/40 dark:text-red-500/50 dark:hover:border-red-700 dark:hover:bg-red-900/15',
+    unselected: 'bg-red-50/60 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:bg-red-950/20 dark:border-red-800/40 dark:text-red-400/80 dark:hover:border-red-700 dark:hover:bg-red-900/25',
   },
   {
     importance: 'important' as const,
@@ -24,7 +24,7 @@ const QUADRANTS = [
     label: 'Plan',
     sublabel: 'Schedule',
     selected: 'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-400',
-    unselected: 'border-blue-200 text-blue-600/60 hover:border-blue-300 hover:bg-blue-50 dark:border-blue-800/40 dark:text-blue-500/50 dark:hover:border-blue-700 dark:hover:bg-blue-900/15',
+    unselected: 'bg-blue-50/60 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:bg-blue-950/20 dark:border-blue-800/40 dark:text-blue-400/80 dark:hover:border-blue-700 dark:hover:bg-blue-900/25',
   },
   {
     importance: 'not-important' as const,
@@ -32,7 +32,7 @@ const QUADRANTS = [
     label: 'Delegate',
     sublabel: 'Quick Wins',
     selected: 'bg-amber-100 border-amber-400 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400',
-    unselected: 'border-amber-200 text-amber-600/60 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-800/40 dark:text-amber-500/50 dark:hover:border-amber-700 dark:hover:bg-amber-900/15',
+    unselected: 'bg-amber-50/60 border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300 dark:bg-amber-950/20 dark:border-amber-800/40 dark:text-amber-400/80 dark:hover:border-amber-700 dark:hover:bg-amber-900/25',
   },
   {
     importance: 'not-important' as const,
@@ -40,7 +40,7 @@ const QUADRANTS = [
     label: 'Backlog',
     sublabel: 'Consider',
     selected: 'bg-slate-100 border-slate-400 text-slate-700 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400',
-    unselected: 'border-slate-200 text-slate-500/60 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/40 dark:text-slate-500/50 dark:hover:border-slate-600 dark:hover:bg-slate-800/30',
+    unselected: 'bg-slate-50/60 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800/20 dark:border-slate-700/40 dark:text-slate-400/80 dark:hover:border-slate-600 dark:hover:bg-slate-800/30',
   },
 ] as const;
 
