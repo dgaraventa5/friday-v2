@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useOnboarding } from '@/hooks/use-onboarding';
+import { useOnboardingContext } from '../onboarding-context';
 import { ONBOARDING_COPY } from '@/lib/onboarding-copy';
 import { SunLogo } from '@/components/auth/sun-logo';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ const fadeUp = {
 };
 
 export default function OnboardingWelcomePage() {
-  const { progress, isLoading, advanceToStep, navigateToCurrentStep } = useOnboarding();
+  const { progress, isLoading, advanceToStep, navigateToCurrentStep } = useOnboardingContext();
   const router = useRouter();
 
   // If user is resuming and already past welcome, redirect to their current step

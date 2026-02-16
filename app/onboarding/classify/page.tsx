@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useOnboarding } from '@/hooks/use-onboarding';
+import { useOnboardingContext } from '../onboarding-context';
 import { ONBOARDING_COPY } from '@/lib/onboarding-copy';
 import { Button } from '@/components/ui/button';
 
 export default function OnboardingClassifyPage() {
-  const { progress, isLoading, advanceToStep } = useOnboarding();
+  const { progress, isLoading, advanceToStep } = useOnboardingContext();
   const router = useRouter();
 
   const [importance, setImportance] = useState<'important' | 'not-important' | null>(null);
@@ -93,7 +93,7 @@ export default function OnboardingClassifyPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col px-6 py-4 max-w-md mx-auto w-full min-h-0">
         <h1 className="text-2xl md:text-3xl font-bold lowercase text-slate-900 dark:text-slate-100">
           {ONBOARDING_COPY.classify.headline}
         </h1>
@@ -115,7 +115,7 @@ export default function OnboardingClassifyPage() {
         </motion.div>
 
         {/* Importance toggle */}
-        <div className="mt-8">
+        <div className="mt-6">
           <h2 className="text-base font-medium lowercase text-slate-700 dark:text-slate-300">
             {ONBOARDING_COPY.classify.importanceLabel}
           </h2>
@@ -145,7 +145,7 @@ export default function OnboardingClassifyPage() {
         </div>
 
         {/* Urgency toggle */}
-        <div className="mt-8">
+        <div className="mt-6">
           <h2 className="text-base font-medium lowercase text-slate-700 dark:text-slate-300">
             {ONBOARDING_COPY.classify.urgencyLabel}
           </h2>
@@ -180,7 +180,7 @@ export default function OnboardingClassifyPage() {
         </div>
 
         {/* Spacer + CTA */}
-        <div className="mt-auto pt-8">
+        <div className="mt-auto pt-4">
           <Button
             size="lg"
             className="w-full"

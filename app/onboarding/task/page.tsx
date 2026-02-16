@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOnboarding } from '@/hooks/use-onboarding';
+import { useOnboardingContext } from '../onboarding-context';
 import { ONBOARDING_COPY } from '@/lib/onboarding-copy';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,7 @@ const DATE_PRESETS: { key: DatePreset; label: string }[] = [
 ];
 
 export default function OnboardingTaskPage() {
-  const { progress, isLoading, advanceToStep } = useOnboarding();
+  const { progress, isLoading, advanceToStep } = useOnboardingContext();
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -128,7 +128,7 @@ export default function OnboardingTaskPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col px-6 py-4 max-w-md mx-auto w-full min-h-0">
         <h1 className="text-2xl md:text-3xl font-bold lowercase text-slate-900 dark:text-slate-100">
           {ONBOARDING_COPY.taskInput.headline}
         </h1>
@@ -196,7 +196,7 @@ export default function OnboardingTaskPage() {
         </AnimatePresence>
 
         {/* Spacer + CTA */}
-        <div className="mt-auto pt-8">
+        <div className="mt-auto pt-4">
           <Button
             size="lg"
             className="w-full"

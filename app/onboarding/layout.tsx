@@ -1,17 +1,19 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { useOnboarding } from '@/hooks/use-onboarding';
+import { ReactNode, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { OnboardingProvider, useOnboardingContext } from './onboarding-context';
 
-export default function OnboardingLayout({ children }: { children: ReactNode }) {
-  const { isComplete, isLoading } = useOnboarding();
+function OnboardingLayoutInner({ children }: { children: ReactNode }) {
+  const { isComplete, isLoading } = useOnboardingContext();
   const router = useRouter();
+  const redirectingRef = useRef(false);
 
   // Redirect completed users to dashboard
   useEffect(() => {
-    if (!isLoading && isComplete) {
+    if (!isLoading && isComplete && !redirectingRef.current) {
+      redirectingRef.current = true;
       router.push('/dashboard');
     }
   }, [isLoading, isComplete, router]);
@@ -24,13 +26,19 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
     );
   }
 
-  if (isComplete) {
-    return null; // Will redirect via useEffect
-  }
-
+  // Keep rendering children even when isComplete — let the useEffect redirect
+  // handle navigation. Returning null here unmounts children mid-navigation.
   return (
-    <div className="min-h-dvh bg-white dark:bg-slate-950 flex flex-col">
+    <div className="h-dvh bg-white dark:bg-slate-950 flex flex-col overflow-hidden">
       {children}
     </div>
+  );
+}
+
+export default function OnboardingLayout({ children }: { children: ReactNode }) {
+  return (
+    <OnboardingProvider>
+      <OnboardingLayoutInner>{children}</OnboardingLayoutInner>
+    </OnboardingProvider>
   );
 }

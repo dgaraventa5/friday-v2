@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useOnboarding } from '@/hooks/use-onboarding';
+import { useOnboardingContext } from '../onboarding-context';
 import { ONBOARDING_COPY } from '@/lib/onboarding-copy';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -48,7 +48,7 @@ function getQuadrant(importance: string, urgency: string): Quadrant {
 }
 
 export default function OnboardingRevealPage() {
-  const { progress, isLoading, createTask, completeOnboarding } = useOnboarding();
+  const { progress, isLoading, createTask, completeOnboarding } = useOnboardingContext();
   const router = useRouter();
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
@@ -144,9 +144,9 @@ export default function OnboardingRevealPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center px-6 py-8 max-w-lg mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 max-w-lg mx-auto w-full min-h-0">
         <motion.h1
-          className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 text-center"
+          className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -156,7 +156,7 @@ export default function OnboardingRevealPage() {
 
         {/* Matrix grid */}
         <motion.div
-          className="mt-8 w-full grid grid-cols-2 grid-rows-2 gap-2 aspect-square max-w-sm"
+          className="mt-6 w-full grid grid-cols-2 grid-rows-2 gap-2 max-w-[280px] aspect-square"
           initial={{ opacity: 0 }}
           animate={{ opacity: showGrid ? 1 : 0 }}
           transition={{ duration: 0.3 }}
@@ -214,7 +214,7 @@ export default function OnboardingRevealPage() {
 
         {/* Explanation */}
         <motion.div
-          className="mt-6 text-center max-w-md"
+          className="mt-4 text-center max-w-md"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: showExplanation ? 1 : 0, y: showExplanation ? 0 : 10 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -241,7 +241,7 @@ export default function OnboardingRevealPage() {
 
         {/* CTA */}
         <motion.div
-          className="mt-auto pt-8 w-full max-w-md"
+          className="mt-6 w-full max-w-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: showCta ? 1 : 0 }}
           transition={{ duration: 0.4 }}
