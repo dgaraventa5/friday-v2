@@ -3,25 +3,29 @@ import { Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { ProblemSection } from "@/components/landing/ProblemSection";
-import { ValuePropsSection } from "@/components/landing/ValuePropsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
-import { SocialProofSection } from "@/components/landing/SocialProofSection";
-import { EisenhowerMatrixSection } from "@/components/landing/EisenhowerMatrixSection";
+import { TrustSignalSection } from "@/components/landing/TrustSignalSection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#FFFDF7]">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
+      <header className="sticky top-0 z-50 border-b border-amber-100 bg-[#FFFDF7]/90 backdrop-blur-lg">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <Sun className="w-8 h-8 text-yellow-500" strokeWidth={2} />
-            <span className="text-xl font-bold text-slate-800 dark:text-slate-100">friday</span>
+            <span className="text-xl font-bold text-slate-800">friday</span>
           </Link>
           <nav className="flex items-center gap-3">
             <Link href="/auth/login">
-              <Button variant="ghost" className="hidden sm:inline-flex text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <Button
+                variant="ghost"
+                className="hidden sm:inline-flex text-slate-600 hover:bg-amber-50"
+              >
                 Login
               </Button>
             </Link>
@@ -38,66 +42,84 @@ export default function HomePage() {
       <main className="flex-1">
         <HeroSection />
         <ProblemSection />
-        <ValuePropsSection />
         <HowItWorksSection />
-        <SocialProofSection />
-        <EisenhowerMatrixSection />
+        <TrustSignalSection />
         <FinalCTASection />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-700 py-12 bg-slate-50 dark:bg-slate-900">
+      <footer className="border-t border-amber-100 py-12">
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <Sun className="w-8 h-8 text-yellow-500" strokeWidth={2} />
-                <span className="text-xl font-bold text-slate-800 dark:text-slate-100">friday</span>
+                <span className="text-xl font-bold text-slate-800">friday</span>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm leading-relaxed">
-                Focus on what matters most. Prioritize your daily tasks using proven productivity principles.
+              <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
+                Focus on what matters most. Prioritize your daily tasks using
+                proven productivity principles.
               </p>
             </div>
 
-            {/* Product */}
             <div>
-              <h3 className="font-semibold mb-3 text-sm text-slate-800 dark:text-slate-100">Product</h3>
-              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+              <h3 className="font-semibold mb-3 text-sm text-slate-700">
+                Product
+              </h3>
+              <ul className="space-y-2 text-sm text-slate-500">
                 <li>
-                  <Link href="/auth/sign-up" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                  <Link
+                    href="/auth/sign-up"
+                    className="hover:text-slate-800 transition-colors"
+                  >
                     Get Started
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#how-it-works" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                  <Link
+                    href="/#how-it-works"
+                    className="hover:text-slate-800 transition-colors"
+                  >
                     How It Works
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                  <Link
+                    href="/dashboard"
+                    className="hover:text-slate-800 transition-colors"
+                  >
                     Dashboard
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Company */}
             <div>
-              <h3 className="font-semibold mb-3 text-sm text-slate-800 dark:text-slate-100">Company</h3>
-              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+              <h3 className="font-semibold mb-3 text-sm text-slate-700">
+                Company
+              </h3>
+              <ul className="space-y-2 text-sm text-slate-500">
                 <li>
-                  <Link href="/#" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                  <Link
+                    href="/#"
+                    className="hover:text-slate-800 transition-colors"
+                  >
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                  <Link
+                    href="/#"
+                    className="hover:text-slate-800 transition-colors"
+                  >
                     Privacy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                  <Link
+                    href="/#"
+                    className="hover:text-slate-800 transition-colors"
+                  >
                     Terms
                   </Link>
                 </li>
@@ -105,8 +127,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-slate-200 dark:border-slate-700 text-center">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="pt-8 border-t border-amber-100 text-center">
+            <p className="text-sm text-slate-400">
               &copy; {new Date().getFullYear()} Friday. Focus on what matters.
             </p>
           </div>
