@@ -288,9 +288,9 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label>Ends</Label>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
                     <input
                       type="radio"
@@ -300,7 +300,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
                       onChange={() => setRecurringEndType('never')}
                       className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
                     />
-                    <Label htmlFor="never" className="cursor-pointer">
+                    <Label htmlFor="never" className="cursor-pointer mb-0">
                       Never
                     </Label>
                   </div>
@@ -313,7 +313,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
                       onChange={() => setRecurringEndType('after')}
                       className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
                     />
-                    <Label htmlFor="after" className="cursor-pointer">
+                    <Label htmlFor="after" className="cursor-pointer mb-0">
                       After
                     </Label>
                     {recurringEndType === 'after' && (
