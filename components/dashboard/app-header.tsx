@@ -1,6 +1,7 @@
 'use client';
 
 import { Sun, Settings, RefreshCw, Sunrise } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,9 +22,11 @@ interface AppHeaderProps {
   profile: Profile;
   userEmail?: string;
   onOpenRecalibration?: () => void;
+  currentView: 'today' | 'schedule';
+  onViewChange: (view: 'today' | 'schedule') => void;
 }
 
-export function AppHeader({ profile, userEmail, onOpenRecalibration }: AppHeaderProps) {
+export function AppHeader({ profile, userEmail, onOpenRecalibration, currentView, onViewChange }: AppHeaderProps) {
   const router = useRouter();
   const supabase = createBrowserClient();
   const { toast } = useToast();
@@ -85,6 +88,32 @@ export function AppHeader({ profile, userEmail, onOpenRecalibration }: AppHeader
         <div className="flex items-center gap-2">
           <Sun className="h-6 w-6 text-yellow-500" fill="currentColor" aria-hidden="true" />
           <span className="text-xl font-semibold lowercase">friday</span>
+        </div>
+
+        {/* Center: Pill Toggle */}
+        <div className="flex items-center rounded-full bg-stone-100 dark:bg-slate-800 p-0.5">
+          <button
+            onClick={() => onViewChange('today')}
+            className={cn(
+              'rounded-full px-4 py-1.5 text-sm font-medium transition-all',
+              currentView === 'today'
+                ? 'bg-white text-stone-800 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                : 'text-stone-500 hover:text-stone-700 dark:text-slate-400 dark:hover:text-slate-200'
+            )}
+          >
+            Today
+          </button>
+          <button
+            onClick={() => onViewChange('schedule')}
+            className={cn(
+              'rounded-full px-4 py-1.5 text-sm font-medium transition-all',
+              currentView === 'schedule'
+                ? 'bg-white text-stone-800 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                : 'text-stone-500 hover:text-stone-700 dark:text-slate-400 dark:hover:text-slate-200'
+            )}
+          >
+            Schedule
+          </button>
         </div>
 
         {/* Right: Profile */}

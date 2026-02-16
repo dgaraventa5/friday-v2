@@ -245,6 +245,8 @@ export function DashboardClient({
         profile={profile}
         userEmail={userEmail}
         onOpenRecalibration={openRecalibrationManually}
+        currentView={currentView}
+        onViewChange={setCurrentView}
       />
       
       <main className="flex-1 overflow-y-auto">
