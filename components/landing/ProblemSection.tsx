@@ -1,57 +1,37 @@
-import { ListX, Brain, Frown } from "lucide-react";
-
 const painPoints = [
-  {
-    icon: ListX,
-    title: "Endless task lists",
-    description: "Most to-do lists just pile up tasks without helping you prioritize",
-    color: "text-red-500"
-  },
-  {
-    icon: Brain,
-    title: "Cognitive overload",
-    description: "You end up with cognitive overload and analysis paralysis",
-    color: "text-orange-500"
-  },
-  {
-    icon: Frown,
-    title: "Productivity becomes a chore",
-    description: "Getting organized becomes a chore that makes you *less* productive",
-    color: "text-yellow-500"
-  }
+  "Your to-do list keeps growing, but nothing gets done.",
+  "You spend more time organizing tasks than actually doing them.",
+  "By 3pm, you\u2019re busy but can\u2019t name one important thing you finished.",
 ];
 
 export function ProblemSection() {
   return (
-    <section className="py-16 md:py-24 bg-white dark:bg-slate-800">
+    <section className="py-24 md:py-36">
       <div className="container mx-auto px-6">
-        <div className="max-w-3xl mx-auto text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-800 dark:text-slate-100">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 mb-16 text-center">
             Sound familiar?
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
-            You're not alone. Traditional productivity apps make the problem worse.
-          </p>
-        </div>
 
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
-          {painPoints.map((point, index) => {
-            const Icon = point.icon;
-            return (
-              <div 
-                key={index}
-                className="bg-white dark:bg-slate-800 rounded-lg p-8 border border-slate-200 dark:border-slate-700 shadow-md card-hover"
+          <div className="space-y-8 md:space-y-10">
+            {painPoints.map((point, i) => (
+              <p
+                key={i}
+                className="text-xl md:text-2xl text-slate-600 leading-relaxed flex items-start gap-4"
               >
-                <div className={`w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-4 ${point.color}`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-slate-800 dark:text-slate-100">{point.title}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {point.description}
-                </p>
-              </div>
-            );
-          })}
+                <span
+                  className="inline-block w-2 h-2 rounded-full bg-yellow-400 mt-3 shrink-0"
+                  aria-hidden="true"
+                />
+                {point}
+              </p>
+            ))}
+          </div>
+
+          <p className="mt-14 md:mt-16 text-center text-lg text-slate-400 italic">
+            It&apos;s not a discipline problem. It&apos;s a prioritization
+            problem.
+          </p>
         </div>
       </div>
     </section>
