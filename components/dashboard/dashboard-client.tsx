@@ -1,17 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Task, Profile, Reminder, ReminderCompletion, ReminderWithStatus, CalendarEventWithCalendar, ConnectedCalendar } from '@/lib/types';
 import { TodayView } from '@/components/today/today-view';
 import { ScheduleView } from '@/components/schedule/schedule-view';
-import { BottomNav } from '@/components/navigation/bottom-nav';
 import { AppHeader } from '@/components/dashboard/app-header';
 import { DashboardDialogs } from '@/components/dashboard/dashboard-dialogs';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { createTasksService, createRemindersService } from '@/lib/services';
 import { useTasks } from '@/hooks/use-tasks';
 import { useReminders } from '@/hooks/use-reminders';
@@ -239,8 +236,26 @@ export function DashboardClient({
     toggleComplete(taskId, true);
   };
 
+  // Quick-add a task with minimal defaults (from inline quick-add input)
+  const handleQuickAdd = async (title: string) => {
+    await addTask({
+      title,
+      description: '',
+      importance: 'not-important',
+      urgency: 'not-urgent',
+      category: 'Personal',
+      estimated_hours: 1,
+      due_date: null,
+      is_recurring: false,
+      recurring_interval: null,
+      recurring_days: null,
+      recurring_end_type: null,
+      recurring_end_count: null,
+    });
+  };
+
   return (
-    <div className="flex h-dvh flex-col bg-background overflow-hidden">
+    <div className="flex h-dvh flex-col bg-background">
       <AppHeader
         profile={profile}
         userEmail={userEmail}
@@ -272,6 +287,7 @@ export function DashboardClient({
               onReminderEdit={editReminder}
               onReminderDelete={deleteReminder}
               onOpenAddReminderDialog={openAddReminderDialog}
+              onQuickAdd={handleQuickAdd}
             />
           ) : (
             <ScheduleView
@@ -283,12 +299,6 @@ export function DashboardClient({
           )}
         </div>
       </main>
-
-      <BottomNav
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        onAddTask={openAddTaskDialog}
-      />
 
       <DashboardDialogs
         showAddTaskDialog={showAddTaskDialog}

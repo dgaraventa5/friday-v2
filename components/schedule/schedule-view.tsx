@@ -377,7 +377,7 @@ export function ScheduleView({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="pb-24 lg:pb-32 px-1 md:px-2">
+      <div className="px-1 md:px-2">
         {/* Timeline wrapper */}
         <div className="relative pl-7">
           {/* Vertical timeline line */}

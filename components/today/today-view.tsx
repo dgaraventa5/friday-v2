@@ -95,7 +95,7 @@ export function TodayView({
   }
 
   return (
-    <div className="pb-24 lg:pb-32">
+    <div>
       {/* Two-column responsive layout: single column on mobile, 60/40 on desktop */}
       <div className="flex flex-col lg:flex-row lg:gap-6">
 
