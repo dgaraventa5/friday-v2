@@ -43,6 +43,11 @@ export function HeroSection() {
   const [phase, setPhase] = useState<Phase>("all");
 
   useEffect(() => {
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    if (prefersReduced) return;
+
     const timer = setTimeout(() => {
       setPhase(NEXT_PHASE[phase]);
     }, PHASE_DURATIONS[phase]);
@@ -83,7 +88,7 @@ export function HeroSection() {
                   className="w-full sm:w-auto px-8 h-12 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium"
                 >
                   Start Focusing
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Button>
               </Link>
               <Button
@@ -97,7 +102,7 @@ export function HeroSection() {
             </div>
 
             <p className="flex items-center gap-2 text-sm text-slate-400">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2 className="h-4 w-4 text-green-500" aria-hidden="true" />
               Free forever. No credit card required.
             </p>
           </div>
