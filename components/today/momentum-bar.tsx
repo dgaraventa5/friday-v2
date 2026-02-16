@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getMotivationalText } from '@/lib/utils/stats-utils';
 import { Flame } from 'lucide-react';
@@ -63,13 +64,15 @@ export function MomentumBar({
 
       {/* Progress bar */}
       <div className="relative h-2 rounded-full bg-amber-100 dark:bg-slate-700 overflow-hidden">
-        <div
+        <motion.div
           className={cn(
-            'h-full rounded-full transition-all duration-500 ease-out',
+            'h-full rounded-full',
             isComplete ? 'momentum-complete' : '',
             progress > 0 ? 'momentum-bar-fill' : ''
           )}
-          style={{ width: `${Math.min(progress, 100)}%` }}
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min(progress, 100)}%` }}
+          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
           role="progressbar"
           aria-valuenow={completedCount}
           aria-valuemin={0}

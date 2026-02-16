@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Task, Profile, ReminderWithStatus, CalendarEventWithCalendar, ConnectedCalendar } from '@/lib/types';
 import { getTodaysFocusTasks } from '@/lib/utils/task-prioritization';
 import { MomentumBar } from './momentum-bar';
@@ -125,16 +126,31 @@ export function TodayView({
                 </div>
               )}
 
-              {incompleteTasks.map((task, index) => (
-                <TaskTile
-                  key={task.id}
-                  task={task}
-                  rank={index + 1}
-                  onComplete={handleTaskComplete}
-                  onEdit={onTaskEdit}
-                  onDelete={onTaskDelete}
-                />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {incompleteTasks.map((task, index) => (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 30,
+                      delay: index * 0.05,
+                    }}
+                    layout
+                  >
+                    <TaskTile
+                      task={task}
+                      rank={index + 1}
+                      onComplete={handleTaskComplete}
+                      onEdit={onTaskEdit}
+                      onDelete={onTaskDelete}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
 
