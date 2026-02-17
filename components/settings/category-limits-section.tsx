@@ -63,7 +63,7 @@ export function CategoryLimitsSection({
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 w-16 shrink-0">
+                  <span className="text-sm text-slate-600 dark:text-slate-400 w-20 shrink-0">
                     Weekday
                   </span>
                   <Slider
@@ -84,7 +84,7 @@ export function CategoryLimitsSection({
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 w-16 shrink-0">
+                  <span className="text-sm text-slate-600 dark:text-slate-400 w-20 shrink-0">
                     Weekend
                   </span>
                   <Slider
