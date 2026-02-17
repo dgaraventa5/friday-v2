@@ -38,7 +38,7 @@ function SliderRow({
         accentColor={accentColor}
         className="flex-1"
       />
-      <span className="bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 font-mono rounded-md px-2 py-0.5 text-sm min-w-[2.5rem] text-center">
+      <span className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-mono font-semibold rounded-md px-2 py-0.5 text-sm min-w-[2.5rem] text-center">
         {value}
       </span>
     </div>
@@ -56,8 +56,8 @@ export function SchedulingSection({
       {/* Daily Max Hours */}
       <div className="mc-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <div className="w-9 h-9 rounded-lg bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -87,8 +87,8 @@ export function SchedulingSection({
       {/* Daily Max Tasks */}
       <div className="mc-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 flex items-center justify-center">
-            <ListChecks className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <div className="w-9 h-9 rounded-lg bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center">
+            <ListChecks className="w-5 h-5 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">

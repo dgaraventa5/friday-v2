@@ -32,8 +32,8 @@ export function CategoryLimitsSection({
     <div className="space-y-6 animate-tile-enter">
       <div className="mc-card p-5">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-9 h-9 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <div className="w-9 h-9 rounded-lg bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -49,8 +49,8 @@ export function CategoryLimitsSection({
           {CATEGORY_CONFIG.map(({ key, label, color }) => (
             <div
               key={key}
-              className="rounded-lg border border-border bg-card p-4"
-              style={{ borderLeftWidth: 3, borderLeftColor: color }}
+              className="overflow-hidden border border-border bg-card p-4"
+              style={{ borderLeftWidth: 3, borderLeftColor: color, borderRadius: '0 0.5rem 0.5rem 0' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div
@@ -78,11 +78,7 @@ export function CategoryLimitsSection({
                     className="flex-1"
                   />
                   <span
-                    className="font-mono rounded-md px-2 py-0.5 text-xs min-w-[2rem] text-center"
-                    style={{
-                      backgroundColor: `${color}15`,
-                      color: color,
-                    }}
+                    className="font-mono font-semibold rounded-md px-2 py-0.5 text-xs min-w-[2rem] text-center bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
                   >
                     {categoryLimits[key].weekday}
                   </span>
@@ -103,11 +99,7 @@ export function CategoryLimitsSection({
                     className="flex-1"
                   />
                   <span
-                    className="font-mono rounded-md px-2 py-0.5 text-xs min-w-[2rem] text-center"
-                    style={{
-                      backgroundColor: `${color}15`,
-                      color: color,
-                    }}
+                    className="font-mono font-semibold rounded-md px-2 py-0.5 text-xs min-w-[2rem] text-center bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
                   >
                     {categoryLimits[key].weekend}
                   </span>

@@ -34,15 +34,17 @@ function Slider({ className, accentColor, ...props }: SliderProps) {
       <SliderPrimitive.Thumb
         data-slot="slider-thumb"
         className={cn(
-          'block h-5 w-5 rounded-full bg-white shadow-md ring-0 transition-transform duration-150 ease-out',
+          'block h-5 w-5 rounded-full shadow-md ring-0 transition-all duration-150 ease-out',
           'hover:scale-110 hover:shadow-lg',
           'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-yellow-500/50',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
         style={{
-          borderWidth: 2,
+          backgroundColor: accentColor || '#FDE047',
+          borderWidth: 3,
           borderStyle: 'solid',
-          borderColor: accentColor || '#FDE047',
+          borderColor: '#FFFFFF',
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
         }}
       />
     </SliderPrimitive.Root>
