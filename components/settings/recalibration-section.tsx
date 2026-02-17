@@ -84,7 +84,7 @@ export function RecalibrationSection({
                 type="time"
                 value={time}
                 onChange={(e) => onTimeChange(e.target.value)}
-                className="w-28 h-8 min-h-0 text-sm px-2 py-1"
+                className="w-36 h-8 min-h-0 text-sm px-3 py-1"
               />
             </div>
 
