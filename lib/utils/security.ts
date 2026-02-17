@@ -23,10 +23,28 @@ export function verifyOrigin(request: Request): NextResponse | null {
   // Build list of allowed origins
   const allowedOrigins: string[] = [];
 
-  // Always allow localhost in development
+  // Always allow localhost in development (any port)
   if (process.env.NODE_ENV === 'development') {
-    allowedOrigins.push('http://localhost:3000');
-    allowedOrigins.push('http://127.0.0.1:3000');
+    if (origin) {
+      try {
+        const url = new URL(origin);
+        if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+          return null;
+        }
+      } catch {
+        // Invalid URL, fall through to normal validation
+      }
+    }
+    if (referer) {
+      try {
+        const url = new URL(referer);
+        if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+          return null;
+        }
+      } catch {
+        // Invalid URL, fall through to normal validation
+      }
+    }
   }
 
   // Add configured site URL
