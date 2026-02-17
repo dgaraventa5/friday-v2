@@ -51,7 +51,7 @@ export function CalendarSlotCard({
   };
 
   return (
-    <div className="p-3 border border-border rounded-lg bg-card">
+    <div className="p-3 border border-yellow-100 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800/50 transition-all duration-150 hover:shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           {/* Color dot or icon */}

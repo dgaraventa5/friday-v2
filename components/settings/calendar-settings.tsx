@@ -226,7 +226,7 @@ export function CalendarSettings({ initialConnections }: CalendarSettingsProps) 
   }, null as string | null);
 
   return (
-    <div className="space-y-4">
+    <div className="mc-card p-5 space-y-4">
       {message && (
         <div
           className={`p-2 rounded-lg border text-sm ${
