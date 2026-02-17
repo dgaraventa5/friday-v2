@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SettingsForm } from "@/components/settings/settings-form";
-import { CalendarSettings } from "@/components/settings/calendar-settings";
+import { SettingsLayout } from "@/components/settings/settings-layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -30,10 +29,10 @@ export default async function SettingsPage() {
   const calendarConnections = calendarResult.data || [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-dvh flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-6 py-2">
+      <header className="border-b bg-card shrink-0">
+        <div className="px-4 md:px-6 py-2">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
               <Button variant="ghost" size="icon-sm">
@@ -52,28 +51,15 @@ export default async function SettingsPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-3">
-        <div className="max-w-2xl mx-auto space-y-4">
-          {/* Task Settings */}
-          <div className="bg-card rounded-lg border border-border shadow-sm p-4">
-            <SettingsForm
-              initialCategoryLimits={profile.category_limits}
-              initialDailyMaxHours={profile.daily_max_hours}
-              initialDailyMaxTasks={profile.daily_max_tasks || { weekday: 4, weekend: 4 }}
-              initialRecalibrationEnabled={profile.recalibration_enabled ?? true}
-              initialRecalibrationTime={profile.recalibration_time?.slice(0, 5) || '17:00'}
-              initialRecalibrationIncludeTomorrow={profile.recalibration_include_tomorrow ?? true}
-            />
-          </div>
-
-          {/* Calendar Settings */}
-          <div className="bg-card rounded-lg border border-border shadow-sm p-4">
-            <CalendarSettings initialConnections={calendarConnections} />
-          </div>
-        </div>
-      </main>
+      <SettingsLayout
+        initialCategoryLimits={profile.category_limits}
+        initialDailyMaxHours={profile.daily_max_hours}
+        initialDailyMaxTasks={profile.daily_max_tasks || { weekday: 4, weekend: 4 }}
+        initialRecalibrationEnabled={profile.recalibration_enabled ?? true}
+        initialRecalibrationTime={profile.recalibration_time?.slice(0, 5) || '17:00'}
+        initialRecalibrationIncludeTomorrow={profile.recalibration_include_tomorrow ?? true}
+        calendarConnections={calendarConnections}
+      />
     </div>
   );
 }
-
