@@ -5,10 +5,10 @@ import { NextResponse } from 'next/server';
  * Returns null if origin is valid, or a 403 response if invalid
  *
  * Security model:
- * - In development: Allow localhost origins
- * - In production: Require NEXT_PUBLIC_SITE_URL or VERCEL_URL to be configured
  * - Requests without origin/referer are allowed (same-origin, server-to-server)
- * - Requests with origin/referer must match allowed origins (fail-closed)
+ * - In development: Allow localhost origins
+ * - In production: Compare Origin against Host header (standard CSRF prevention)
+ * - Fallback: Check env var allowlist (NEXT_PUBLIC_SITE_URL, VERCEL_URL, etc.)
  */
 export function verifyOrigin(request: Request): NextResponse | null {
   const origin = request.headers.get('origin');
@@ -19,9 +19,6 @@ export function verifyOrigin(request: Request): NextResponse | null {
   if (!origin && !referer) {
     return null;
   }
-
-  // Build list of allowed origins
-  const allowedOrigins: string[] = [];
 
   // Always allow localhost in development (any port)
   if (process.env.NODE_ENV === 'development') {
@@ -47,66 +44,81 @@ export function verifyOrigin(request: Request): NextResponse | null {
     }
   }
 
-  // Add configured site URL
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (siteUrl) {
-    if (siteUrl.startsWith('http')) {
-      allowedOrigins.push(siteUrl);
-    } else {
-      allowedOrigins.push(`https://${siteUrl}`);
+  // Host-header comparison: standard CSRF prevention
+  // If Origin matches the Host/X-Forwarded-Host, it's same-origin
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  if (host && origin) {
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.host === host) {
+        return null;
+      }
+    } catch {
+      // Invalid origin URL, fall through
+    }
+  }
+  if (host && !origin && referer) {
+    try {
+      const refererUrl = new URL(referer);
+      if (refererUrl.host === host) {
+        return null;
+      }
+    } catch {
+      // Invalid referer URL, fall through
     }
   }
 
-  // Add Vercel URL (automatically set in Vercel deployments)
+  // Build list of additional allowed origins from env vars
+  const allowedOrigins: string[] = [];
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) {
+    let normalized = siteUrl;
+    if (!normalized.startsWith('http')) {
+      normalized = `https://${normalized}`;
+    }
+    // Strip trailing slash for consistent comparison
+    allowedOrigins.push(normalized.replace(/\/$/, ''));
+  }
+
   const vercelUrl = process.env.VERCEL_URL;
   if (vercelUrl) {
     allowedOrigins.push(`https://${vercelUrl}`);
   }
 
-  // Also allow Vercel preview URLs
   const vercelBranchUrl = process.env.VERCEL_BRANCH_URL;
   if (vercelBranchUrl) {
     allowedOrigins.push(`https://${vercelBranchUrl}`);
   }
 
-  // FAIL-CLOSED: If no allowed origins configured in production, reject cross-origin requests
-  if (allowedOrigins.length === 0) {
-    console.error('[Security] No allowed origins configured. Set NEXT_PUBLIC_SITE_URL or deploy to Vercel.');
-    return NextResponse.json(
-      { error: 'Server configuration error' },
-      { status: 500 }
-    );
-  }
-
-  // Check origin header
-  if (origin && !allowedOrigins.includes(origin)) {
-    console.warn(`[Security] Blocked request with invalid origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
-    return NextResponse.json(
-      { error: 'Invalid origin' },
-      { status: 403 }
-    );
-  }
-
-  // If origin is missing but referer is present, validate referer
-  if (!origin && referer) {
-    try {
-      const refererUrl = new URL(referer);
-      const refererOrigin = refererUrl.origin;
-      if (!allowedOrigins.includes(refererOrigin)) {
-        console.warn(`[Security] Blocked request with invalid referer: ${referer}`);
-        return NextResponse.json(
-          { error: 'Invalid origin' },
-          { status: 403 }
-        );
-      }
-    } catch {
-      // Invalid referer URL, reject
-      return NextResponse.json(
-        { error: 'Invalid origin' },
-        { status: 403 }
-      );
+  // Check origin against env-var allowlist
+  if (origin) {
+    if (allowedOrigins.length > 0 && allowedOrigins.includes(origin)) {
+      return null;
     }
   }
 
-  return null;
+  // Check referer against env-var allowlist
+  if (!origin && referer) {
+    try {
+      const refererOrigin = new URL(referer).origin;
+      if (allowedOrigins.length > 0 && allowedOrigins.includes(refererOrigin)) {
+        return null;
+      }
+    } catch {
+      // Invalid referer, fall through to rejection
+    }
+  }
+
+  // If we reach here, the origin is not allowed
+  const requestOrigin = origin || (referer ? `referer: ${referer}` : 'unknown');
+  console.warn(
+    `[Security] Blocked request with invalid origin: ${requestOrigin}. ` +
+    `Host: ${host || 'none'}. Allowed: ${allowedOrigins.join(', ') || 'none (no env vars configured)'}`
+  );
+
+  return NextResponse.json(
+    { error: 'Invalid origin' },
+    { status: 403 }
+  );
 }
