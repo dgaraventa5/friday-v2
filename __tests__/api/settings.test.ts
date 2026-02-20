@@ -75,7 +75,11 @@ describe('Settings API', () => {
 
       mockSupabase.from.mockReturnValue({
         update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null }),
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+            }),
+          }),
         }),
       });
 
@@ -255,7 +259,11 @@ describe('Settings API', () => {
     test('should accept valid task limits', async () => {
       mockSupabase.from.mockReturnValue({
         update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null }),
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+            }),
+          }),
         }),
       });
 
@@ -283,7 +291,11 @@ describe('Settings API', () => {
 
     test('should call database update with correct data', async () => {
       const updateMock = jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+          }),
+        }),
       });
 
       mockSupabase.from.mockReturnValue({
@@ -314,8 +326,13 @@ describe('Settings API', () => {
     test('should handle database errors gracefully', async () => {
       mockSupabase.from.mockReturnValue({
         update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ 
-            error: new Error('Database error') 
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: new Error('Database error'),
+              }),
+            }),
           }),
         }),
       });
@@ -336,7 +353,11 @@ describe('Settings API', () => {
     test('should return success message on successful save', async () => {
       mockSupabase.from.mockReturnValue({
         update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null }),
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+            }),
+          }),
         }),
       });
 
