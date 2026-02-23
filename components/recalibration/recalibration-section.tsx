@@ -1,8 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import { ChevronDown, ChevronRight, AlertTriangle, Calendar, CalendarClock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 
 interface RecalibrationSectionProps {
   title: string;
@@ -12,24 +11,6 @@ interface RecalibrationSectionProps {
   children: ReactNode;
 }
 
-const variantStyles = {
-  warning: {
-    container: 'border-amber-200 dark:border-amber-800',
-    header: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
-    icon: AlertTriangle,
-  },
-  default: {
-    container: 'border-slate-200 dark:border-slate-700',
-    header: 'bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300',
-    icon: Calendar,
-  },
-  muted: {
-    container: 'border-slate-200 dark:border-slate-700',
-    header: 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400',
-    icon: CalendarClock,
-  },
-};
-
 export function RecalibrationSection({
   title,
   count,
@@ -38,33 +19,30 @@ export function RecalibrationSection({
   children,
 }: RecalibrationSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
-  const styles = variantStyles[variant];
-  const Icon = styles.icon;
+
+  const titleColor = variant === 'warning'
+    ? 'text-amber-600 dark:text-amber-400'
+    : 'text-muted-foreground';
 
   return (
-    <div className={cn('rounded-lg border', styles.container)}>
+    <div>
       <button
         type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={cn(
-          'w-full flex items-center justify-between px-4 py-3 rounded-t-lg',
-          styles.header,
-          isCollapsed && 'rounded-b-lg'
-        )}
+        className="flex items-center gap-2 mb-2 group"
       >
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4" />
-          <span className="font-medium text-sm">{title}</span>
-          <span className="text-xs opacity-75">({count})</span>
-        </div>
-        {isCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
+        {defaultCollapsed && (
+          isCollapsed
+            ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         )}
+        <span className={`text-xs font-semibold uppercase tracking-wider ${titleColor}`}>
+          {title}
+        </span>
+        <span className="text-xs text-muted-foreground">{count}</span>
       </button>
       {!isCollapsed && (
-        <div className="p-3 space-y-3">
+        <div className="space-y-2">
           {children}
         </div>
       )}
