@@ -127,12 +127,7 @@ export interface RecalibrationState {
   reviewedTaskIds: Set<string>;  // Tasks explicitly reviewed (keep-as-is or modified)
 }
 
-export interface RecalibrationLocalStorage {
-  lastDismissedDate: string | null;  // "YYYY-MM-DD" format
-  snoozedUntil: string | null;       // ISO timestamp
-}
-
-export type DatePreset = 'tomorrow' | 'plus2' | 'plus3' | 'plus7' | 'custom';
+export type DatePreset = 'tomorrow' | 'plus3' | 'plus7';
 
 export interface RecalibrationSettings {
   recalibration_enabled: boolean;

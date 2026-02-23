@@ -115,8 +115,6 @@ export function calculatePresetDate(preset: DatePreset): string {
   switch (preset) {
     case 'tomorrow':
       return addDaysToDateString(today, 1);
-    case 'plus2':
-      return addDaysToDateString(today, 2);
     case 'plus3':
       return addDaysToDateString(today, 3);
     case 'plus7':
