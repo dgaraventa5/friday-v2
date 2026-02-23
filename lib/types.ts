@@ -132,7 +132,7 @@ export interface RecalibrationLocalStorage {
   snoozedUntil: string | null;       // ISO timestamp
 }
 
-export type DatePreset = 'tomorrow' | 'plus2' | 'plus7' | 'custom';
+export type DatePreset = 'tomorrow' | 'plus2' | 'plus3' | 'plus7' | 'custom';
 
 export interface RecalibrationSettings {
   recalibration_enabled: boolean;

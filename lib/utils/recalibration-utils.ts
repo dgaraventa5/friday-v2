@@ -127,6 +127,8 @@ export function calculatePresetDate(preset: DatePreset): string {
       return addDaysToDateString(today, 1);
     case 'plus2':
       return addDaysToDateString(today, 2);
+    case 'plus3':
+      return addDaysToDateString(today, 3);
     case 'plus7':
       return addDaysToDateString(today, 7);
     default:
