@@ -33,13 +33,15 @@ export function RecalibrationSection({
       >
         {defaultCollapsed && (
           isCollapsed
-            ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-            : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-150" />
+            : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-150" />
         )}
         <span className={`text-xs font-semibold uppercase tracking-wider ${titleColor}`}>
           {title}
         </span>
-        <span className="text-xs text-muted-foreground">{count}</span>
+        <span className="text-[10px] text-muted-foreground tabular-nums bg-muted/60 px-1.5 py-0.5 rounded-full">
+          {count}
+        </span>
       </button>
       {!isCollapsed && (
         <div className="space-y-2">

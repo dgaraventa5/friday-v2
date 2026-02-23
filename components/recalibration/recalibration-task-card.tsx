@@ -105,8 +105,8 @@ export function RecalibrationTaskCard({
       {/* Collapsed row - always visible, tappable to expand */}
       <div
         className={cn(
-          'flex items-center gap-3 px-3 py-2.5',
-          !isExpanded && 'cursor-pointer'
+          'flex items-center gap-3 px-3 py-2.5 transition-colors',
+          !isExpanded && 'cursor-pointer hover:bg-muted/50 active:bg-muted/70 rounded-lg'
         )}
         onClick={isExpanded ? undefined : onToggleExpand}
         role={isExpanded ? undefined : 'button'}
@@ -131,14 +131,36 @@ export function RecalibrationTaskCard({
             <h3 className="text-sm font-medium text-foreground truncate">
               {task.title}
             </h3>
-            <span className={cn(
-              'text-xs shrink-0',
-              pendingChanges?.due_date
-                ? 'text-blue-600 dark:text-blue-400 font-medium'
-                : 'text-muted-foreground'
-            )}>
-              {getDateBadge()}
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={cn(
+                'text-xs',
+                pendingChanges?.due_date
+                  ? 'text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-muted-foreground'
+              )}>
+                {getDateBadge()}
+              </span>
+              {/* Overflow menu - inline when expanded */}
+              {isExpanded && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 -mr-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={onHide}>
+                      Remove from review
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span
@@ -162,62 +184,49 @@ export function RecalibrationTaskCard({
         </div>
       </div>
 
-      {/* Expanded controls */}
-      {isExpanded && (
-        <div className="px-3 pb-3 space-y-3">
-          {/* Overflow menu */}
-          <div className="flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                >
-                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onHide}>
-                  Remove from review
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+      {/* Expanded controls - animated reveal */}
+      <div
+        className={cn(
+          'grid transition-all duration-200 ease-out',
+          isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3 pt-1 space-y-3">
+            {/* Date presets */}
+            <div>
+              <div className="text-xs text-muted-foreground mb-1.5">Reschedule:</div>
+              <DatePresetButtons
+                currentDueDate={task.due_date || task.originalDueDate}
+                selectedDate={pendingChanges?.due_date}
+                onDateChange={handleDateChange}
+              />
+            </div>
 
-          {/* Date presets */}
-          <div>
-            <div className="text-xs text-muted-foreground mb-1.5">Reschedule:</div>
-            <DatePresetButtons
-              currentDueDate={task.due_date || task.originalDueDate}
-              selectedDate={pendingChanges?.due_date}
-              onDateChange={handleDateChange}
+            {/* Importance/Urgency */}
+            <ImportanceUrgencyToggles
+              importance={currentImportance}
+              urgency={currentUrgency}
+              onImportanceChange={handleImportanceChange}
+              onUrgencyChange={handleUrgencyChange}
+              compact
             />
+
+            {/* Keep as-is */}
+            {!isTaskReviewed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs text-muted-foreground hover:text-foreground"
+                onClick={onMarkReviewed}
+              >
+                <Check className="h-3 w-3 mr-1" />
+                Keep as-is
+              </Button>
+            )}
           </div>
-
-          {/* Importance/Urgency */}
-          <ImportanceUrgencyToggles
-            importance={currentImportance}
-            urgency={currentUrgency}
-            onImportanceChange={handleImportanceChange}
-            onUrgencyChange={handleUrgencyChange}
-            compact
-          />
-
-          {/* Keep as-is */}
-          {!isTaskReviewed && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-xs text-muted-foreground hover:text-foreground"
-              onClick={onMarkReviewed}
-            >
-              <Check className="h-3 w-3 mr-1" />
-              Keep as-is
-            </Button>
-          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
