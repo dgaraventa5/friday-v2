@@ -5,33 +5,8 @@ import { Task, RecalibrationTask, PendingTaskChanges } from '@/lib/types';
 import {
   getTasksForRecalibration,
   shouldShowRecalibration,
-  getSnoozeEndTime,
   parseTriggerHour,
 } from '@/lib/utils/recalibration-utils';
-
-// localStorage key for device-specific snooze state only
-const SNOOZE_STORAGE_KEY = 'friday_recalibration_snooze';
-
-function getSnoozedUntil(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(SNOOZE_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function setSnoozedUntil(timestamp: string | null): void {
-  try {
-    if (timestamp) {
-      localStorage.setItem(SNOOZE_STORAGE_KEY, timestamp);
-    } else {
-      localStorage.removeItem(SNOOZE_STORAGE_KEY);
-    }
-  } catch {
-    // Ignore localStorage errors
-  }
-}
 
 interface UseRecalibrationOptions {
   triggerTime?: string;  // "HH:MM:SS" format
@@ -56,7 +31,6 @@ interface UseRecalibrationReturn {
   markTaskReviewed: (taskId: string) => void;
   hideTask: (taskId: string) => void;
   skipToday: () => void;
-  snooze: () => void;
   close: () => void;
   openManually: () => void;
   getAllPendingChanges: () => Array<{ taskId: string; changes: PendingTaskChanges }>;
@@ -123,8 +97,7 @@ export function useRecalibration(
   useEffect(() => {
     if (hasCheckedTrigger || !enabled) return;
 
-    const snoozedUntil = getSnoozedUntil();
-    if (shouldShowRecalibration(tasks, triggerHour, lastDismissedDate, snoozedUntil, enabled)) {
+    if (shouldShowRecalibration(tasks, triggerHour, lastDismissedDate, enabled)) {
       // Delay slightly to not interrupt page load
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
@@ -161,8 +134,6 @@ export function useRecalibration(
 
   // Skip for today - persists to database for cross-device sync
   const skipToday = useCallback(async () => {
-    // Clear any existing snooze
-    setSnoozedUntil(null);
     setIsOpen(false);
     resetState();
 
@@ -175,12 +146,6 @@ export function useRecalibration(
       }
     }
   }, [resetState, onDismiss]);
-
-  // Snooze for 1 hour (device-specific, stays in localStorage)
-  const snooze = useCallback(() => {
-    setSnoozedUntil(getSnoozeEndTime());
-    setIsOpen(false);
-  }, []);
 
   // Open modal manually (bypasses time/dismissed checks)
   const openManually = useCallback(() => {
@@ -213,7 +178,6 @@ export function useRecalibration(
     markTaskReviewed,
     hideTask,
     skipToday,
-    snooze,
     close,
     openManually,
     getAllPendingChanges,

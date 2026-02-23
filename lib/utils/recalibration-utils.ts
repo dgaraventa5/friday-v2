@@ -1,4 +1,4 @@
-import { Task, RecalibrationTask, RecalibrationLocalStorage, DatePreset } from '@/lib/types';
+import { Task, RecalibrationTask, DatePreset } from '@/lib/types';
 import { getTodayLocal, addDaysToDateString, parseDateLocal } from './date-utils';
 
 /**
@@ -74,14 +74,12 @@ export function parseTriggerHour(timeString: string): number {
  * @param tasks - User's tasks to check
  * @param triggerHour - Hour of day to trigger (default 17 = 5 PM)
  * @param lastDismissedDate - Date from profile (cross-device), "YYYY-MM-DD" format or null
- * @param snoozedUntil - Snooze timestamp from localStorage (device-specific), ISO format or null
  * @param isEnabled - Whether recalibration feature is enabled
  */
 export function shouldShowRecalibration(
   tasks: Task[],
   triggerHour: number = 17,
   lastDismissedDate: string | null,
-  snoozedUntil: string | null,
   isEnabled: boolean = true
 ): boolean {
   // Check if feature is enabled
@@ -101,14 +99,6 @@ export function shouldShowRecalibration(
   // Check if dismissed today (from profile - cross-device)
   if (lastDismissedDate === today) {
     return false;
-  }
-
-  // Check if snoozed (from localStorage - device-specific)
-  if (snoozedUntil) {
-    const snoozeEnd = new Date(snoozedUntil);
-    if (now < snoozeEnd) {
-      return false;
-    }
   }
 
   // Check if any tasks need attention (overdue or due today)
@@ -154,15 +144,6 @@ export function getRelativeDateString(dueDate: string): string {
   } else {
     return `In ${Math.abs(daysOverdue)} days`;
   }
-}
-
-/**
- * Get snooze end time (1 hour from now)
- */
-export function getSnoozeEndTime(): string {
-  const snoozeEnd = new Date();
-  snoozeEnd.setHours(snoozeEnd.getHours() + 1);
-  return snoozeEnd.toISOString();
 }
 
 /**

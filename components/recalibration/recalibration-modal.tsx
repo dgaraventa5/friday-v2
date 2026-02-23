@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Task, Profile, PendingTaskChanges, RecalibrationTask } from '@/lib/types';
+import { Task, Profile, PendingTaskChanges } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { RecalibrationSection } from './recalibration-section';
 import { RecalibrationTaskCard } from './recalibration-task-card';
 import { useRecalibration } from '@/hooks/use-recalibration';
-import { Sunrise, Clock } from 'lucide-react';
+import { Sunrise } from 'lucide-react';
 
 interface RecalibrationModalProps {
   tasks: Task[];
@@ -25,7 +25,6 @@ interface RecalibrationModalProps {
   ) => Promise<void>;
   onTaskComplete: (taskId: string) => void;
   onSkipToday: () => void;
-  onSnooze: () => void;
 }
 
 export function RecalibrationModal({
@@ -36,9 +35,9 @@ export function RecalibrationModal({
   onSaveChanges,
   onTaskComplete,
   onSkipToday,
-  onSnooze,
 }: RecalibrationModalProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const {
     visibleTasks,
@@ -50,7 +49,6 @@ export function RecalibrationModal({
     hideTask,
     hasChanges,
     getAllPendingChanges,
-    reviewedCount,
   } = useRecalibration(tasks, {
     triggerTime: profile.recalibration_time || '17:00:00',
     includeTomorrow: profile.recalibration_include_tomorrow ?? true,
@@ -66,20 +64,27 @@ export function RecalibrationModal({
         setIsSaving(false);
       }
     }
-    // Mark as dismissed for the day so it doesn't auto-trigger again
     onSkipToday();
   };
 
   const handleTaskComplete = (taskId: string) => {
     onTaskComplete(taskId);
-    // Hide the task from the recalibration view after completion
     hideTask(taskId);
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId(null);
+    }
   };
 
-  const progressPercent =
-    totalTaskCount > 0
-      ? Math.round((reviewedCount / totalTaskCount) * 100)
-      : 100;
+  const handleToggleExpand = (taskId: string) => {
+    setExpandedTaskId(prev => prev === taskId ? null : taskId);
+  };
+
+  const handleMarkReviewed = (taskId: string) => {
+    markTaskReviewed(taskId);
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId(null);
+    }
+  };
 
   // Empty state
   if (totalTaskCount === 0) {
@@ -109,28 +114,12 @@ export function RecalibrationModal({
             Daily Recalibration
           </DialogTitle>
           <DialogDescription>
-            Review and adjust your upcoming tasks
+            {totalTaskCount} {totalTaskCount === 1 ? 'task' : 'tasks'} to review
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress bar */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>
-              Reviewed {reviewedCount} of {totalTaskCount} tasks
-            </span>
-            <span>{progressPercent}%</span>
-          </div>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-
         {/* Scrollable task list */}
-        <div className="flex-1 overflow-y-auto space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-2">
           {visibleTasks.overdue.length > 0 && (
             <RecalibrationSection
               title="Overdue"
@@ -143,12 +132,14 @@ export function RecalibrationModal({
                   task={task}
                   pendingChanges={pendingChanges.get(task.id)}
                   isReviewed={reviewedTaskIds.has(task.id)}
+                  isExpanded={expandedTaskId === task.id}
+                  onToggleExpand={() => handleToggleExpand(task.id)}
                   onUpdateChanges={(changes) =>
                     updateTaskChanges(task.id, changes)
                   }
                   onComplete={() => handleTaskComplete(task.id)}
                   onHide={() => hideTask(task.id)}
-                  onMarkReviewed={() => markTaskReviewed(task.id)}
+                  onMarkReviewed={() => handleMarkReviewed(task.id)}
                 />
               ))}
             </RecalibrationSection>
@@ -166,12 +157,14 @@ export function RecalibrationModal({
                   task={task}
                   pendingChanges={pendingChanges.get(task.id)}
                   isReviewed={reviewedTaskIds.has(task.id)}
+                  isExpanded={expandedTaskId === task.id}
+                  onToggleExpand={() => handleToggleExpand(task.id)}
                   onUpdateChanges={(changes) =>
                     updateTaskChanges(task.id, changes)
                   }
                   onComplete={() => handleTaskComplete(task.id)}
                   onHide={() => hideTask(task.id)}
-                  onMarkReviewed={() => markTaskReviewed(task.id)}
+                  onMarkReviewed={() => handleMarkReviewed(task.id)}
                 />
               ))}
             </RecalibrationSection>
@@ -190,12 +183,14 @@ export function RecalibrationModal({
                   task={task}
                   pendingChanges={pendingChanges.get(task.id)}
                   isReviewed={reviewedTaskIds.has(task.id)}
+                  isExpanded={expandedTaskId === task.id}
+                  onToggleExpand={() => handleToggleExpand(task.id)}
                   onUpdateChanges={(changes) =>
                     updateTaskChanges(task.id, changes)
                   }
                   onComplete={() => handleTaskComplete(task.id)}
                   onHide={() => hideTask(task.id)}
-                  onMarkReviewed={() => markTaskReviewed(task.id)}
+                  onMarkReviewed={() => handleMarkReviewed(task.id)}
                 />
               ))}
             </RecalibrationSection>
@@ -203,31 +198,21 @@ export function RecalibrationModal({
         </div>
 
         {/* Footer actions */}
-        <div className="border-t pt-4 space-y-3">
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onSkipToday}
-            >
-              Skip Today
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleDone}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : 'Done'}
-            </Button>
-          </div>
-
-          <button
-            onClick={onSnooze}
-            className="w-full text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 rounded-md p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <div className="border-t pt-3 flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={onSkipToday}
           >
-            <Clock className="h-3 w-3" aria-hidden="true" />
-            Remind me in 1 hour
-          </button>
+            Skip Today
+          </Button>
+          <Button
+            className="flex-1"
+            onClick={handleDone}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Done'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

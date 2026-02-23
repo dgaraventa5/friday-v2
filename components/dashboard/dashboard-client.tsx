@@ -174,7 +174,6 @@ export function DashboardClient({
     isOpen: isRecalibrationOpen,
     setIsOpen: setRecalibrationOpen,
     skipToday: skipRecalibrationToday,
-    snooze: snoozeRecalibration,
     openManually: openRecalibrationManually,
   } = useRecalibration(tasks, {
     triggerTime: profile.recalibration_time || '17:00:00',
@@ -309,7 +308,6 @@ export function DashboardClient({
         onSaveChanges={handleRecalibrationSave}
         onTaskComplete={handleRecalibrationTaskComplete}
         onSkipToday={skipRecalibrationToday}
-        onSnooze={snoozeRecalibration}
       />
     </div>
   );
