@@ -10,10 +10,10 @@ export function FinalCTASection() {
         <FadeIn>
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
-              Ready to focus on what actually matters?
+              Your most productive day starts with less.
             </h2>
             <p className="text-lg md:text-xl text-slate-600 mb-10">
-              Let Friday figure out what to tackle first.
+              Let Friday do the thinking. You do the doing.
             </p>
 
             <Link href="/auth/sign-up">
@@ -21,7 +21,7 @@ export function FinalCTASection() {
                 size="lg"
                 className="cta-hover px-10 h-12 bg-slate-900 text-white hover:bg-slate-800 font-medium text-base"
               >
-                Get started for free
+                Start Your First Day
                 <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Button>
             </Link>

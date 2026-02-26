@@ -70,8 +70,8 @@ export default function HomePage() {
                 <span className="text-xl font-bold text-slate-800">friday</span>
               </div>
               <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
-                Focus on what matters most. Prioritize your daily tasks using
-                proven productivity principles.
+                Your daily tasks, sorted by what actually matters. Less
+                overwhelm, more progress.
               </p>
             </div>
 

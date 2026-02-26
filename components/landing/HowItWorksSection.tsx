@@ -173,17 +173,17 @@ function TodaysFocusVisual() {
 const acts = [
   {
     step: "01",
-    title: "Dump everything in",
+    title: "Get it off your mind",
     description:
-      "Add tasks with a name, category, and two simple toggles: important and urgent. No complex project management, no tags, no multi-step workflows. If it\u2019s on your mind, get it into Friday in seconds.",
+      "Add a task with a name, a category, and two simple questions: is it important? Is it urgent? That\u2019s it. If it\u2019s weighing on you, Friday holds it so you don\u2019t have to.",
     Visual: AddTaskVisual,
     reverse: false,
   },
   {
     step: "02",
-    title: "Friday finds what matters",
+    title: "Let Friday sort the noise",
     description:
-      "Behind the scenes, Friday uses the Eisenhower Matrix \u2014 the same framework used by presidents and CEOs for decades \u2014 to score every task by importance, urgency, and deadline pressure. It automatically schedules your day so the right things get done first.",
+      "Behind the scenes, Friday scores every task using the Eisenhower Matrix \u2014 the same framework used by world-class leaders for decades. It weighs importance, urgency, and deadline pressure to find what truly needs your attention.",
     Visual: MatrixVisual,
     reverse: true,
   },
@@ -191,7 +191,7 @@ const acts = [
     step: "03",
     title: "Wake up knowing what to do",
     description:
-      "Every morning, your most important tasks are waiting \u2014 prioritized by urgency, deadlines, and impact. No scanning, no overthinking. Just open Friday and start. With recurring tasks, streak tracking, and category balance built in.",
+      "Each morning, your top tasks are waiting \u2014 chosen for you based on what matters most. No decision fatigue. No guilt about what you\u2019re not doing. Just a clear, calm starting point.",
     Visual: TodaysFocusVisual,
     reverse: false,
   },
@@ -204,10 +204,10 @@ export function HowItWorksSection() {
         <FadeIn>
           <div className="max-w-2xl mx-auto text-center mb-20 md:mb-28">
             <h2 className="text-3xl md:text-5xl font-semibold text-slate-900 mb-4">
-              How Friday works
+              Simple by design
             </h2>
             <p className="text-lg text-slate-500">
-              Three steps. No learning curve.
+              Getting organized shouldn&apos;t be another chore.
             </p>
           </div>
         </FadeIn>

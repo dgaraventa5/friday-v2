@@ -70,16 +70,16 @@ export function HeroSection() {
           {/* Left column — Content */}
           <div className="max-w-xl">
             <h1 className="animate-fade-up text-5xl md:text-7xl font-bold leading-[1.08] tracking-tight mb-6 text-slate-900">
-              The to-do list that{" "}
-              <span className="text-yellow-600">thinks&nbsp;for&nbsp;you.</span>
+              Do less today.{" "}
+              <span className="text-yellow-600">Get&nbsp;more&nbsp;done.</span>
             </h1>
 
             <p
               className="animate-fade-up text-lg md:text-xl text-slate-600 leading-relaxed mb-10 max-w-[540px]"
               style={{ animationDelay: "150ms" }}
             >
-              Add your tasks. Friday&apos;s prioritization engine surfaces what
-              matters most each day, so nothing important slips through.
+              Too many tasks, not enough clarity. Friday cuts through the
+              noise so you start each day knowing exactly what to tackle.
             </p>
 
             <div
@@ -91,7 +91,7 @@ export function HeroSection() {
                   size="lg"
                   className="cta-hover w-full sm:w-auto px-8 h-12 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium"
                 >
-                  Start Focusing
+                  Start Your First Day
                   <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Button>
               </Link>
