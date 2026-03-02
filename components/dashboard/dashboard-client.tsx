@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Task, Profile, Reminder, ReminderCompletion, ReminderWithStatus, CalendarEventWithCalendar, ConnectedCalendar } from '@/lib/types';
 import { TodayView } from '@/components/today/today-view';
 import { ScheduleView } from '@/components/schedule/schedule-view';
@@ -104,14 +104,11 @@ export function DashboardClient({
     toast,
   });
 
-  // Use the calendar hook for calendar events
-  const {
-    events: calendarEvents,
-    connections: calendarConnections,
-    lastSyncedAt: calendarLastSyncedAt,
-    isLoading: calendarIsLoading,
-    refresh: refreshCalendar,
-  } = useCalendar({
+  // Memoize the initial calendar data to prevent the useCalendar hook's
+  // useEffect from overwriting client-side state on every re-render.
+  // Without this, the inline object creates a new reference each render,
+  // causing the hook to reset freshly fetched data with stale server props.
+  const calendarInitialData = useMemo(() => ({
     events: initialCalendarEvents,
     connections: initialCalendarConnections,
     lastSyncedAt: initialCalendarConnections.reduce((latest, conn) => {
@@ -120,7 +117,16 @@ export function DashboardClient({
       return conn.last_synced_at > latest ? conn.last_synced_at : latest;
     }, null as string | null),
     syncError: null,
-  });
+  }), [initialCalendarEvents, initialCalendarConnections]);
+
+  // Use the calendar hook for calendar events
+  const {
+    events: calendarEvents,
+    connections: calendarConnections,
+    lastSyncedAt: calendarLastSyncedAt,
+    isLoading: calendarIsLoading,
+    refresh: refreshCalendar,
+  } = useCalendar(calendarInitialData);
 
   // Sync user's timezone to profile if not already set
   // This ensures server-side date calculations match the user's local timezone

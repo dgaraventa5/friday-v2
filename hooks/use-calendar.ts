@@ -45,6 +45,7 @@ export function useCalendar(initialData?: TodayCalendarData): UseCalendarReturn 
   }, []);
 
   const refresh = useCallback(async () => {
+    setIsLoading(true);
     // Trigger a sync first
     try {
       await fetch('/api/calendar/sync', {
@@ -56,7 +57,7 @@ export function useCalendar(initialData?: TodayCalendarData): UseCalendarReturn 
       console.error('Error syncing calendars:', error);
     }
 
-    // Then fetch the updated data
+    // Then fetch the updated data (this also manages isLoading)
     await fetchCalendarData();
   }, [fetchCalendarData]);
 
