@@ -29,6 +29,31 @@ export interface ITasksService {
 export class TasksService extends BaseService implements ITasksService {
   private readonly TABLE_NAME = 'tasks';
 
+  private readonly VALID_IMPORTANCE = ['important', 'not-important'];
+  private readonly VALID_URGENCY = ['urgent', 'not-urgent'];
+  private readonly VALID_CATEGORIES = ['Work', 'Home', 'Health', 'Personal'];
+
+  /**
+   * Validate task data before insert/update
+   */
+  private validateTaskData(taskData: Partial<Task>): string | null {
+    if (taskData.importance && !this.VALID_IMPORTANCE.includes(taskData.importance)) {
+      return `Invalid importance value: ${taskData.importance}`;
+    }
+    if (taskData.urgency && !this.VALID_URGENCY.includes(taskData.urgency)) {
+      return `Invalid urgency value: ${taskData.urgency}`;
+    }
+    if (taskData.category && !this.VALID_CATEGORIES.includes(taskData.category)) {
+      return `Invalid category value: ${taskData.category}`;
+    }
+    if (taskData.estimated_hours !== undefined && taskData.estimated_hours !== null) {
+      if (typeof taskData.estimated_hours !== 'number' || taskData.estimated_hours < 0 || taskData.estimated_hours > 100) {
+        return 'estimated_hours must be a number between 0 and 100';
+      }
+    }
+    return null;
+  }
+
   /**
    * Get all tasks for a specific user
    */
@@ -83,6 +108,11 @@ export class TasksService extends BaseService implements ITasksService {
    * Create a new task
    */
   async createTask(taskData: Partial<Task>): Promise<ServiceResult<Task>> {
+    const validationError = this.validateTaskData(taskData);
+    if (validationError) {
+      return createErrorResult({ message: validationError, code: 'VALIDATION_ERROR' });
+    }
+
     try {
       const { data, error } = await this.supabase
         .from(this.TABLE_NAME)
@@ -132,6 +162,11 @@ export class TasksService extends BaseService implements ITasksService {
    * Update a single task
    */
   async updateTask(taskId: string, updates: Partial<Task>): Promise<ServiceResult<Task>> {
+    const validationError = this.validateTaskData(updates);
+    if (validationError) {
+      return createErrorResult({ message: validationError, code: 'VALIDATION_ERROR' });
+    }
+
     try {
       const { data, error } = await this.supabase
         .from(this.TABLE_NAME)

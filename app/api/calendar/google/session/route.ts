@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { verifyOrigin } from '@/lib/utils/security';
 
 /**
  * GET /api/calendar/google/session
@@ -60,6 +61,9 @@ export async function GET(request: Request) {
  * Clean up OAuth session after completion or cancellation
  */
 export async function DELETE(request: Request) {
+  const originError = verifyOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

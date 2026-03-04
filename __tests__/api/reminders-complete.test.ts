@@ -191,7 +191,9 @@ describe('POST /api/reminders/complete', () => {
 
     it('should delete completion and decrement count', async () => {
       const deleteMock = jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null }),
+        }),
       });
       const selectMock = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -220,7 +222,9 @@ describe('POST /api/reminders/complete', () => {
 
     it('should not decrement below 0', async () => {
       const deleteMock = jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null }),
+        }),
       });
       const selectMock = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({

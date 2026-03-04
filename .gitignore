@@ -31,6 +31,10 @@ yarn-error.log*
 # worktrees
 .worktrees
 
+# claude
+.claude/
+.agents/
+
 # vercel
 .vercel
 

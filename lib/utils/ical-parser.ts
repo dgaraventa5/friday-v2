@@ -230,6 +230,43 @@ function isEventInRange(event: ParsedEvent, rangeStart: Date, rangeEnd: Date): b
 }
 
 /**
+ * Check if a URL is safe to fetch (SSRF protection)
+ * Blocks private IPs, localhost, and cloud metadata endpoints
+ */
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+
+    // Only allow HTTPS
+    if (parsed.protocol !== 'https:') {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Block localhost
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1') {
+      return false;
+    }
+
+    // Block private IP ranges
+    const ipMatch = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (ipMatch) {
+      const [, a, b] = ipMatch.map(Number);
+      if (a === 10) return false;                          // 10.0.0.0/8
+      if (a === 172 && b >= 16 && b <= 31) return false;   // 172.16.0.0/12
+      if (a === 192 && b === 168) return false;             // 192.168.0.0/16
+      if (a === 169 && b === 254) return false;             // 169.254.0.0/16 (link-local / cloud metadata)
+      if (a === 0) return false;                            // 0.0.0.0/8
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Validate that a URL returns valid iCal data
  */
 export async function validateICalUrl(url: string): Promise<{
@@ -239,6 +276,10 @@ export async function validateICalUrl(url: string): Promise<{
 }> {
   try {
     const normalizedUrl = normalizeCalendarUrl(url);
+
+    if (!isSafeUrl(normalizedUrl)) {
+      return { valid: false, error: 'Invalid or blocked URL. Only public HTTPS URLs are allowed.' };
+    }
 
     const response = await fetch(normalizedUrl, {
       headers: {
@@ -308,6 +349,11 @@ export async function fetchAndParseICalUrl(
 }> {
   try {
     const normalizedUrl = normalizeCalendarUrl(url);
+
+    if (!isSafeUrl(normalizedUrl)) {
+      return { success: false, error: 'Invalid or blocked URL. Only public HTTPS URLs are allowed.' };
+    }
+
     const response = await fetch(normalizedUrl, {
       headers: {
         'Accept': 'text/calendar',

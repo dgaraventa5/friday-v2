@@ -83,7 +83,8 @@ export async function POST(request: Request) {
       const { error } = await supabase
         .from('reminder_completions')
         .delete()
-        .eq('id', completionId);
+        .eq('id', completionId)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('[API] Uncomplete error:', error);
@@ -138,7 +139,8 @@ export async function POST(request: Request) {
       const { error } = await supabase
         .from('reminder_completions')
         .delete()
-        .eq('id', completionId);
+        .eq('id', completionId)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('[API] Unskip error:', error);

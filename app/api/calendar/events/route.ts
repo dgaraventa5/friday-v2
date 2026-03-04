@@ -62,9 +62,12 @@ export async function GET(request: Request) {
     // Check for any sync errors
     const syncError = connections.find(c => c.sync_error)?.sync_error || null;
 
+    // Strip sensitive fields from connections before returning to client
+    const safeConnections = connections.map(({ google_access_token, google_refresh_token, ical_url, ...rest }) => rest);
+
     return NextResponse.json({
       events: eventsResult.data || [],
-      connections,
+      connections: safeConnections,
       lastSyncedAt,
       syncError,
     });
