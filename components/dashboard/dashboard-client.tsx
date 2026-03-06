@@ -178,8 +178,8 @@ export function DashboardClient({
   // Use the recalibration hook for daily task review
   const {
     isOpen: isRecalibrationOpen,
-    setIsOpen: setRecalibrationOpen,
     skipToday: skipRecalibrationToday,
+    close: closeRecalibration,
     openManually: openRecalibrationManually,
   } = useRecalibration(tasks, {
     triggerTime: profile.recalibration_time || '17:00:00',
@@ -310,7 +310,7 @@ export function DashboardClient({
         tasks={tasks}
         profile={profile}
         isOpen={isRecalibrationOpen}
-        onOpenChange={setRecalibrationOpen}
+        onOpenChange={(open) => { if (!open) closeRecalibration(); }}
         onSaveChanges={handleRecalibrationSave}
         onTaskComplete={handleRecalibrationTaskComplete}
         onSkipToday={skipRecalibrationToday}

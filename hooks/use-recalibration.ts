@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Task, RecalibrationTask, PendingTaskChanges } from '@/lib/types';
 import {
   getTasksForRecalibration,
@@ -55,7 +55,7 @@ export function useRecalibration(
   const [pendingChanges, setPendingChanges] = useState<Map<string, PendingTaskChanges>>(new Map());
   const [hiddenTaskIds, setHiddenTaskIds] = useState<Set<string>>(new Set());
   const [reviewedTaskIds, setReviewedTaskIds] = useState<Set<string>>(new Set());
-  const [hasCheckedTrigger, setHasCheckedTrigger] = useState(false);
+  const hasCheckedTrigger = useRef(false);
 
   const triggerHour = useMemo(() => parseTriggerHour(triggerTime), [triggerTime]);
 
@@ -95,15 +95,15 @@ export function useRecalibration(
 
   // Check if should auto-trigger
   useEffect(() => {
-    if (hasCheckedTrigger || !enabled) return;
+    if (hasCheckedTrigger.current || !enabled) return;
+    hasCheckedTrigger.current = true;
 
     if (shouldShowRecalibration(tasks, triggerHour, lastDismissedDate, enabled)) {
       // Delay slightly to not interrupt page load
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
     }
-    setHasCheckedTrigger(true);
-  }, [tasks, triggerHour, hasCheckedTrigger, enabled, lastDismissedDate]);
+  }, [tasks, triggerHour, enabled, lastDismissedDate]);
 
   // Update pending changes for a task (also marks it as reviewed)
   const updateTaskChanges = useCallback((taskId: string, changes: Partial<PendingTaskChanges>) => {
@@ -153,11 +153,19 @@ export function useRecalibration(
     setIsOpen(true);
   }, [resetState]);
 
-  // Close modal
-  const close = useCallback(() => {
+  // Close modal - also persists dismissal so it won't reappear today
+  const close = useCallback(async () => {
     setIsOpen(false);
     resetState();
-  }, [resetState]);
+
+    if (onDismiss) {
+      try {
+        await onDismiss();
+      } catch (error) {
+        console.error('[Recalibration] Failed to persist dismissal:', error);
+      }
+    }
+  }, [resetState, onDismiss]);
 
   // Get all pending changes for submission
   const getAllPendingChanges = useCallback(() => {
