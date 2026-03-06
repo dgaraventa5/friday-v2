@@ -27,8 +27,6 @@ export function generateNextRecurringInstance(completedTask: Task): Task | null 
         const currentDay = getDayOfWeek(currentDueDateStr);
         const sortedDays = [...completedTask.recurring_days].sort((a, b) => a - b);
         
-        console.log('[v0] Next instance: current day (local):', currentDay, 'recurring_days:', sortedDays);
-        
         // Find next day in the cycle
         let nextDay = sortedDays.find(day => day > currentDay);
         
@@ -55,8 +53,6 @@ export function generateNextRecurringInstance(completedTask: Task): Task | null 
       nextDueDateStr = formatDateLocal(currentDate);
       break;
   }
-  
-  console.log('[v0] Generated next instance due date:', nextDueDateStr);
   
   // Create new task instance
   const nextInstance: Partial<Task> = {
@@ -94,9 +90,6 @@ export function generateInitialRecurringInstances(
   const startDateStr = baseTask.due_date || formatDateLocal(new Date());
   let instanceCount = 1;
 
-  console.log('[v0] Generating recurring instances for interval:', baseTask.recurring_interval);
-  console.log('[v0] Start date:', startDateStr);
-
   // Helper to check if we've reached the end count
   const hasReachedEndCount = () => {
     return (
@@ -122,12 +115,9 @@ export function generateInitialRecurringInstances(
       const endDateStr = addDaysToDateString(startDateStr, weeksAhead * 7);
       let currentDateStr = startDateStr;
 
-      console.log('[v0] Generating daily instances from', startDateStr, 'to', endDateStr);
-
       while (currentDateStr <= endDateStr) {
         if (hasReachedEndCount()) break;
 
-        console.log('[v0] Creating daily instance on date', currentDateStr);
         instances.push(createInstance(currentDateStr));
         instanceCount++;
         currentDateStr = addDaysToDateString(currentDateStr, 1);
@@ -139,16 +129,12 @@ export function generateInitialRecurringInstances(
       // Weekly tasks require recurring_days to be set
       if (!baseTask.recurring_days || baseTask.recurring_days.length === 0) {
         // Fallback: just create single instance with start_date set
-        console.log('[v0] Weekly task without recurring_days, creating single instance');
         instances.push(createInstance(startDateStr));
         break;
       }
 
       const endDateStr = addDaysToDateString(startDateStr, weeksAhead * 7);
       let currentDateStr = startDateStr;
-
-      console.log('[v0] Generating weekly instances from', startDateStr, 'to', endDateStr);
-      console.log('[v0] Recurring days:', baseTask.recurring_days);
 
       // Generate instances for each occurrence day within the time window
       while (currentDateStr <= endDateStr) {
@@ -157,7 +143,6 @@ export function generateInitialRecurringInstances(
         const dayOfWeek = getDayOfWeek(currentDateStr);
         
         if (baseTask.recurring_days.includes(dayOfWeek)) {
-          console.log('[v0] Creating weekly instance for day', dayOfWeek, 'on date', currentDateStr);
           instances.push(createInstance(currentDateStr));
           instanceCount++;
         }
@@ -174,9 +159,6 @@ export function generateInitialRecurringInstances(
       let currentDate = parseDateLocal(startDateStr);
       const originalDayOfMonth = currentDate.getDate();
 
-      console.log('[v0] Generating monthly instances, months ahead:', monthsAhead);
-      console.log('[v0] Day of month:', originalDayOfMonth);
-
       for (let i = 0; i < monthsAhead; i++) {
         if (hasReachedEndCount()) break;
 
@@ -187,7 +169,6 @@ export function generateInitialRecurringInstances(
         targetDate.setDate(dayToUse);
 
         const dateStr = formatDateLocal(targetDate);
-        console.log('[v0] Creating monthly instance on date', dateStr);
         instances.push(createInstance(dateStr));
         instanceCount++;
       }
@@ -196,11 +177,8 @@ export function generateInitialRecurringInstances(
 
     default:
       // Unknown interval - just return the base task with start_date set
-      console.log('[v0] Unknown recurring interval, creating single instance');
       instances.push(createInstance(startDateStr));
   }
-
-  console.log('[v0] Generated', instances.length, 'recurring instances');
 
   return instances;
 }

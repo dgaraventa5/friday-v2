@@ -56,10 +56,7 @@ export async function POST(request: Request) {
     );
 
     // Update only tasks that were rescheduled
-    console.log('[reschedule] Updating', result.rescheduledTasks.length, 'tasks in database');
-
     const updatePromises = result.rescheduledTasks.map(({ task }) => {
-      console.log(`[reschedule] Updating "${task.title}": ${task.start_date}`);
       return supabase
         .from('tasks')
         .update({ start_date: task.start_date })
@@ -76,8 +73,6 @@ export async function POST(request: Request) {
         error: 'Some tasks failed to update',
       }, { status: 500 });
     }
-
-    console.log('[reschedule] Successfully updated', result.rescheduledTasks.length, 'tasks');
 
     return NextResponse.json({
       success: true,

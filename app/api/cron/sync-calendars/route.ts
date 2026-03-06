@@ -53,16 +53,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('[Cron] Starting calendar sync job');
-
     const supabaseAdmin = getSupabaseAdmin();
     const result = await syncAllActiveCalendars(supabaseAdmin);
-
-    console.log(`[Cron] Calendar sync complete: ${result.succeeded}/${result.total} succeeded`);
-
-    if (result.errors.length > 0) {
-      console.error('[Cron] Sync errors:', result.errors);
-    }
 
     return NextResponse.json({
       success: result.failed === 0,

@@ -1,4 +1,4 @@
-import { FadeIn } from "./FadeIn";
+import { FadeIn } from "./fade-in";
 
 /* ----- Act 1 Visual: Add Task Form ----- */
 function AddTaskVisual() {

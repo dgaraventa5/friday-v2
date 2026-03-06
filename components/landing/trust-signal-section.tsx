@@ -1,4 +1,4 @@
-import { FadeIn } from "./FadeIn";
+import { FadeIn } from "./fade-in";
 
 export function TrustSignalSection() {
   return (

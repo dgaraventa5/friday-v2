@@ -45,23 +45,12 @@ export async function validateStreak(userId: string): Promise<Profile | null> {
   const wasToday = lastCompletionStr === todayStr;
   const wasYesterday = lastCompletionStr === yesterdayStr;
 
-  console.log('[validateStreak] Checking streak validity:', {
-    todayStr,
-    yesterdayStr,
-    lastCompletionStr,
-    currentStreak: profile.current_streak,
-    wasToday,
-    wasYesterday,
-  });
-
   // If last completion was today or yesterday, streak is still valid
   if (wasToday || wasYesterday) {
-    console.log('[validateStreak] Streak is valid - no changes');
     return profile;
   }
 
   // Last completion was more than 1 day ago - reset streak to 0
-  console.log('[validateStreak] Streak broken - resetting to 0');
   if (profile.current_streak !== 0) {
     const updateResult = await profileService.updateStreakFields(userId, {
       current_streak: 0,
@@ -86,7 +75,6 @@ export async function updateStreak(userId: string) {
   const result = await profileService.getProfile(userId);
 
   if (result.error || !result.data) {
-    console.log('[updateStreak] Failed to get profile:', result.error);
     return;
   }
 
@@ -97,23 +85,14 @@ export async function updateStreak(userId: string) {
   const yesterdayStr = addDaysToDateString(todayStr, -1);
   const lastCompletionStr = profile.last_completion_date;
 
-  console.log('[updateStreak] Current state:', {
-    todayStr,
-    yesterdayStr,
-    lastCompletionStr,
-    currentStreak: profile.current_streak,
-  });
-
   // If last completion was today, don't update (already counted)
   // UNLESS the streak is 0 (inconsistent state that needs fixing)
   if (lastCompletionStr === todayStr && profile.current_streak > 0) {
-    console.log('[updateStreak] Already counted today - skipping');
     return;
   }
 
   // Special case: last_completion_date is today but streak is 0 (inconsistent state)
   if (lastCompletionStr === todayStr && profile.current_streak === 0) {
-    console.log('[updateStreak] Inconsistent state detected - fixing streak');
     // Check if they had completions yesterday to determine the correct streak value
     const hasCompletedYesterday = await hasCompletedAnythingOnDate(supabase, userId, yesterdayStr);
 
@@ -131,7 +110,6 @@ export async function updateStreak(userId: string) {
       return;
     }
 
-    console.log('[updateStreak] Fixed inconsistent streak!', updateResult.data);
     return;
   }
 
@@ -140,21 +118,13 @@ export async function updateStreak(userId: string) {
   // If last completion was yesterday, increment streak
   if (lastCompletionStr === yesterdayStr) {
     newStreak += 1;
-    console.log('[updateStreak] Incrementing streak from yesterday:', newStreak);
   } else {
     // Last completion was before yesterday or never - reset to 1
     newStreak = 1;
-    console.log('[updateStreak] Starting new streak:', newStreak);
   }
 
   // Update longest streak if current exceeds it
   const newLongestStreak = Math.max(newStreak, profile.longest_streak);
-
-  console.log('[updateStreak] Updating profile with:', {
-    current_streak: newStreak,
-    longest_streak: newLongestStreak,
-    last_completion_date: todayStr,
-  });
 
   // Update profile using ProfileService
   const updateResult = await profileService.updateStreakFields(userId, {
@@ -168,7 +138,6 @@ export async function updateStreak(userId: string) {
     return;
   }
 
-  console.log('[updateStreak] Successfully updated streak!', updateResult.data);
 }
 
 /**
@@ -231,7 +200,6 @@ export async function recalculateStreak(userId: string) {
     .limit(1);
 
   if (tasksError) {
-    console.error('[v0] Error fetching today\'s completed tasks:', tasksError);
     return;
   }
 

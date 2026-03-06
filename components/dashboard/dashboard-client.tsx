@@ -136,7 +136,6 @@ export function DashboardClient({
       if (profile.timezone) return;
 
       const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      console.log('[DashboardClient] Syncing timezone:', browserTimezone);
 
       try {
         const response = await fetch('/api/settings', {
@@ -146,14 +145,13 @@ export function DashboardClient({
         });
 
         if (!response.ok) {
-          console.error('[DashboardClient] Failed to sync timezone');
           return;
         }
 
         // Refresh to get updated profile with timezone
         router.refresh();
       } catch (error) {
-        console.error('[DashboardClient] Error syncing timezone:', error);
+        // Timezone sync is best-effort; silently ignore failures
       }
     };
 
@@ -170,7 +168,6 @@ export function DashboardClient({
       // Refresh to get updated profile with new dismissed date
       router.refresh();
     } catch (error) {
-      console.error('[Recalibration] Failed to dismiss:', error);
       throw error;
     }
   };
@@ -222,7 +219,7 @@ export function DashboardClient({
     try {
       await fetch('/api/reschedule', { method: 'POST' });
     } catch (error) {
-      console.error('[Recalibration] Failed to reschedule:', error);
+      // Reschedule is best-effort during recalibration
     }
 
     // Refresh to get updated data

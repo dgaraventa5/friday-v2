@@ -111,12 +111,6 @@ export function verifyOrigin(request: Request): NextResponse | null {
   }
 
   // If we reach here, the origin is not allowed
-  const requestOrigin = origin || (referer ? `referer: ${referer}` : 'unknown');
-  console.warn(
-    `[Security] Blocked request with invalid origin: ${requestOrigin}. ` +
-    `Host: ${host || 'none'}. Allowed: ${allowedOrigins.join(', ') || 'none (no env vars configured)'}`
-  );
-
   return NextResponse.json(
     { error: 'Invalid origin' },
     { status: 403 }

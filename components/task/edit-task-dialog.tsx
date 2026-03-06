@@ -81,12 +81,8 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
 
     try {
       const dueDateStr = formatDateLocal(dueDate);
-      
-      console.log('[v0] Editing task:', task.title);
-      console.log('[v0] Old due_date:', task.due_date, 'Old start_date:', task.start_date);
-      console.log('[v0] New due_date:', dueDateStr);
-      
-      const updateData: any = {
+
+      const updateData: Partial<Task> & { updated_at: string } = {
         title: title.trim(),
         category,
         due_date: dueDateStr,
@@ -100,7 +96,6 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
       
       if (!task.is_recurring) {
         updateData.start_date = dueDateStr;
-        console.log('[v0] Updating non-recurring task start_date to:', dueDateStr);
       }
       
       const result = await tasksService.updateTask(task.id, updateData);
@@ -108,8 +103,6 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
       if (result.error) throw result.error;
       if (!result.data) throw new Error('No task data returned');
 
-      console.log('[v0] Task updated successfully:', result.data);
-      
       toast({
         title: 'Task updated',
         description: 'Your task has been saved successfully.',
@@ -118,7 +111,6 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
       onTaskUpdated(result.data);
       onOpenChange(false);
     } catch (err) {
-      console.error('[v0] Error updating task:', err);
       setError('Failed to update task. Please try again.');
       
       toast({
@@ -159,7 +151,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="edit-category">Category</Label>
-              <Select value={category} onValueChange={(value: any) => setCategory(value)}>
+              <Select value={category} onValueChange={(value: string) => setCategory(value as typeof category)}>
                 <SelectTrigger id="edit-category">
                   <SelectValue />
                 </SelectTrigger>

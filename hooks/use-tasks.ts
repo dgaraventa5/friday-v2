@@ -73,7 +73,6 @@ export function useTasks({
         // 1. Find the task in the CURRENT state
         const task = tasks.find(t => t.id === taskId);
         if (!task) {
-          console.warn(`Task ${taskId} not found in current state, skipping`);
           setPullQueue(prev => prev.slice(1));
           isProcessingQueue.current = false;
           return;
@@ -92,7 +91,6 @@ export function useTasks({
           t.id === taskId ? { ...t, start_date: todayStr, pinned_date: todayStr } : t
         );
 
-        console.log('[v0] Task pulled to today - optimizing schedule to fill gaps');
         const dailyMaxTasks = getDailyMaxTasks();
 
         const schedulingResult = assignStartDates(
@@ -107,8 +105,6 @@ export function useTasks({
           .filter(({ newDate, task: t }) => newDate !== null && t.id !== taskId);
 
         if (tasksToUpdate.length > 0) {
-          console.log('[v0] Rescheduling', tasksToUpdate.length, 'additional tasks to fill gaps');
-
           const updates = tasksToUpdate.map(({ task: t }) => ({
             id: t.id,
             data: { start_date: t.start_date }
@@ -131,7 +127,6 @@ export function useTasks({
 
         router.refresh();
       } catch (error) {
-        console.error('[v0] Error pulling task to today:', error);
         toast({
           title: 'Update Failed',
           description: 'Could not add task to today. Please try again.',
@@ -151,15 +146,7 @@ export function useTasks({
   // Initial scheduling on mount
   useEffect(() => {
     const runInitialScheduling = async () => {
-      console.log('[v0] Running initial scheduling for all tasks');
-      console.log('[v0] Profile data:', {
-        category_limits: profile.category_limits,
-        daily_max_hours: profile.daily_max_hours,
-        daily_max_tasks: profile.daily_max_tasks,
-      });
-
       const dailyMaxTasks = getDailyMaxTasks();
-      console.log('[v0] Using daily_max_tasks:', dailyMaxTasks);
 
       const schedulingResult = assignStartDates(
         tasks,
@@ -173,8 +160,6 @@ export function useTasks({
         .filter(({ newDate }) => newDate !== null);
 
       if (tasksToUpdate.length > 0) {
-        console.log('[v0] Updating', tasksToUpdate.length, 'tasks with new start dates');
-
         const updates = tasksToUpdate.map(({ task }) => ({
           id: task.id,
           data: { start_date: task.start_date }
@@ -199,7 +184,6 @@ export function useTasks({
 
   const addTask = async (newTasks: Task | Task[]) => {
     const tasksArray = Array.isArray(newTasks) ? newTasks : [newTasks];
-    console.log('[v0] handleTaskAdded called with', tasksArray.length, 'tasks');
 
     // Add new tasks to state
     const updatedTaskList = [...tasks, ...tasksArray];
@@ -219,8 +203,6 @@ export function useTasks({
       .filter(({ newDate }) => newDate !== null);
 
     if (tasksToUpdate.length > 0) {
-      console.log('[v0] Updating', tasksToUpdate.length, 'tasks in database');
-
       const updates = tasksToUpdate.map(({ task }) => ({
         id: task.id,
         data: { start_date: task.start_date }
@@ -315,8 +297,6 @@ export function useTasks({
               if (!insertResult.error && insertResult.data) {
                 updatedTasks.push(insertResult.data);
               }
-            } else {
-              console.log('[v0] Skipping duplicate recurring instance for', nextInstance.start_date);
             }
           }
         }
@@ -324,7 +304,6 @@ export function useTasks({
         // Only re-run scheduling if auto-scheduling is not skipped
         if (!skipAutoSchedule) {
           // Re-run scheduling to backfill the freed capacity
-          console.log('[v0] Task completed - re-optimizing schedule');
           const dailyMaxTasks = getDailyMaxTasks();
 
           const schedulingResult = assignStartDates(
@@ -354,7 +333,6 @@ export function useTasks({
 
           setTasks(schedulingResult.tasks);
         } else {
-          console.log('[v0] Task completed - skipping auto-scheduling per user preference');
           setTasks(updatedTasks);
         }
       } else {
@@ -369,26 +347,20 @@ export function useTasks({
 
       router.refresh();
     } catch (error) {
-      console.error('[v0] Error updating task:', error);
       setTasks(tasks);
     }
   };
 
   const editTask = (task: Task) => {
-    console.log('[v0] Editing task:', task.title);
     setEditingTask(task);
     setShowEditDialog(true);
   };
 
   const updateTask = async (updatedTask: Task) => {
-    console.log('[v0] Task updated:', updatedTask.title);
-    console.log('[v0] Updated values:', { due_date: updatedTask.due_date, start_date: updatedTask.start_date });
-
     // Update task in list
     const updatedTaskList = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
 
     // Run full scheduling
-    console.log('[v0] Re-running scheduling algorithm after edit...');
     const dailyMaxTasks = getDailyMaxTasks();
 
     const schedulingResult = assignStartDates(
@@ -404,8 +376,6 @@ export function useTasks({
 
     // Batch update in database
     if (tasksToUpdate.length > 0) {
-      console.log('[v0] Rescheduling', tasksToUpdate.length, 'additional tasks');
-
       try {
         const updates = tasksToUpdate.map(({ task }) => ({
           id: task.id,
@@ -418,7 +388,6 @@ export function useTasks({
           description: `${tasksToUpdate.length} task${tasksToUpdate.length > 1 ? 's were' : ' was'} moved to accommodate your changes.`,
         });
       } catch (error) {
-        console.error('[v0] Error updating rescheduled tasks:', error);
         toast({
           title: 'Update Error',
           description: 'Some tasks may not have been rescheduled. Please refresh the page.',
@@ -461,7 +430,6 @@ export function useTasks({
       if (result.error) throw result.error;
 
       // Re-run scheduling to backfill freed capacity
-      console.log('[v0] Task deleted - re-optimizing schedule');
       const dailyMaxTasks = getDailyMaxTasks();
 
       const schedulingResult = assignStartDates(
@@ -491,7 +459,6 @@ export function useTasks({
       setTasks(schedulingResult.tasks);
       router.refresh();
     } catch (error) {
-      console.error('[v0] Error deleting task:', error);
       toast({
         title: 'Delete Failed',
         description: 'Could not delete task. Please try again.',

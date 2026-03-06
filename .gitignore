@@ -34,6 +34,10 @@ yarn-error.log*
 # claude
 .claude/
 .agents/
+skills-lock.json
+
+# editor
+.cursor/
 
 # vercel
 .vercel

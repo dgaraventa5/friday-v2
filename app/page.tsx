@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
-import { TrustSignalSection } from "@/components/landing/TrustSignalSection";
-import { FinalCTASection } from "@/components/landing/FinalCTASection";
+import { HeroSection } from "@/components/landing/hero-section";
+import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { TrustSignalSection } from "@/components/landing/trust-signal-section";
+import { FinalCTASection } from "@/components/landing/final-cta-section";
 
 export default function HomePage() {
   return (

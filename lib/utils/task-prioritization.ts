@@ -222,38 +222,17 @@ export function assignStartDates(
 
   // Step 2: Deduplicate recurring tasks
   const { tasks: deduplicatedRecurring, duplicatesFound } = deduplicateRecurringTasks(recurring);
-  if (duplicatesFound.length > 0) {
-    console.log('[Scheduling] Removed', duplicatesFound.length, 'duplicate recurring tasks');
-  }
-
   // Step 3: Set up capacity tracking context
   const context = new SchedulingContext(categoryLimits, dailyMaxHours, dailyMaxTasks);
 
   // Seed with tasks that are already scheduled and won't be rescheduled
   // NOTE: Include completed tasks in capacity tracking - they took time/capacity during
   // the day and should count toward daily limits
-  console.log('[Scheduling] Seeding context with existing tasks:', {
-    completed: completed.length,
-    recurring: deduplicatedRecurring.length,
-    pinned: pinned.length,
-    total: completed.length + deduplicatedRecurring.length + pinned.length
-  });
-  console.log('[Scheduling] Completed tasks for today:', completed.filter(t => t.start_date === todayStr).map(t => t.title));
   context.seedWithExistingTasks([...completed, ...deduplicatedRecurring, ...pinned]);
-  console.log('[Scheduling] Capacity after seeding for today:', context.getDebugInfo(todayStr));
-  console.log('[Scheduling] Tasks to schedule:', toSchedule.length, 'tasks');
 
   // Step 4: Score and sort tasks by priority (highest first)
   const scoredTasks = addPriorityScores(toSchedule);
   scoredTasks.sort((a, b) => b.priorityScore - a.priorityScore);
-
-  console.log('[Scheduling] Top 5 priorities:', scoredTasks.slice(0, 5).map(t => ({
-    title: t.title,
-    score: t.priorityScore,
-    quadrant: t.quadrant,
-    due_date: t.due_date,
-    current_start: t.start_date
-  })));
 
   // Step 5: Schedule tasks using greedy algorithm
   const options: SchedulingOptions = {
@@ -287,13 +266,6 @@ export function assignStartDates(
   // Step 7: Combine all tasks
   const result = [...completed, ...deduplicatedRecurring, ...pinned, ...scheduled];
 
-  console.log('[Scheduling] Complete:', {
-    total: result.length,
-    scheduled: scheduled.length,
-    rescheduled: rescheduledTasks.length,
-    warnings: warnings.length,
-  });
-
   return {
     tasks: result,
     rescheduledTasks,
@@ -307,19 +279,13 @@ export function assignStartDates(
 export function getTodaysFocusTasks(tasks: Task[]): Task[] {
   const todayStr = getTodayLocal();
   
-  console.log('[v1] getTodaysFocusTasks - today:', todayStr);
-  
   // Filter for tasks scheduled for today
   const incompleteTodayTasks = tasks
     .filter(t => !t.completed && t.start_date === todayStr);
-  
+
   const completedTodayTasks = tasks
     .filter(t => t.completed && t.start_date === todayStr);
-  
-  console.log('[v1] Raw incomplete today tasks:', incompleteTodayTasks.length);
-  console.log('[v1] Raw completed today tasks:', completedTodayTasks.length);
-  console.log('[v1] Total:', incompleteTodayTasks.length + completedTodayTasks.length);
-  
+
   // Add priority scores and sort incomplete tasks
   const scoredIncompleteTasks = addPriorityScores(incompleteTodayTasks);
   scoredIncompleteTasks.sort((a, b) => b.priorityScore - a.priorityScore);

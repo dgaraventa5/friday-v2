@@ -11,18 +11,19 @@ export abstract class BaseService {
    * Standardizes error handling across all services
    * Converts various error types into a consistent Error object
    */
-  protected handleError(error: any, context?: string): Error {
+  protected handleError(error: unknown, context?: string): Error {
     // If it's already an Error with a message, use it
-    if (error?.message) {
+    const err = error as Record<string, unknown>;
+    if (err?.message) {
       const errorMessage = context
-        ? `${context}: ${error.message}`
-        : error.message;
+        ? `${context}: ${err.message}`
+        : String(err.message);
       return new Error(errorMessage);
     }
 
     // If it's a Supabase error object
-    if (error?.error_description) {
-      return new Error(error.error_description);
+    if (err?.error_description) {
+      return new Error(String(err.error_description));
     }
 
     // If it's a string

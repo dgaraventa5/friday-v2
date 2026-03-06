@@ -74,7 +74,6 @@ export function useReminders({
 
       router.refresh();
     } catch (error) {
-      console.error('[v0] Error adding reminder:', error);
       toast({
         title: 'Error',
         description: 'Could not add reminder. Please try again.',
@@ -172,7 +171,6 @@ export function useReminders({
 
       router.refresh();
     } catch (error) {
-      console.error('[Reminder] Error completing reminder:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Could not update reminder. Please try again.',
@@ -211,7 +209,6 @@ export function useReminders({
 
       router.refresh();
     } catch (error) {
-      console.error('[Reminder] Error skipping reminder:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Could not skip reminder. Please try again.',
@@ -253,7 +250,6 @@ export function useReminders({
 
       router.refresh();
     } catch (error) {
-      console.error('[Reminder] Error undoing skip:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Could not undo skip. Please try again.',
@@ -296,7 +292,6 @@ export function useReminders({
       setShowEditReminderDialog(false);
       router.refresh();
     } catch (error) {
-      console.error('[v0] Error updating reminder:', error);
       toast({
         title: 'Error',
         description: 'Could not update reminder. Please try again.',
@@ -323,7 +318,6 @@ export function useReminders({
 
       router.refresh();
     } catch (error) {
-      console.error('[v0] Error deleting reminder:', error);
       toast({
         title: 'Error',
         description: 'Could not delete reminder. Please try again.',

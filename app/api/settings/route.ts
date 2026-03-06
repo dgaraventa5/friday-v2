@@ -14,22 +14,23 @@ interface SettingsUpdateRequest {
 }
 
 // Validate category limits
-function validateCategoryLimits(limits: any): limits is CategoryLimits {
+function validateCategoryLimits(limits: unknown): limits is CategoryLimits {
   if (!limits || typeof limits !== "object") return false;
 
+  const obj = limits as Record<string, Record<string, unknown>>;
   const categories = ["Work", "Home", "Health", "Personal"];
   for (const category of categories) {
-    if (!limits[category]) return false;
+    if (!obj[category]) return false;
     if (
-      typeof limits[category].weekday !== "number" ||
-      typeof limits[category].weekend !== "number"
+      typeof obj[category].weekday !== "number" ||
+      typeof obj[category].weekend !== "number"
     )
       return false;
     if (
-      limits[category].weekday < 0 ||
-      limits[category].weekday > 24 ||
-      limits[category].weekend < 0 ||
-      limits[category].weekend > 24
+      obj[category].weekday < 0 ||
+      obj[category].weekday > 24 ||
+      obj[category].weekend < 0 ||
+      obj[category].weekend > 24
     )
       return false;
   }
@@ -38,49 +39,35 @@ function validateCategoryLimits(limits: any): limits is CategoryLimits {
 }
 
 // Validate daily max hours
-function validateDailyMaxHours(hours: any): hours is DailyMaxHours {
+function validateDailyMaxHours(hours: unknown): hours is DailyMaxHours {
   if (!hours || typeof hours !== "object") return false;
 
-  if (
-    typeof hours.weekday !== "number" ||
-    typeof hours.weekend !== "number"
-  )
+  const obj = hours as Record<string, unknown>;
+  if (typeof obj.weekday !== "number" || typeof obj.weekend !== "number")
     return false;
 
-  if (
-    hours.weekday < 0 ||
-    hours.weekday > 24 ||
-    hours.weekend < 0 ||
-    hours.weekend > 24
-  )
+  if (obj.weekday < 0 || obj.weekday > 24 || obj.weekend < 0 || obj.weekend > 24)
     return false;
 
   return true;
 }
 
 // Validate daily max tasks
-function validateDailyMaxTasks(tasks: any): tasks is DailyMaxTasks {
+function validateDailyMaxTasks(tasks: unknown): tasks is DailyMaxTasks {
   if (!tasks || typeof tasks !== "object") return false;
 
-  if (
-    typeof tasks.weekday !== "number" ||
-    typeof tasks.weekend !== "number"
-  )
+  const obj = tasks as Record<string, unknown>;
+  if (typeof obj.weekday !== "number" || typeof obj.weekend !== "number")
     return false;
 
-  if (
-    tasks.weekday < 1 ||
-    tasks.weekday > 20 ||
-    tasks.weekend < 1 ||
-    tasks.weekend > 20
-  )
+  if (obj.weekday < 1 || obj.weekday > 20 || obj.weekend < 1 || obj.weekend > 20)
     return false;
 
   return true;
 }
 
 // Validate recalibration time (HH:MM format)
-function validateRecalibrationTime(time: any): boolean {
+function validateRecalibrationTime(time: unknown): boolean {
   if (typeof time !== "string") return false;
   // Accept HH:MM format
   const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;

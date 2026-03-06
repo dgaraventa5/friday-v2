@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { SchedulingSection } from './scheduling-section'
 import { CategoryLimitsSection } from './category-limits-section'
-import { RecalibrationSection } from './recalibration-section'
+import { RecalibrationSection } from './recalibration-settings'
 import { CalendarSettings } from './calendar-settings'
 import type {
   CategoryLimits,

@@ -97,10 +97,6 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
 
       const dueDateStr = formatDateLocal(dueDate);
 
-      console.log('[v0] Form submission - selected date:', dueDate.toISOString());
-      console.log('[v0] Form submission - normalized date (local):', dueDateStr);
-      console.log('[v0] Form submission - recurring days:', recurringDays);
-
       const baseTaskData = {
         user_id: user.id,
         title: title.trim(),
@@ -121,8 +117,6 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
 
       const instances = generateInitialRecurringInstances(baseTaskData, 4);
 
-      console.log('[v0] Creating', instances.length, 'task instances');
-
       // Use TasksService instead of direct Supabase
       const tasksService = createTasksService(supabase);
       const result = await tasksService.createTasks(instances);
@@ -133,7 +127,6 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
         result.data.forEach(task => onTaskAdded(task));
       }
     } catch (err) {
-      console.error('[v0] Error adding task:', err);
       setError('Failed to add task. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -162,7 +155,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="category">Category</Label>
-          <Select value={category} onValueChange={(value: any) => setCategory(value)}>
+          <Select value={category} onValueChange={(value: string) => setCategory(value as typeof category)}>
             <SelectTrigger id="category">
               <SelectValue />
             </SelectTrigger>
@@ -256,7 +249,7 @@ export function AddTaskForm({ onTaskAdded, onCancel }: AddTaskFormProps) {
             <div className="space-y-3 pl-6">
               <div className="space-y-1.5">
                 <Label htmlFor="interval">Repeat</Label>
-                <Select value={recurringInterval} onValueChange={(value: any) => setRecurringInterval(value)}>
+                <Select value={recurringInterval} onValueChange={(value: string) => setRecurringInterval(value as typeof recurringInterval)}>
                   <SelectTrigger id="interval">
                     <SelectValue />
                   </SelectTrigger>
