@@ -88,7 +88,7 @@ function MatrixVisual() {
         </div>
 
         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
-          <div className="text-xs font-bold text-slate-400 mb-1">ELIMINATE</div>
+          <div className="text-xs font-bold text-slate-400 mb-1">BACKLOG</div>
           <div className="text-[11px] text-slate-300 mb-3">Neither</div>
           <div className="space-y-1.5">
             <div className="text-xs bg-white/70 rounded-lg px-2.5 py-1.5 text-slate-400">
