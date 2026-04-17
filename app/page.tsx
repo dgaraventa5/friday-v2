@@ -122,7 +122,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
-                    href="/#"
+                    href="/privacy"
                     className="hover:text-slate-800 transition-colors"
                   >
                     Privacy
@@ -130,7 +130,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
-                    href="/#"
+                    href="/terms"
                     className="hover:text-slate-800 transition-colors"
                   >
                     Terms
