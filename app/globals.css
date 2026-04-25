@@ -639,6 +639,11 @@
     transition-duration: 100ms;
   }
 
+  /* Landing Page - Cinematic display serif (used for headlines) */
+  .font-display {
+    font-family: 'Iowan Old Style', 'Palatino', 'Palatino Linotype', Georgia, 'Times New Roman', serif;
+  }
+
   /* Momentum Bar Shimmer */
   @keyframes momentum-shimmer {
     0% { transform: translateX(-100%); }
