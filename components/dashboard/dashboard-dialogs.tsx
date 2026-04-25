@@ -16,6 +16,7 @@ interface DashboardDialogsProps {
   showEditDialog: boolean;
   setShowEditDialog: (show: boolean) => void;
   updateTask: (updatedTask: Task) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
 
   // Reminder dialog props
   showAddReminderDialog: boolean;
@@ -42,6 +43,7 @@ export function DashboardDialogs({
   showEditDialog,
   setShowEditDialog,
   updateTask,
+  deleteTask,
   showAddReminderDialog,
   toggleAddReminderDialog,
   closeAddReminderDialog,
@@ -75,6 +77,7 @@ export function DashboardDialogs({
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         onTaskUpdated={updateTask}
+        onTaskDelete={deleteTask}
       />
 
       {/* Add Reminder Modal */}

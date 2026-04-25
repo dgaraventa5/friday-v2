@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/types';
 import { createBrowserClient } from '@/lib/supabase/client';
@@ -28,9 +28,10 @@ interface EditTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTaskUpdated: (task: Task) => void;
+  onTaskDelete: (taskId: string) => Promise<void>;
 }
 
-export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: EditTaskDialogProps) {
+export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated, onTaskDelete }: EditTaskDialogProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'Work' | 'Home' | 'Health' | 'Personal'>('Personal');
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
@@ -219,18 +220,34 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
             </div>
           </div>
 
-          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end pt-3">
+          <div className="flex flex-col-reverse gap-3 pt-3 md:flex-row md:items-center md:justify-between">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+              variant="destructive"
+              onClick={async () => {
+                if (!task) return;
+                await onTaskDelete(task.id);
+                onOpenChange(false);
+              }}
+              disabled={isSubmitting}
               className="w-full md:w-auto"
             >
-              Cancel
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Delete
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
-            </Button>
+            <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="w-full md:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

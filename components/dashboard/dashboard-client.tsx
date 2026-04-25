@@ -293,6 +293,7 @@ export function DashboardClient({
         showEditDialog={showEditDialog}
         setShowEditDialog={setShowEditDialog}
         updateTask={updateTask}
+        deleteTask={deleteTask}
         showAddReminderDialog={showAddReminderDialog}
         toggleAddReminderDialog={toggleAddReminderDialog}
         closeAddReminderDialog={closeAddReminderDialog}
