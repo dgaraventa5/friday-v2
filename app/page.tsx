@@ -6,6 +6,7 @@ import { TrustStripSection } from "@/components/landing/trust-strip-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { MidCtaSection } from "@/components/landing/mid-cta-section";
 import { TrustSignalSection } from "@/components/landing/trust-signal-section";
+import { FaqSection } from "@/components/landing/faq-section";
 import { FinalCTASection } from "@/components/landing/final-cta-section";
 
 export default function HomePage() {
@@ -46,6 +47,7 @@ export default function HomePage() {
         <HowItWorksSection />
         <MidCtaSection />
         <TrustSignalSection />
+        <FaqSection />
         <FinalCTASection />
       </main>
 
