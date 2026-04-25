@@ -87,7 +87,7 @@ export function HeroSection() {
               </Link>
               <a
                 href="#three-acts"
-                className="text-sm font-medium text-amber-900 underline underline-offset-4 decoration-amber-900/40 hover:decoration-amber-900 transition-colors"
+                className="rounded-sm text-sm font-medium text-amber-900 underline underline-offset-4 decoration-amber-900/40 transition-colors hover:decoration-amber-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-900/60 focus-visible:outline-offset-2"
               >
                 See how it works ↓
               </a>
