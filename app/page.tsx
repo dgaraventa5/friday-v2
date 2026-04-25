@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/landing/hero-section";
 import { TrustStripSection } from "@/components/landing/trust-strip-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { MidCtaSection } from "@/components/landing/mid-cta-section";
 import { TrustSignalSection } from "@/components/landing/trust-signal-section";
 import { FinalCTASection } from "@/components/landing/final-cta-section";
 
@@ -43,6 +44,7 @@ export default function HomePage() {
         <HeroSection />
         <TrustStripSection />
         <HowItWorksSection />
+        <MidCtaSection />
         <TrustSignalSection />
         <FinalCTASection />
       </main>
