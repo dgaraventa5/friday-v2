@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/landing/hero-section";
+import { TrustStripSection } from "@/components/landing/trust-strip-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { TrustSignalSection } from "@/components/landing/trust-signal-section";
 import { FinalCTASection } from "@/components/landing/final-cta-section";
@@ -40,13 +41,7 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1">
         <HeroSection />
-
-        {/* Gradient divider: Hero → HowItWorks */}
-        <div
-          className="h-px mx-auto max-w-3xl bg-gradient-to-r from-transparent via-amber-200/60 to-transparent"
-          aria-hidden="true"
-        />
-
+        <TrustStripSection />
         <HowItWorksSection />
         <TrustSignalSection />
         <FinalCTASection />
