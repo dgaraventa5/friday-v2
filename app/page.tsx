@@ -32,8 +32,8 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/auth/sign-up">
-              <Button className="cta-hover bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-medium">
-                Get Started
+              <Button className="cta-hover bg-slate-900 hover:bg-slate-800 text-amber-100 font-medium">
+                Get started
               </Button>
             </Link>
           </nav>
