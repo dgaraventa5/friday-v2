@@ -35,12 +35,9 @@ export function FinalCTASection() {
               style={{ letterSpacing: "-0.03em" }}
             >
               It&apos;s Friday.
-            </h2>
-            <h2
-              className="font-display text-4xl md:text-6xl font-normal italic leading-[0.95] tracking-tight text-amber-900 mt-1"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Lighten the load.
+              <span className="block font-normal italic text-amber-900 mt-1">
+                Lighten the load.
+              </span>
             </h2>
 
             <Link href="/auth/sign-up" className="inline-block mt-8">

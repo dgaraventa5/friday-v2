@@ -57,12 +57,12 @@ export function HeroSection() {
               style={{ animationDelay: "100ms", letterSpacing: "-0.035em" }}
             >
               Less today.
-            </h1>
-            <h1
-              className="animate-fade-up font-display text-5xl md:text-7xl font-normal italic leading-[0.95] tracking-tight text-amber-900 mt-1"
-              style={{ animationDelay: "200ms", letterSpacing: "-0.035em" }}
-            >
-              More&nbsp;done.
+              <span
+                className="block font-normal italic text-amber-900 mt-1"
+                style={{ animationDelay: "200ms" }}
+              >
+                More&nbsp;done.
+              </span>
             </h1>
             <p
               className="animate-fade-up mt-6 max-w-md text-base md:text-lg text-amber-950/90 leading-relaxed"

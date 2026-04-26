@@ -89,7 +89,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
-                    href="/#how-it-works"
+                    href="/#three-acts"
                     className="hover:text-slate-800 transition-colors"
                   >
                     How It Works
