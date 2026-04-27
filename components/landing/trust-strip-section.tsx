@@ -9,8 +9,12 @@ const pills = [
 export function TrustStripSection() {
   return (
     <section
-      className="bg-amber-50 border-y"
-      style={{ borderColor: "rgba(180, 83, 9, 0.1)" }}
+      className="border-y"
+      style={{
+        backgroundImage:
+          "linear-gradient(180deg, #fb923c 0%, #fed7aa 35%, #fffbeb 100%)",
+        borderColor: "rgba(180, 83, 9, 0.1)",
+      }}
     >
       <div className="container mx-auto px-6 py-6">
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">

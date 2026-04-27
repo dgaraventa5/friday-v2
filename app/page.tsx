@@ -84,7 +84,7 @@ export default function HomePage() {
                     href="/auth/sign-up"
                     className="hover:text-slate-800 transition-colors"
                   >
-                    Get Started
+                    Get started
                   </Link>
                 </li>
                 <li>
